@@ -76,8 +76,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // TypeScriptの型チェックのために型アサーション
+    const validPlanType = planType as PlanType;
+
     // Grow Planは準備中のため、新規購入を拒否（既存のサブスクリプションの更新は許可）
-    if (planType === 'grow') {
+    if (validPlanType === 'grow') {
       const hasActiveGrowSubscription = user.subscription?.planType === 'grow' && 
                                        user.subscription?.status === 'active' &&
                                        user.subscription?.stripeSubscriptionId;
@@ -98,14 +101,14 @@ export async function POST(request: NextRequest) {
       bloom: process.env.STRIPE_PRICE_ID_BLOOM || '',
     };
 
-    const priceId = priceIds[planType];
+    const priceId = priceIds[validPlanType];
 
     if (!priceId) {
       
       let errorMessage = 'プランの価格IDが設定されていません。';
-      if (planType === 'grow') {
+      if (validPlanType === 'grow') {
         errorMessage += '.env.localファイルのSTRIPE_PRICE_ID_GROWを確認してください。';
-      } else if (planType === 'bloom') {
+      } else if (validPlanType === 'bloom') {
         errorMessage += 'Bloom Planは現在準備中です。.env.localファイルのSTRIPE_PRICE_ID_BLOOMを設定してください。';
       } else {
         errorMessage += '.env.localファイルのSTRIPE_PRICE_ID_GROWまたはSTRIPE_PRICE_ID_BLOOMを確認してください。';
@@ -205,7 +208,7 @@ export async function POST(request: NextRequest) {
             ...user.subscription,
             stripeCustomerId: customerId,
             stripeSubscriptionId: updatedSubscription.id,
-            planType: planType,
+            planType: validPlanType,
             status: updatedSubscription.status as any,
             currentPeriodEnd: new Date(updatedSubscription.current_period_end * 1000).toISOString(),
             cancelAtPeriodEnd: updatedSubscription.cancel_at_period_end,
@@ -214,7 +217,7 @@ export async function POST(request: NextRequest) {
         
         // プラン変更に伴い、既存の投稿の優先表示フラグを更新
         const isActive = updatedSubscription.status === 'active';
-        const shouldHavePriority = (planType === 'grow' || planType === 'bloom') && isActive;
+        const shouldHavePriority = (validPlanType === 'grow' || validPlanType === 'bloom') && isActive;
         
         const posts = await getPosts();
         let updated = false;
@@ -258,7 +261,7 @@ export async function POST(request: NextRequest) {
     console.log('Checkout: 新しいチェックアウトセッションを作成', {
       customerId,
       priceId,
-      planType,
+      planType: validPlanType,
     });
     
     try {
@@ -276,7 +279,7 @@ export async function POST(request: NextRequest) {
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/pricing?canceled=true`,
         metadata: {
           userId: user.id,
-          planType: planType,
+          planType: validPlanType,
         },
       });
 
