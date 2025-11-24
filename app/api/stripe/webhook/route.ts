@@ -171,7 +171,6 @@ export async function POST(request: NextRequest) {
         }
         break;
       }
-      
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
@@ -331,7 +330,6 @@ export async function POST(request: NextRequest) {
         }
         break;
       }
-      
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
@@ -389,7 +387,6 @@ export async function POST(request: NextRequest) {
         }
         break;
       }
-
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice;
         const customerId = invoice.customer as string;
@@ -451,7 +448,6 @@ export async function POST(request: NextRequest) {
         }
         break;
       }
-
       default:
         console.warn(`Webhook: 未処理のイベントタイプ ${event.type}`);
     }
