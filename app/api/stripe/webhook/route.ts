@@ -171,8 +171,8 @@ export async function POST(request: NextRequest) {
         }
         break;
       }
-      case 'customer.subscription.updated':
-      case 'customer.subscription.deleted': {
+      
+      case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
         console.log('Webhook: subscription event', {
@@ -196,14 +196,39 @@ export async function POST(request: NextRequest) {
                 currentPlan: user.subscription?.planType,
               });
               
-              if (event.type === 'customer.subscription.deleted') {
-                // サブスクリプションが削除された場合、無料プランに戻す
-                console.log('Webhook: サブスクリプション削除 - Free Planに戻す');
+              // サブスクリプションが更新された場合
+              // サブスクリプションがキャンセル済みまたは無効な状態の場合、Freeプランに戻す
+              const invalidStatuses = ['canceled', 'unpaid', 'past_due', 'incomplete_expired'];
+              const isInvalidStatus = invalidStatuses.includes(subscription.status);
+              
+              // 期間終了チェック: cancel_at_period_end が true で、current_period_end が過去の日付の場合
+              const now = Math.floor(Date.now() / 1000);
+              const periodEnded = subscription.cancel_at_period_end && 
+                                 subscription.current_period_end && 
+                                 subscription.current_period_end < now;
+              
+              if (isInvalidStatus || periodEnded) {
+                // サブスクリプションが無効な状態、または期間終了済みの場合、Freeプランに戻す
+                console.log('Webhook: サブスクリプションが無効な状態または期間終了 - Free Planに戻す', {
+                  status: subscription.status,
+                  subscriptionId: subscription.id,
+                  cancelAtPeriodEnd: subscription.cancel_at_period_end,
+                  currentPeriodEnd: subscription.current_period_end,
+                  periodEnded,
+                  isInvalidStatus,
+                });
+                
                 await updateUser(userId, {
                   subscription: {
+                    ...user.subscription,
                     stripeCustomerId: customerId,
+                    stripeSubscriptionId: subscription.id,
                     planType: 'free',
-                    status: 'canceled',
+                    status: subscription.status as any,
+                    currentPeriodEnd: subscription.current_period_end 
+                      ? new Date(subscription.current_period_end * 1000).toISOString()
+                      : undefined,
+                    cancelAtPeriodEnd: subscription.cancel_at_period_end,
                   },
                 });
                 
@@ -221,133 +246,139 @@ export async function POST(request: NextRequest) {
                 if (updated) {
                   await savePosts(posts);
                 }
+                
+                console.log('Webhook: Free Planへの切り替え完了');
               } else {
-                // サブスクリプションが更新された場合
-                // サブスクリプションがキャンセル済みまたは無効な状態の場合、Freeプランに戻す
-                const invalidStatuses = ['canceled', 'unpaid', 'past_due', 'incomplete_expired'];
-                const isInvalidStatus = invalidStatuses.includes(subscription.status);
+                // サブスクリプションが有効な場合、Stripeの価格IDからplanTypeを取得
+                const priceId = subscription.items.data[0]?.price?.id;
+                let planType: PlanType = 'free';
                 
-                // 期間終了チェック: cancel_at_period_end が true で、current_period_end が過去の日付の場合
-                const now = Math.floor(Date.now() / 1000);
-                const periodEnded = subscription.cancel_at_period_end && 
-                                   subscription.current_period_end && 
-                                   subscription.current_period_end < now;
-                
-                if (isInvalidStatus || periodEnded) {
-                  // サブスクリプションが無効な状態、または期間終了済みの場合、Freeプランに戻す
-                  console.log('Webhook: サブスクリプションが無効な状態または期間終了 - Free Planに戻す', {
-                    status: subscription.status,
-                    subscriptionId: subscription.id,
-                    cancelAtPeriodEnd: subscription.cancel_at_period_end,
-                    currentPeriodEnd: subscription.current_period_end,
-                    periodEnded,
-                    isInvalidStatus,
-                  });
+                if (priceId) {
+                  // 環境変数から価格IDを取得して比較
+                  const growPriceId = process.env.STRIPE_PRICE_ID_GROW;
+                  const bloomPriceId = process.env.STRIPE_PRICE_ID_BLOOM;
                   
-                  await updateUser(userId, {
-                    subscription: {
-                      ...user.subscription,
-                      stripeCustomerId: customerId,
-                      stripeSubscriptionId: subscription.id,
-                      planType: 'free',
-                      status: subscription.status as any,
-                      currentPeriodEnd: subscription.current_period_end 
-                        ? new Date(subscription.current_period_end * 1000).toISOString()
-                        : undefined,
-                      cancelAtPeriodEnd: subscription.cancel_at_period_end,
-                    },
-                  });
-                  
-                  // 既存の投稿の優先表示フラグを無効化
-                  const posts = await getPosts();
-                  let updated = false;
-                  for (let i = 0; i < posts.length; i++) {
-                    if (posts[i].userId === userId) {
-                      posts[i].priorityDisplay = false;
-                      posts[i].featuredDisplay = false;
-                      posts[i].updatedAt = new Date().toISOString();
-                      updated = true;
-                    }
-                  }
-                  if (updated) {
-                    await savePosts(posts);
-                  }
-                  
-                  console.log('Webhook: Free Planへの切り替え完了');
-                } else {
-                  // サブスクリプションが有効な場合、Stripeの価格IDからplanTypeを取得
-                  const priceId = subscription.items.data[0]?.price?.id;
-                  let planType: PlanType = 'free';
-                  
-                  if (priceId) {
-                    // 環境変数から価格IDを取得して比較
-                    const growPriceId = process.env.STRIPE_PRICE_ID_GROW;
-                    const bloomPriceId = process.env.STRIPE_PRICE_ID_BLOOM;
-                    
-                    if (priceId === growPriceId) {
-                      planType = 'grow';
-                    } else if (priceId === bloomPriceId) {
-                      planType = 'bloom';
-                    } else {
-                      // 価格IDが一致しない場合、既存のplanTypeを保持（フォールバック）
-                      planType = user.subscription?.planType || 'free';
-                      console.warn('Webhook: 価格IDが一致しません', {
-                        priceId,
-                        growPriceId,
-                        bloomPriceId,
-                        fallbackPlanType: planType,
-                      });
-                    }
+                  if (priceId === growPriceId) {
+                    planType = 'grow';
+                  } else if (priceId === bloomPriceId) {
+                    planType = 'bloom';
                   } else {
-                    // 価格IDが取得できない場合、既存のplanTypeを保持
+                    // 価格IDが一致しない場合、既存のplanTypeを保持（フォールバック）
                     planType = user.subscription?.planType || 'free';
-                    console.warn('Webhook: 価格IDが取得できません', {
-                      subscriptionId: subscription.id,
+                    console.warn('Webhook: 価格IDが一致しません', {
+                      priceId,
+                      growPriceId,
+                      bloomPriceId,
                       fallbackPlanType: planType,
                     });
                   }
-                  
-                  const isActive = subscription.status === 'active';
-                  
-                  console.log('Webhook: サブスクリプション更新', {
-                    priceId,
-                    planType,
-                    isActive,
-                    subscriptionStatus: subscription.status,
-                    previousPlanType: user.subscription?.planType,
+                } else {
+                  // 価格IDが取得できない場合、既存のplanTypeを保持
+                  planType = user.subscription?.planType || 'free';
+                  console.warn('Webhook: 価格IDが取得できません', {
+                    subscriptionId: subscription.id,
+                    fallbackPlanType: planType,
                   });
-                  
-                  await updateUser(userId, {
-                    subscription: {
-                      ...user.subscription,
-                      stripeCustomerId: customerId,
-                      stripeSubscriptionId: subscription.id,
-                      planType: planType,
-                      status: subscription.status as any,
-                      currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
-                      cancelAtPeriodEnd: subscription.cancel_at_period_end,
-                    },
-                  });
-                  
-                  console.log('Webhook: ユーザー情報更新完了');
-                  
-                  // プラン変更に伴い、既存の投稿の優先表示フラグを更新
-                  const shouldHavePriority = (planType === 'grow' || planType === 'bloom') && isActive;
-                  
-                  const posts = await getPosts();
-                  let updated = false;
-                  for (let i = 0; i < posts.length; i++) {
-                    if (posts[i].userId === userId) {
-                      posts[i].priorityDisplay = shouldHavePriority;
-                      posts[i].featuredDisplay = shouldHavePriority;
-                      posts[i].updatedAt = new Date().toISOString();
-                      updated = true;
-                    }
-                  }
-                  if (updated) {
-                    await savePosts(posts);
+                }
+                
+                const isActive = subscription.status === 'active';
+                
+                console.log('Webhook: サブスクリプション更新', {
+                  priceId,
+                  planType,
+                  isActive,
+                  subscriptionStatus: subscription.status,
+                  previousPlanType: user.subscription?.planType,
+                });
+                
+                await updateUser(userId, {
+                  subscription: {
+                    ...user.subscription,
+                    stripeCustomerId: customerId,
+                    stripeSubscriptionId: subscription.id,
+                    planType: planType,
+                    status: subscription.status as any,
+                    currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+                    cancelAtPeriodEnd: subscription.cancel_at_period_end,
+                  },
+                });
+                
+                console.log('Webhook: ユーザー情報更新完了');
+                
+                // プラン変更に伴い、既存の投稿の優先表示フラグを更新
+                const shouldHavePriority = (planType === 'grow' || planType === 'bloom') && isActive;
+                
+                const posts = await getPosts();
+                let updated = false;
+                for (let i = 0; i < posts.length; i++) {
+                  if (posts[i].userId === userId) {
+                    posts[i].priorityDisplay = shouldHavePriority;
+                    posts[i].featuredDisplay = shouldHavePriority;
+                    posts[i].updatedAt = new Date().toISOString();
+                    updated = true;
                   }
                 }
+                if (updated) {
+                  await savePosts(posts);
+                }
+              }
+            } else {
+              console.error('Webhook: ユーザーが見つかりません', { userId });
+            }
+          } else {
+            console.error('Webhook: 顧客メタデータにuserIdがありません', { customerId });
+          }
+        }
+        break;
+      }
+      
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as Stripe.Subscription;
+        const customerId = subscription.customer as string;
+        console.log('Webhook: subscription deleted event', {
+          type: event.type,
+          customerId,
+          subscriptionId: subscription.id,
+          status: subscription.status,
+        });
+
+        // メタデータからユーザーIDを取得
+        const customer = await stripe.customers.retrieve(customerId);
+        if (!customer.deleted && 'metadata' in customer) {
+          const userId = customer.metadata?.userId;
+          console.log('Webhook: 顧客情報取得', { userId, customerId });
+          
+          if (userId) {
+            const user = await getUserById(userId);
+            if (user) {
+              console.log('Webhook: ユーザー情報取得', {
+                userId: user.id,
+                currentPlan: user.subscription?.planType,
+              });
+              
+              // サブスクリプションが削除された場合、無料プランに戻す
+              console.log('Webhook: サブスクリプション削除 - Free Planに戻す');
+              await updateUser(userId, {
+                subscription: {
+                  stripeCustomerId: customerId,
+                  planType: 'free',
+                  status: 'canceled',
+                },
+              });
+              
+              // 既存の投稿の優先表示フラグを無効化
+              const posts = await getPosts();
+              let updated = false;
+              for (let i = 0; i < posts.length; i++) {
+                if (posts[i].userId === userId) {
+                  posts[i].priorityDisplay = false;
+                  posts[i].featuredDisplay = false;
+                  posts[i].updatedAt = new Date().toISOString();
+                  updated = true;
+                }
+              }
+              if (updated) {
+                await savePosts(posts);
               }
             } else {
               console.error('Webhook: ユーザーが見つかりません', { userId });
