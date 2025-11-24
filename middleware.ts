@@ -10,8 +10,8 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 const RATE_LIMITS = {
-  login: { maxRequests: isDevelopment ? 50 : 5, windowMs: 15 * 60 * 1000 }, // 15分間に5回（開発環境では50回）
-  register: { maxRequests: isDevelopment ? 30 : 3, windowMs: 60 * 60 * 1000 }, // 1時間に3回（開発環境では30回）
+  login: { maxRequests: isDevelopment ? 50 : 10, windowMs: 15 * 60 * 1000 }, // 15分間に10回（開発環境では50回）
+  register: { maxRequests: isDevelopment ? 30 : 10, windowMs: 60 * 60 * 1000 }, // 1時間に10回（開発環境では30回）- Vercelの複数インスタンスを考慮して緩和
   post: { maxRequests: isDevelopment ? 100 : 10, windowMs: 60 * 60 * 1000 }, // 1時間に10回（開発環境では100回）
   comment: { maxRequests: isDevelopment ? 200 : 20, windowMs: 60 * 60 * 1000 }, // 1時間に20回（開発環境では200回）
   message: { maxRequests: isDevelopment ? 300 : 30, windowMs: 60 * 60 * 1000 }, // 1時間に30回（開発環境では300回）
