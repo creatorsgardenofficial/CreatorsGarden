@@ -987,7 +987,7 @@ export default function AdminPage() {
                       </thead>
                       <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         {securityLogs.map((log) => {
-                          const severityColors = {
+                          const severityColors: Record<string, string> = {
                             low: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
                             medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
                             high: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
