@@ -5,7 +5,7 @@ import { verifyPassword, hashPassword, isPasswordHashed } from '@/lib/password';
 import { generateCsrfToken } from '@/lib/csrf';
 import { logSecurityEvent } from '@/lib/securityLog';
 import { getClientIp } from '@/lib/utils';
-import { User } from '@/types';
+import type { User } from '@/types';
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
