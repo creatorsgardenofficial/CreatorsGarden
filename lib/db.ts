@@ -30,7 +30,10 @@ export function shouldUseDatabase(): boolean {
   // データベースが利用可能で、本番環境の場合はデータベースを使用
   if (isDatabaseAvailable()) {
     // 開発環境でもデータベースを使用する場合は、環境変数で制御
-    return process.env.USE_DATABASE === 'true' || process.env.VERCEL === '1';
+    // Vercel環境（本番、プレビュー、開発）では常にデータベースを使用
+    return process.env.USE_DATABASE === 'true' || 
+           process.env.VERCEL === '1' || 
+           process.env.VERCEL_ENV !== undefined;
   }
   return false;
 }
