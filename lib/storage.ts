@@ -114,9 +114,13 @@ export async function updateUser(id: string, updates: Partial<User>): Promise<Us
       };
     } else {
       // subscriptionが存在しない場合は、デフォルト値とマージ
+      // updates.subscriptionにplanTypeが含まれていない場合のみデフォルト値を設定
+      const defaultSubscription = {
+        planType: 'free' as const,
+        status: 'active' as const,
+      };
       updates.subscription = {
-        planType: 'free',
-        status: 'active',
+        ...defaultSubscription,
         ...updates.subscription,
       };
     }
