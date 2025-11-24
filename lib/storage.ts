@@ -40,7 +40,16 @@ export async function getUsers(): Promise<User[]> {
 
 export async function saveUsers(users: User[]): Promise<void> {
   await ensureDataDir();
-  await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
+  try {
+    await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
+  } catch (error: any) {
+    console.error('Failed to save users:', error);
+    // Vercelの本番環境ではファイルシステムへの書き込みができない
+    if (error?.code === 'EACCES' || error?.code === 'EROFS' || error?.message?.includes('read-only')) {
+      throw new Error('File system is read-only. Database storage is required in production environment.');
+    }
+    throw error;
+  }
 }
 
 export async function getUserById(id: string): Promise<User | null> {

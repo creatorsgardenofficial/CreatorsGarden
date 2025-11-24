@@ -96,10 +96,30 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ user }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Registration error:', error);
+    console.error('Error details:', {
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack,
+    });
+    
+    // ファイルシステムエラーの場合、より詳細なメッセージを返す
+    if (error?.code === 'EACCES' || error?.code === 'EROFS' || error?.message?.includes('read-only')) {
+      console.error('File system is read-only. This is expected in Vercel production environment.');
+      return NextResponse.json(
+        { 
+          error: '本番環境ではデータベースが必要です。現在、ファイルベースのストレージは使用できません。' 
+        },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: '登録に失敗しました' },
+      { 
+        error: '登録に失敗しました',
+        details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+      },
       { status: 500 }
     );
   }
