@@ -360,6 +360,7 @@ export default function AdminPage() {
       setAnnouncementForm({
         title: '',
         content: '',
+        type: 'info',
         isVisible: true,
         publishedAt: '',
         expiresAt: '',
@@ -406,6 +407,7 @@ export default function AdminPage() {
       setAnnouncementForm({
         title: '',
         content: '',
+        type: 'info',
         isVisible: true,
         publishedAt: '',
         expiresAt: '',
