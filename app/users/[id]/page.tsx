@@ -169,17 +169,21 @@ export default function UserProfilePage() {
                   作品URL
                 </h2>
                 <div className="space-y-2">
-                  {user.portfolioUrls.map((url, index) => (
-                    <a
-                      key={index}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-indigo-600 dark:text-indigo-400 hover:underline break-all"
-                    >
-                      {url}
-                    </a>
-                  ))}
+                  {user.portfolioUrls.map((item, index) => {
+                    const url = typeof item === 'string' ? item : item.url;
+                    const description = typeof item === 'string' ? undefined : item.description;
+                    return (
+                      <a
+                        key={index}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-indigo-600 dark:text-indigo-400 hover:underline break-all"
+                      >
+                        {description || url}
+                      </a>
+                    );
+                  })}
                 </div>
               </div>
             )}
