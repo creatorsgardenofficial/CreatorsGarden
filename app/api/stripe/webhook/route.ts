@@ -5,7 +5,7 @@ import { PlanType } from '@/types';
 
 // Stripe APIバージョン（最新の安定版を使用）
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2023-10-16',
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
@@ -78,15 +78,18 @@ export async function POST(request: NextRequest) {
               // 開発環境のみログ出力
               if (process.env.NODE_ENV === 'development') {
                 console.log('Webhook: ユーザー情報取得成功', { 
-                userId: user.id, 
-                currentPlan: user.subscription?.planType 
-              });
+                  userId: user.id, 
+                  currentPlan: user.subscription?.planType 
+                });
+              }
               
               const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-              console.log('Webhook: サブスクリプション情報取得', {
-                subscriptionId,
-                status: subscription.status,
-              });
+              if (process.env.NODE_ENV === 'development') {
+                console.log('Webhook: サブスクリプション情報取得', {
+                  subscriptionId,
+                  status: subscription.status,
+                });
+              }
               
               // 価格IDからplanTypeを取得して検証
               const priceId = subscription.items.data[0]?.price?.id;
@@ -163,12 +166,11 @@ export async function POST(request: NextRequest) {
               console.error('Webhook: ユーザーが見つかりません', { userId });
             }
           } else {
-            console.error('Webhook: メタデータが不足しています', { userId, planType });
+            console.error('Webhook: メタデータが不足しています', { userId, metadataPlanType });
           }
         }
         break;
       }
-
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
