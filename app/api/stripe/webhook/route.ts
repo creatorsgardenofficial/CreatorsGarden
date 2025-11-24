@@ -169,8 +169,8 @@ export async function POST(request: NextRequest) {
             console.error('Webhook: メタデータが不足しています', { userId, metadataPlanType });
           }
         }
-        break;
       }
+      break;
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
