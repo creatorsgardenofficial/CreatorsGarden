@@ -29,6 +29,13 @@ const ANNOUNCEMENTS_FILE = path.join(DATA_DIR, 'announcements.json');
 
 // ユーザー管理
 export async function getUsers(): Promise<User[]> {
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { getUsers: getUsersDb } = await import('./storage-db');
+    return getUsersDb();
+  }
+  
   await ensureDataDir();
   try {
     const data = await fs.readFile(USERS_FILE, 'utf-8');
@@ -39,11 +46,30 @@ export async function getUsers(): Promise<User[]> {
 }
 
 export async function saveUsers(users: User[]): Promise<void> {
+  // Vercelの本番環境ではファイルシステムへの書き込みができない
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  
+  if (isVercelProduction) {
+    const error = new Error('File system is read-only in Vercel production. Database storage is required.');
+    console.error('Cannot write to file system in Vercel production environment.');
+    console.error('Error details:', {
+      VERCEL: process.env.VERCEL,
+      VERCEL_ENV: process.env.VERCEL_ENV,
+      NODE_ENV: process.env.NODE_ENV,
+    });
+    throw error;
+  }
+  
   await ensureDataDir();
   try {
     await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
   } catch (error: any) {
     console.error('Failed to save users:', error);
+    console.error('Error details:', {
+      code: error?.code,
+      message: error?.message,
+      stack: error?.stack,
+    });
     // Vercelの本番環境ではファイルシステムへの書き込みができない
     if (error?.code === 'EACCES' || error?.code === 'EROFS' || error?.message?.includes('read-only')) {
       throw new Error('File system is read-only. Database storage is required in production environment.');
@@ -53,11 +79,23 @@ export async function saveUsers(users: User[]): Promise<void> {
 }
 
 export async function getUserById(id: string): Promise<User | null> {
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { getUserById: getUserByIdDb } = await import('./storage-db');
+    return getUserByIdDb(id);
+  }
+  
   const users = await getUsers();
   return users.find(u => u.id === id) || null;
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { getUserByEmail: getUserByEmailDb } = await import('./storage-db');
+    return getUserByEmailDb(email);
+  }
+  
   const users = await getUsers();
   return users.find(u => u.email === email) || null;
 }
@@ -90,6 +128,12 @@ async function generateUniquePublicId(): Promise<string> {
 }
 
 export async function createUser(user: Omit<User, 'id' | 'createdAt' | 'publicId'>): Promise<User> {
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { createUser: createUserDb } = await import('./storage-db');
+    return createUserDb(user);
+  }
+  
   const users = await getUsers();
   const publicId = await generateUniquePublicId();
   const newUser: User = {
@@ -109,6 +153,12 @@ export async function createUser(user: Omit<User, 'id' | 'createdAt' | 'publicId
 }
 
 export async function updateUser(id: string, updates: Partial<User>): Promise<User | null> {
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { updateUser: updateUserDb } = await import('./storage-db');
+    return updateUserDb(id, updates);
+  }
+  
   const users = await getUsers();
   const index = users.findIndex(u => u.id === id);
   if (index === -1) return null;
@@ -618,6 +668,12 @@ export async function updateConversation(conversationId: string, updates: Partia
 
 // 表示用IDでユーザーを検索
 export async function getUserByPublicId(publicId: string): Promise<User | null> {
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { getUserByPublicId: getUserByPublicIdDb } = await import('./storage-db');
+    return getUserByPublicIdDb(publicId);
+  }
+  
   const users = await getUsers();
   return users.find(u => u.publicId === publicId && u.isActive !== false) || null;
 }
