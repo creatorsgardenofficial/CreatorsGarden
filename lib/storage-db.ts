@@ -1,4 +1,4 @@
-import { sql, shouldUseDatabase } from './db';
+import { sql } from './db';
 import { User, Post, Comment, Feedback, Message, Conversation, GroupMessage, GroupChat, Bookmark, PasswordResetToken, Announcement } from '@/types';
 
 /**
@@ -9,12 +9,7 @@ import { User, Post, Comment, Feedback, Message, Conversation, GroupMessage, Gro
 // ==================== ユーザー管理 ====================
 
 export async function getUsers(): Promise<User[]> {
-  if (!shouldUseDatabase()) {
-    // フォールバック: ファイルシステムストレージを使用
-    const { getUsers: getUsersFile } = await import('./storage');
-    return getUsersFile();
-  }
-
+  // この関数はデータベース専用。shouldUseDatabase()のチェックはstorage.tsで行う
   try {
     const result = await sql`
       SELECT 
@@ -47,11 +42,7 @@ export async function getUsers(): Promise<User[]> {
 }
 
 export async function getUserById(id: string): Promise<User | null> {
-  if (!shouldUseDatabase()) {
-    const { getUserById: getUserByIdFile } = await import('./storage');
-    return getUserByIdFile(id);
-  }
-
+  // この関数はデータベース専用。shouldUseDatabase()のチェックはstorage.tsで行う
   try {
     const result = await sql`
       SELECT 
@@ -88,11 +79,7 @@ export async function getUserById(id: string): Promise<User | null> {
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
-  if (!shouldUseDatabase()) {
-    const { getUserByEmail: getUserByEmailFile } = await import('./storage');
-    return getUserByEmailFile(email);
-  }
-
+  // この関数はデータベース専用。shouldUseDatabase()のチェックはstorage.tsで行う
   try {
     const result = await sql`
       SELECT 
@@ -129,11 +116,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
 }
 
 export async function getUserByPublicId(publicId: string): Promise<User | null> {
-  if (!shouldUseDatabase()) {
-    const { getUserByPublicId: getUserByPublicIdFile } = await import('./storage');
-    return getUserByPublicIdFile(publicId);
-  }
-
+  // この関数はデータベース専用。shouldUseDatabase()のチェックはstorage.tsで行う
   try {
     const result = await sql`
       SELECT 
@@ -186,25 +169,16 @@ async function generateUniquePublicId(): Promise<string> {
       break;
     }
     
-    if (shouldUseDatabase()) {
-      const result = await sql`SELECT id FROM users WHERE public_id = ${publicId} LIMIT 1`;
-      if (result.rows.length === 0) break;
-    } else {
-      const { getUsers } = await import('./storage');
-      const users = await getUsers();
-      if (!users.some(u => u.publicId === publicId)) break;
-    }
+    // データベース専用なので、直接SQLクエリを実行
+    const result = await sql`SELECT id FROM users WHERE public_id = ${publicId} LIMIT 1`;
+    if (result.rows.length === 0) break;
   } while (true);
   
   return publicId;
 }
 
 export async function createUser(user: Omit<User, 'id' | 'createdAt' | 'publicId'>): Promise<User> {
-  if (!shouldUseDatabase()) {
-    const { createUser: createUserFile } = await import('./storage');
-    return createUserFile(user);
-  }
-
+  // この関数はデータベース専用。shouldUseDatabase()のチェックはstorage.tsで行う
   try {
     const publicId = await generateUniquePublicId();
     const id = Date.now().toString();
@@ -245,11 +219,7 @@ export async function createUser(user: Omit<User, 'id' | 'createdAt' | 'publicId
 }
 
 export async function updateUser(id: string, updates: Partial<User>): Promise<User | null> {
-  if (!shouldUseDatabase()) {
-    const { updateUser: updateUserFile } = await import('./storage');
-    return updateUserFile(id, updates);
-  }
-
+  // この関数はデータベース専用。shouldUseDatabase()のチェックはstorage.tsで行う
   try {
     // まず既存のユーザーを取得
     const existingUser = await getUserById(id);
