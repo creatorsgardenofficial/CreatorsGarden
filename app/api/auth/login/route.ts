@@ -196,10 +196,18 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error);
+    console.error('Login error details:', {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name,
+    });
     return NextResponse.json(
-      { error: 'ログインに失敗しました' },
+      { 
+        error: 'ログインに失敗しました',
+        details: process.env.NODE_ENV === 'development' ? error?.message : undefined,
+      },
       { status: 500 }
     );
   }

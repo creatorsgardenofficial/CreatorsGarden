@@ -19,6 +19,12 @@ export interface SecurityLogEntry {
 
 // データディレクトリの初期化
 async function ensureDataDir() {
+  // Vercelの本番環境ではファイルシステムへの書き込みができない
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    return; // 本番環境ではスキップ
+  }
+  
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
   } catch (error) {
@@ -39,6 +45,14 @@ async function readLogs(): Promise<SecurityLogEntry[]> {
 
 // ログファイルの保存
 async function saveLogs(logs: SecurityLogEntry[]): Promise<void> {
+  // Vercelの本番環境ではファイルシステムへの書き込みができない
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境ではログを保存しない（データベース対応が必要）
+    // エラーを発生させないため、静かにスキップ
+    return;
+  }
+  
   await ensureDataDir();
   // 最新1000件のみ保持（メモリ効率のため）
   const recentLogs = logs.slice(-1000);
