@@ -34,6 +34,12 @@ async function ensureDataDir() {
 
 // ログファイルの読み込み
 async function readLogs(): Promise<SecurityLogEntry[]> {
+  // Vercelの本番環境ではファイルシステムへの読み込みもスキップ
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    return []; // 本番環境では空配列を返す
+  }
+  
   await ensureDataDir();
   try {
     const data = await fs.readFile(SECURITY_LOG_FILE, 'utf-8');
