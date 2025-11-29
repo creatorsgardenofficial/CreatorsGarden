@@ -101,6 +101,7 @@ export async function POST(request: NextRequest) {
     console.error('Error details:', {
       message: error?.message,
       code: error?.code,
+      name: error?.name,
       stack: error?.stack,
     });
     
@@ -110,6 +111,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           error: '本番環境ではデータベースが必要です。現在、ファイルベースのストレージは使用できません。' 
+        },
+        { status: 503 }
+      );
+    }
+    
+    // データベース接続エラーの場合
+    if (error?.code === 'missing_connection_string' || 
+        error?.message?.includes('missing_connection_string') ||
+        error?.message?.includes('POSTGRES_PRISMA_URL') ||
+        error?.name === 'VercelPostgresError') {
+      console.error('Database connection error detected');
+      return NextResponse.json(
+        { 
+          error: 'データベース接続に失敗しました。環境変数（POSTGRES_PRISMA_URL）が正しく設定されているか確認してください。',
+          details: process.env.NODE_ENV === 'development' ? error?.message : undefined
         },
         { status: 503 }
       );
