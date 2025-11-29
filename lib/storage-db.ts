@@ -1,4 +1,4 @@
-import { sql } from './db';
+import { pool } from './db';
 import { User, Post, Comment, Feedback, Message, Conversation, GroupMessage, GroupChat, Bookmark, PasswordResetToken, Announcement } from '@/types';
 
 /**
@@ -11,8 +11,8 @@ import { User, Post, Comment, Feedback, Message, Conversation, GroupMessage, Gro
 export async function getUsers(): Promise<User[]> {
   // この関数はデータベース専用。shouldUseDatabase()のチェックはstorage.tsで行う
   try {
-    const result = await sql`
-      SELECT 
+    const result = await pool.query(
+      `SELECT
         id,
         username,
         email,
@@ -27,8 +27,8 @@ export async function getUsers(): Promise<User[]> {
         account_locked_until as "accountLockedUntil",
         subscription
       FROM users
-      ORDER BY created_at DESC
-    `;
+      ORDER BY created_at DESC`
+    );
     
     return result.rows.map(row => ({
       ...row,
@@ -44,8 +44,8 @@ export async function getUsers(): Promise<User[]> {
 export async function getUserById(id: string): Promise<User | null> {
   // この関数はデータベース専用。shouldUseDatabase()のチェックはstorage.tsで行う
   try {
-    const result = await sql`
-      SELECT 
+    const result = await pool.query(
+      `SELECT
         id,
         username,
         email,
@@ -60,9 +60,10 @@ export async function getUserById(id: string): Promise<User | null> {
         account_locked_until as "accountLockedUntil",
         subscription
       FROM users
-      WHERE id = ${id}
-      LIMIT 1
-    `;
+      WHERE id = $1
+      LIMIT 1`,
+      [id]
+    );
     
     if (result.rows.length === 0) return null;
     
@@ -81,8 +82,8 @@ export async function getUserById(id: string): Promise<User | null> {
 export async function getUserByEmail(email: string): Promise<User | null> {
   // この関数はデータベース専用。shouldUseDatabase()のチェックはstorage.tsで行う
   try {
-    const result = await sql`
-      SELECT 
+    const result = await pool.query(
+      `SELECT
         id,
         username,
         email,
@@ -97,9 +98,10 @@ export async function getUserByEmail(email: string): Promise<User | null> {
         account_locked_until as "accountLockedUntil",
         subscription
       FROM users
-      WHERE email = ${email}
-      LIMIT 1
-    `;
+      WHERE email = $1
+      LIMIT 1`,
+      [email]
+    );
     
     if (result.rows.length === 0) return null;
     
@@ -118,8 +120,8 @@ export async function getUserByEmail(email: string): Promise<User | null> {
 export async function getUserByPublicId(publicId: string): Promise<User | null> {
   // この関数はデータベース専用。shouldUseDatabase()のチェックはstorage.tsで行う
   try {
-    const result = await sql`
-      SELECT 
+    const result = await pool.query(
+      `SELECT
         id,
         username,
         email,
@@ -134,10 +136,11 @@ export async function getUserByPublicId(publicId: string): Promise<User | null> 
         account_locked_until as "accountLockedUntil",
         subscription
       FROM users
-      WHERE public_id = ${publicId}
+      WHERE public_id = $1
         AND (is_active IS NULL OR is_active = true)
-      LIMIT 1
-    `;
+      LIMIT 1`,
+      [publicId]
+    );
     
     if (result.rows.length === 0) return null;
     
@@ -168,9 +171,11 @@ async function generateUniquePublicId(): Promise<string> {
       publicId = Date.now().toString(36).toUpperCase().slice(-8);
       break;
     }
-    
     // データベース専用なので、直接SQLクエリを実行
-    const result = await sql`SELECT id FROM users WHERE public_id = ${publicId} LIMIT 1`;
+    const result = await pool.query(
+      'SELECT id FROM users WHERE public_id = $1 LIMIT 1',
+      [publicId]
+    );
     if (result.rows.length === 0) break;
   } while (true);
   
@@ -184,25 +189,27 @@ export async function createUser(user: Omit<User, 'id' | 'createdAt' | 'publicId
     const id = Date.now().toString();
     const createdAt = new Date().toISOString();
     const subscription = user.subscription || { planType: 'free', status: 'active' };
-    
-    await sql`
-      INSERT INTO users (
+    await pool.query(
+      `INSERT INTO users (
         id, username, email, password, creator_type, bio, portfolio_urls,
         is_active, public_id, created_at, subscription
       ) VALUES (
-        ${id},
-        ${user.username},
-        ${user.email},
-        ${user.password},
-        ${user.creatorType},
-        ${user.bio || null},
-        ${JSON.stringify(user.portfolioUrls || null)},
-        ${user.isActive !== undefined ? user.isActive : true},
-        ${publicId},
-        ${createdAt},
-        ${JSON.stringify(subscription)}
-      )
-    `;
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
+      )`,
+      [
+        id,
+        user.username,
+        user.email,
+        user.password,
+        user.creatorType,
+        user.bio || null,
+        JSON.stringify(user.portfolioUrls || null),
+        user.isActive !== undefined ? user.isActive : true,
+        publicId,
+        createdAt,
+        JSON.stringify(subscription),
+      ]
+    );
     
     return {
       ...user,
@@ -235,27 +242,38 @@ export async function updateUser(id: string, updates: Partial<User>): Promise<Us
     const isActive = updates.isActive !== undefined ? updates.isActive : existingUser.isActive;
     const failedLoginAttempts = updates.failedLoginAttempts !== undefined ? updates.failedLoginAttempts : existingUser.failedLoginAttempts;
     const accountLockedUntil = updates.accountLockedUntil !== undefined ? updates.accountLockedUntil : existingUser.accountLockedUntil;
-    
     // subscriptionをマージ
     const subscription = updates.subscription 
       ? { ...existingUser.subscription, ...updates.subscription }
       : existingUser.subscription || { planType: 'free', status: 'active' };
-    
-    await sql`
-      UPDATE users 
-      SET 
-        username = ${username},
-        email = ${email},
-        password = ${password},
-        creator_type = ${creatorType},
-        bio = ${bio || null},
-        portfolio_urls = ${JSON.stringify(portfolioUrls || null)},
-        is_active = ${isActive !== undefined ? isActive : true},
-        failed_login_attempts = ${failedLoginAttempts || 0},
-        account_locked_until = ${accountLockedUntil || null},
-        subscription = ${JSON.stringify(subscription)}
-      WHERE id = ${id}
-    `;
+    await pool.query(
+      `UPDATE users
+       SET
+         username = $1,
+         email = $2,
+         password = $3,
+         creator_type = $4,
+         bio = $5,
+         portfolio_urls = $6,
+         is_active = $7,
+         failed_login_attempts = $8,
+         account_locked_until = $9,
+         subscription = $10
+       WHERE id = $11`,
+      [
+        username,
+        email,
+        password,
+        creatorType,
+        bio || null,
+        JSON.stringify(portfolioUrls || null),
+        isActive !== undefined ? isActive : true,
+        failedLoginAttempts || 0,
+        accountLockedUntil || null,
+        JSON.stringify(subscription),
+        id,
+      ]
+    );
     
     return getUserById(id);
   } catch (error) {
