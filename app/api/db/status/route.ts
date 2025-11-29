@@ -63,6 +63,15 @@ export async function GET() {
         POSTGRES_URL_value: process.env.POSTGRES_URL 
           ? `${process.env.POSTGRES_URL.substring(0, 20)}...` 
           : null,
+        POSTGRES_PRISMA_URL_value: process.env.POSTGRES_PRISMA_URL 
+          ? `${process.env.POSTGRES_PRISMA_URL.substring(0, 20)}...` 
+          : null,
+        PRISMA_DATABASE_URL_value: process.env.PRISMA_DATABASE_URL 
+          ? `${process.env.PRISMA_DATABASE_URL.substring(0, 20)}...` 
+          : null,
+        STORAGE_PRISMA_URL_value: process.env.STORAGE_PRISMA_URL 
+          ? `${process.env.STORAGE_PRISMA_URL.substring(0, 20)}...` 
+          : null,
       },
       summary: {
         message: shouldUseDb 
