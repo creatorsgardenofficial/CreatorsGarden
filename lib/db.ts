@@ -16,10 +16,13 @@ import { sql as defaultSql, createClient } from '@vercel/postgres';
 let sqlInstance: typeof defaultSql;
 
 // カスタムプレフィックス（STORAGEなど）が設定されている場合も対応
+// POSTGRES_PRISMA_URLを優先的に使用し、なければPOSTGRES_URLをフォールバックとして使用
 const prismaUrl = 
   process.env.POSTGRES_PRISMA_URL || 
   process.env.PRISMA_DATABASE_URL ||
-  process.env.STORAGE_PRISMA_URL; // カスタムプレフィックス対応
+  process.env.STORAGE_PRISMA_URL || // カスタムプレフィックス対応
+  process.env.STORAGE_URL || // カスタムプレフィックスの直接接続URL
+  process.env.POSTGRES_URL; // フォールバック: 直接接続URL（動作しない可能性があるが試す）
 const isVercelEnvironment = process.env.VERCEL === '1' || process.env.VERCEL_ENV !== undefined;
 
 if (prismaUrl) {
