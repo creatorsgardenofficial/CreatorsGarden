@@ -6,6 +6,12 @@ const DATA_DIR = path.join(process.cwd(), 'data');
 
 // データディレクトリの初期化
 async function ensureDataDir() {
+  // Vercelの本番環境ではファイルシステムへの書き込みができない
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    return; // 本番環境ではスキップ
+  }
+  
   // データベースを使用する場合は、ファイルシステム操作をスキップ
   const { shouldUseDatabase } = await import('./db');
   if (shouldUseDatabase()) {
@@ -40,6 +46,12 @@ export async function getUsers(): Promise<User[]> {
   if (shouldUseDatabase()) {
     const { getUsers: getUsersDb } = await import('./storage-db');
     return getUsersDb();
+  }
+  
+  // Vercelの本番環境ではファイルシステムを使用できない
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
   }
   
   // ファイルシステムを使用する場合のみディレクトリを作成
