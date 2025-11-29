@@ -7,6 +7,7 @@ export async function GET() {
     const envVars = {
       POSTGRES_URL: !!process.env.POSTGRES_URL,
       POSTGRES_PRISMA_URL: !!process.env.POSTGRES_PRISMA_URL,
+      PRISMA_DATABASE_URL: !!process.env.PRISMA_DATABASE_URL,
       POSTGRES_URL_NON_POOLING: !!process.env.POSTGRES_URL_NON_POOLING,
       STORAGE_URL: !!process.env.STORAGE_URL,
       STORAGE_PRISMA_URL: !!process.env.STORAGE_PRISMA_URL,
