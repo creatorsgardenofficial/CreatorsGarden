@@ -15,7 +15,11 @@ import { sql as defaultSql, createClient } from '@vercel/postgres';
 // しかし、明示的にcreateClient()を使用することで、確実に接続文字列を指定できます
 let sqlInstance: typeof defaultSql;
 
-const prismaUrl = process.env.POSTGRES_PRISMA_URL || process.env.PRISMA_DATABASE_URL;
+// カスタムプレフィックス（STORAGEなど）が設定されている場合も対応
+const prismaUrl = 
+  process.env.POSTGRES_PRISMA_URL || 
+  process.env.PRISMA_DATABASE_URL ||
+  process.env.STORAGE_PRISMA_URL; // カスタムプレフィックス対応
 const isVercelEnvironment = process.env.VERCEL === '1' || process.env.VERCEL_ENV !== undefined;
 
 if (prismaUrl) {
@@ -33,8 +37,10 @@ if (prismaUrl) {
   // 本番環境でPOSTGRES_PRISMA_URLが設定されていない場合
   // @vercel/postgresのsqlタグは自動的に環境変数を探しますが、
   // POSTGRES_PRISMA_URLが設定されていない場合はエラーが発生します
-  console.error('⚠️  POSTGRES_PRISMA_URL is not set in production environment.');
+  // カスタムプレフィックス（STORAGEなど）が設定されている場合、STORAGE_PRISMA_URLもチェック
+  console.error('⚠️  POSTGRES_PRISMA_URL or STORAGE_PRISMA_URL is not set in production environment.');
   console.error('   Please configure POSTGRES_PRISMA_URL in Vercel dashboard.');
+  console.error('   Or if using custom prefix, ensure STORAGE_PRISMA_URL is set.');
   console.error('   Go to: Vercel Dashboard → Project → Settings → Environment Variables');
   // デフォルトのsqlタグを使用（エラーは実際のクエリ実行時に発生する）
   sqlInstance = defaultSql;
@@ -57,11 +63,15 @@ export async function testConnection(): Promise<boolean> {
 // データベースが利用可能かどうかをチェック
 export function isDatabaseAvailable(): boolean {
   // Vercel Postgresの環境変数が設定されているかチェック
+  // カスタムプレフィックス（STORAGEなど）が設定されている場合も対応
   return !!(
     process.env.POSTGRES_URL ||
     process.env.POSTGRES_PRISMA_URL ||
     process.env.PRISMA_DATABASE_URL ||
-    process.env.POSTGRES_URL_NON_POOLING
+    process.env.POSTGRES_URL_NON_POOLING ||
+    process.env.STORAGE_URL ||
+    process.env.STORAGE_PRISMA_URL ||
+    process.env.STORAGE_URL_NON_POOLING
   );
 }
 
