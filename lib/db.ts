@@ -1,5 +1,6 @@
 import { sql as defaultSql, createClient } from '@vercel/postgres';
 
+
 /**
  * Vercel Postgresデータベース接続ユーティリティ
  * 
@@ -16,13 +17,11 @@ import { sql as defaultSql, createClient } from '@vercel/postgres';
 let sqlInstance: typeof defaultSql;
 
 // カスタムプレフィックス（STORAGEなど）が設定されている場合も対応
-// POSTGRES_PRISMA_URLを優先的に使用し、なければPOSTGRES_URLをフォールバックとして使用
+// POSTGRES_PRISMA_URLを優先的に使用（プール接続用）
+// PRISMA_DATABASE_URLはPrisma Accelerate用のため、@vercel/postgresでは使用しない
 const prismaUrl = 
   process.env.POSTGRES_PRISMA_URL || 
-  process.env.PRISMA_DATABASE_URL ||
-  process.env.STORAGE_PRISMA_URL || // カスタムプレフィックス対応
-  process.env.STORAGE_URL || // カスタムプレフィックスの直接接続URL
-  process.env.POSTGRES_URL; // フォールバック: 直接接続URL（動作しない可能性があるが試す）
+  process.env.STORAGE_PRISMA_URL; // カスタムプレフィックス対応
 const isVercelEnvironment = process.env.VERCEL === '1' || process.env.VERCEL_ENV !== undefined;
 
 // デバッグ: 環境変数の状態をログ出力（本番環境のみ）
@@ -41,21 +40,6 @@ if (isVercelEnvironment) {
 }
 
 if (prismaUrl) {
-  // PRISMA_DATABASE_URLが設定されている場合、POSTGRES_PRISMA_URLとしても設定する
-  // @vercel/postgresのsqlタグはPOSTGRES_PRISMA_URLを自動的に探す
-  if (process.env.PRISMA_DATABASE_URL && !process.env.POSTGRES_PRISMA_URL) {
-    // prisma+postgres://形式の場合は、postgres://形式に変換
-    let connectionString = process.env.PRISMA_DATABASE_URL;
-    if (connectionString.startsWith('prisma+postgres://')) {
-      connectionString = connectionString.replace('prisma+postgres://', 'postgres://');
-      console.log('⚠️  Converting prisma+postgres:// to postgres:// format');
-    }
-    // 環境変数として設定（このセッションでのみ有効）
-    // 注意: 実行時に環境変数を設定しても、@vercel/postgresのsqlタグが認識しない可能性がある
-    process.env.POSTGRES_PRISMA_URL = connectionString;
-    console.log('✅ Set POSTGRES_PRISMA_URL from PRISMA_DATABASE_URL');
-  }
-  
   // デフォルトのsqlタグを使用（環境変数を自動的に探す）
   // @vercel/postgresのsqlタグはPOSTGRES_PRISMA_URLを優先的に探す
   // createClient()を使わないことで、this.queryエラーを回避
