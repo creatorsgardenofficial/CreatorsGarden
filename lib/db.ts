@@ -1,19 +1,37 @@
-import { sql } from '@vercel/postgres';
+import { sql as defaultSql, createClient } from '@vercel/postgres';
 
 /**
  * Vercel Postgresデータベース接続ユーティリティ
  * 
  * @vercel/postgresのsqlタグは自動的に環境変数から接続文字列を読み取ります。
- * 優先順位: POSTGRES_PRISMA_URL > POSTGRES_URL > POSTGRES_URL_NON_POOLING
+ * しかし、POSTGRES_PRISMA_URLが設定されている場合、明示的にcreateClient()を使用します。
  * 
  * 注意: POSTGRES_URLは直接接続文字列のため、sqlタグでは使用できません。
  * POSTGRES_PRISMA_URLが設定されている必要があります。
  */
 
+// sqlインスタンスを初期化
+// POSTGRES_PRISMA_URLが設定されている場合は、createClient()を使用
+// それ以外の場合は、デフォルトのsqlタグを使用
+let sqlInstance: typeof defaultSql;
+
+const prismaUrl = process.env.POSTGRES_PRISMA_URL || process.env.PRISMA_DATABASE_URL;
+
+if (prismaUrl) {
+  // プール接続文字列が設定されている場合は、createClient()を使用
+  const client = createClient({ connectionString: prismaUrl });
+  // client.sqlは既にバインドされている関数なので、直接使用
+  sqlInstance = client.sql as typeof defaultSql;
+} else {
+  // プール接続文字列が設定されていない場合、デフォルトのsqlを使用
+  // ただし、本番環境ではエラーが発生する可能性があります
+  sqlInstance = defaultSql;
+}
+
 // データベース接続の確認
 export async function testConnection(): Promise<boolean> {
   try {
-    await sql`SELECT 1`;
+    await sqlInstance`SELECT 1`;
     return true;
   } catch (error) {
     console.error('Database connection failed:', error);
@@ -27,6 +45,7 @@ export function isDatabaseAvailable(): boolean {
   return !!(
     process.env.POSTGRES_URL ||
     process.env.POSTGRES_PRISMA_URL ||
+    process.env.PRISMA_DATABASE_URL ||
     process.env.POSTGRES_URL_NON_POOLING
   );
 }
@@ -50,4 +69,4 @@ export function shouldUseDatabase(): boolean {
   return false;
 }
 
-export { sql };
+export { sqlInstance as sql };
