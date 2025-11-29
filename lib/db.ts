@@ -41,27 +41,26 @@ if (isVercelEnvironment) {
 }
 
 if (prismaUrl) {
-  // プール接続文字列が設定されている場合は、createClient()を使用
-  // prisma+postgres://形式の場合は、postgres://形式に変換
-  let connectionString = prismaUrl;
-  if (prismaUrl.startsWith('prisma+postgres://')) {
-    connectionString = prismaUrl.replace('prisma+postgres://', 'postgres://');
-    console.log('⚠️  Converting prisma+postgres:// to postgres:// format');
+  // PRISMA_DATABASE_URLが設定されている場合、POSTGRES_PRISMA_URLとしても設定する
+  // @vercel/postgresのsqlタグはPOSTGRES_PRISMA_URLを自動的に探す
+  if (process.env.PRISMA_DATABASE_URL && !process.env.POSTGRES_PRISMA_URL) {
+    // prisma+postgres://形式の場合は、postgres://形式に変換
+    let connectionString = process.env.PRISMA_DATABASE_URL;
+    if (connectionString.startsWith('prisma+postgres://')) {
+      connectionString = connectionString.replace('prisma+postgres://', 'postgres://');
+      console.log('⚠️  Converting prisma+postgres:// to postgres:// format');
+    }
+    // 環境変数として設定（このセッションでのみ有効）
+    // 注意: 実行時に環境変数を設定しても、@vercel/postgresのsqlタグが認識しない可能性がある
+    process.env.POSTGRES_PRISMA_URL = connectionString;
+    console.log('✅ Set POSTGRES_PRISMA_URL from PRISMA_DATABASE_URL');
   }
   
-  try {
-    const client = createClient({ connectionString });
-    // client.sqlは既にバインドされている関数なので、直接使用
-    sqlInstance = client.sql as typeof defaultSql;
-    console.log('✅ Database client created successfully with connection string');
-  } catch (error) {
-    console.error('❌ Failed to create database client:', error);
-    console.error('Connection string (first 50 chars):', connectionString.substring(0, 50) + '...');
-    // フォールバック: デフォルトのsqlタグを使用
-    // @vercel/postgresのsqlタグは自動的に環境変数を探す
-    console.log('⚠️  Falling back to default sql tag (will use environment variables automatically)');
-    sqlInstance = defaultSql;
-  }
+  // デフォルトのsqlタグを使用（環境変数を自動的に探す）
+  // @vercel/postgresのsqlタグはPOSTGRES_PRISMA_URLを優先的に探す
+  // createClient()を使わないことで、this.queryエラーを回避
+  sqlInstance = defaultSql;
+  console.log('✅ Using default sql tag (will use POSTGRES_PRISMA_URL automatically)');
 } else if (isVercelEnvironment) {
   // 本番環境でPOSTGRES_PRISMA_URLが設定されていない場合
   // @vercel/postgresのsqlタグは自動的に環境変数を探しますが、
