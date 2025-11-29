@@ -24,11 +24,6 @@ export const pool = new Pool(
 
 // データベース接続の確認（pg版）
 export async function testConnection(): Promise<boolean> {
-  if (!connectionString) {
-    console.error('❌ Database connection test failed: connection string is not set');
-    return false;
-  }
-
   try {
     const result = await pool.query('SELECT 1');
     console.log('✅ Database connection test successful', result.rows[0]);
@@ -72,4 +67,7 @@ export function shouldUseDatabase(): boolean {
   return false;
 }
 
-export { sqlInstance as sql };
+// 以前は @vercel/postgres の sql タグを再エクスポートしていたが、
+// 現在は pg の Pool を使用しているため sql は提供しない。
+// 代わりに pool を経由してクエリを実行する。
+
