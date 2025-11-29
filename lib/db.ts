@@ -34,6 +34,10 @@ if (isVercelEnvironment) {
   console.log('  STORAGE_URL:', !!process.env.STORAGE_URL);
   console.log('  POSTGRES_URL:', !!process.env.POSTGRES_URL);
   console.log('  Using connection string:', prismaUrl ? 'Found' : 'Not found');
+  if (prismaUrl) {
+    console.log('  Connection string format:', prismaUrl.startsWith('prisma+postgres://') ? 'prisma+postgres://' : 
+                                                      prismaUrl.startsWith('postgres://') ? 'postgres://' : 'unknown');
+  }
 }
 
 if (prismaUrl) {
@@ -84,6 +88,12 @@ export async function testConnection(): Promise<boolean> {
     console.error('❌ Database connection test failed:', error);
     console.error('Error code:', error?.code);
     console.error('Error message:', error?.message);
+    console.error('Error name:', error?.name);
+    console.error('Error stack:', error?.stack);
+    // より詳細なエラー情報をログ出力
+    if (error?.code === 'missing_connection_string') {
+      console.error('⚠️  Connection string is missing. Check environment variables.');
+    }
     return false;
   }
 }
