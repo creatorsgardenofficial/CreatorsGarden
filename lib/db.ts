@@ -11,20 +11,35 @@ import { sql as defaultSql, createClient } from '@vercel/postgres';
  */
 
 // sqlインスタンスを初期化
-// POSTGRES_PRISMA_URLが設定されている場合は、createClient()を使用
-// それ以外の場合は、デフォルトのsqlタグを使用
+// @vercel/postgresのsqlタグは、POSTGRES_PRISMA_URLを自動的に探します
+// しかし、明示的にcreateClient()を使用することで、確実に接続文字列を指定できます
 let sqlInstance: typeof defaultSql;
 
 const prismaUrl = process.env.POSTGRES_PRISMA_URL || process.env.PRISMA_DATABASE_URL;
+const isVercelEnvironment = process.env.VERCEL === '1' || process.env.VERCEL_ENV !== undefined;
 
 if (prismaUrl) {
   // プール接続文字列が設定されている場合は、createClient()を使用
-  const client = createClient({ connectionString: prismaUrl });
-  // client.sqlは既にバインドされている関数なので、直接使用
-  sqlInstance = client.sql as typeof defaultSql;
+  try {
+    const client = createClient({ connectionString: prismaUrl });
+    // client.sqlは既にバインドされている関数なので、直接使用
+    sqlInstance = client.sql as typeof defaultSql;
+  } catch (error) {
+    console.error('Failed to create database client:', error);
+    // フォールバック: デフォルトのsqlタグを使用
+    sqlInstance = defaultSql;
+  }
+} else if (isVercelEnvironment) {
+  // 本番環境でPOSTGRES_PRISMA_URLが設定されていない場合
+  // @vercel/postgresのsqlタグは自動的に環境変数を探しますが、
+  // POSTGRES_PRISMA_URLが設定されていない場合はエラーが発生します
+  console.error('⚠️  POSTGRES_PRISMA_URL is not set in production environment.');
+  console.error('   Please configure POSTGRES_PRISMA_URL in Vercel dashboard.');
+  console.error('   Go to: Vercel Dashboard → Project → Settings → Environment Variables');
+  // デフォルトのsqlタグを使用（エラーは実際のクエリ実行時に発生する）
+  sqlInstance = defaultSql;
 } else {
-  // プール接続文字列が設定されていない場合、デフォルトのsqlを使用
-  // ただし、本番環境ではエラーが発生する可能性があります
+  // 開発環境でプール接続文字列が設定されていない場合、デフォルトのsqlを使用
   sqlInstance = defaultSql;
 }
 
