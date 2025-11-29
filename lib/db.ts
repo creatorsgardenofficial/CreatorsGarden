@@ -25,14 +25,27 @@ const prismaUrl =
   process.env.POSTGRES_URL; // フォールバック: 直接接続URL（動作しない可能性があるが試す）
 const isVercelEnvironment = process.env.VERCEL === '1' || process.env.VERCEL_ENV !== undefined;
 
+// デバッグ: 環境変数の状態をログ出力（本番環境のみ）
+if (isVercelEnvironment) {
+  console.log('🔍 Database environment variables check:');
+  console.log('  POSTGRES_PRISMA_URL:', !!process.env.POSTGRES_PRISMA_URL);
+  console.log('  PRISMA_DATABASE_URL:', !!process.env.PRISMA_DATABASE_URL);
+  console.log('  STORAGE_PRISMA_URL:', !!process.env.STORAGE_PRISMA_URL);
+  console.log('  STORAGE_URL:', !!process.env.STORAGE_URL);
+  console.log('  POSTGRES_URL:', !!process.env.POSTGRES_URL);
+  console.log('  Using connection string:', prismaUrl ? 'Found' : 'Not found');
+}
+
 if (prismaUrl) {
   // プール接続文字列が設定されている場合は、createClient()を使用
   try {
     const client = createClient({ connectionString: prismaUrl });
     // client.sqlは既にバインドされている関数なので、直接使用
     sqlInstance = client.sql as typeof defaultSql;
+    console.log('✅ Database client created successfully with connection string');
   } catch (error) {
-    console.error('Failed to create database client:', error);
+    console.error('❌ Failed to create database client:', error);
+    console.error('Connection string (first 50 chars):', prismaUrl.substring(0, 50) + '...');
     // フォールバック: デフォルトのsqlタグを使用
     sqlInstance = defaultSql;
   }
@@ -56,9 +69,12 @@ if (prismaUrl) {
 export async function testConnection(): Promise<boolean> {
   try {
     await sqlInstance`SELECT 1`;
+    console.log('✅ Database connection test successful');
     return true;
-  } catch (error) {
-    console.error('Database connection failed:', error);
+  } catch (error: any) {
+    console.error('❌ Database connection test failed:', error);
+    console.error('Error code:', error?.code);
+    console.error('Error message:', error?.message);
     return false;
   }
 }
