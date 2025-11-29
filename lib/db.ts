@@ -1,42 +1,19 @@
-import { sql, createClient } from '@vercel/postgres';
+import { sql } from '@vercel/postgres';
 
 /**
  * Vercel Postgresデータベース接続ユーティリティ
  * 
- * @vercel/postgresのsqlタグはプール接続文字列（POSTGRES_PRISMA_URL）を必要とします。
- * POSTGRES_URLは直接接続用のため、sqlタグでは使用できません。
+ * @vercel/postgresのsqlタグは自動的に環境変数から接続文字列を読み取ります。
+ * 優先順位: POSTGRES_PRISMA_URL > POSTGRES_URL > POSTGRES_URL_NON_POOLING
+ * 
+ * 注意: POSTGRES_URLは直接接続文字列のため、sqlタグでは使用できません。
+ * POSTGRES_PRISMA_URLが設定されている必要があります。
  */
-
-// sqlインスタンスを取得（プール接続文字列を優先）
-// @vercel/postgresのsqlタグは自動的にPOSTGRES_PRISMA_URLを探します
-// しかし、POSTGRES_URLが設定されているとそれを優先しようとするため、
-// 明示的にPOSTGRES_PRISMA_URLを使用するクライアントを作成します
-let sqlInstance: typeof sql;
-
-// 環境変数に基づいて適切なsqlインスタンスを初期化
-// @vercel/postgresはPOSTGRES_PRISMA_URLを優先しますが、
-// PRISMA_DATABASE_URLも使用可能です
-const prismaUrl = process.env.POSTGRES_PRISMA_URL || process.env.PRISMA_DATABASE_URL;
-
-if (prismaUrl) {
-  // プール接続文字列が設定されている場合はそれを使用（推奨）
-  const client = createClient({ connectionString: prismaUrl });
-  sqlInstance = client.sql as typeof sql;
-} else {
-  // プール接続文字列が設定されていない場合、デフォルトのsqlを使用
-  // ただし、POSTGRES_URLのみが設定されている場合はエラーが発生する可能性があります
-  if (process.env.POSTGRES_URL && !prismaUrl) {
-    console.warn('⚠️  POSTGRES_PRISMA_URL or PRISMA_DATABASE_URL is not set.');
-    console.warn('   POSTGRES_URL may cause connection errors.');
-    console.warn('   Please set POSTGRES_PRISMA_URL in Vercel dashboard.');
-  }
-  sqlInstance = sql;
-}
 
 // データベース接続の確認
 export async function testConnection(): Promise<boolean> {
   try {
-    await sqlInstance`SELECT 1`;
+    await sql`SELECT 1`;
     return true;
   } catch (error) {
     console.error('Database connection failed:', error);
@@ -67,5 +44,4 @@ export function shouldUseDatabase(): boolean {
   return false;
 }
 
-export { sqlInstance as sql };
-
+export { sql };
