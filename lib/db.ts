@@ -33,14 +33,20 @@ export function isDatabaseAvailable(): boolean {
 
 // 開発環境ではファイルシステム、本番環境ではデータベースを使用
 export function shouldUseDatabase(): boolean {
-  // データベースが利用可能で、本番環境の場合はデータベースを使用
-  if (isDatabaseAvailable()) {
-    // 開発環境でもデータベースを使用する場合は、環境変数で制御
-    // Vercel環境（本番、プレビュー、開発）では常にデータベースを使用
-    return process.env.USE_DATABASE === 'true' || 
-           process.env.VERCEL === '1' || 
-           process.env.VERCEL_ENV !== undefined;
+  // Vercel環境（本番、プレビュー、開発）では常にデータベースを使用
+  // 本番環境では環境変数が設定されていなくてもデータベースを使用する必要がある
+  const isVercelEnvironment = process.env.VERCEL === '1' || process.env.VERCEL_ENV !== undefined;
+  
+  if (isVercelEnvironment) {
+    // 本番環境では常にデータベースを使用（環境変数が設定されていない場合はエラーになるが、それは後で検出される）
+    return true;
   }
+  
+  // 開発環境では、USE_DATABASE環境変数またはデータベースが利用可能な場合にデータベースを使用
+  if (isDatabaseAvailable()) {
+    return process.env.USE_DATABASE === 'true';
+  }
+  
   return false;
 }
 
