@@ -80,8 +80,7 @@ export async function GET(request: NextRequest) {
       
       // メッセージを取得したら既読にする（チャット画面を開いた時に既読データを登録）
       // readByがundefinedの場合は、カラムが存在しない可能性があるため、既読処理をスキップ
-      const readByColumnExists = messages.length > 0 && messages[0].readBy !== undefined;
-      if (readByColumnExists) {
+      if (messages.length > 0) {
         // 既読処理を並列で実行（パフォーマンス向上）
         const readPromises = messages
           .filter(m => {
@@ -89,12 +88,18 @@ export async function GET(request: NextRequest) {
             if (m.senderId === userId) {
               return false;
             }
-            // readByが存在し、既読でない場合は既読にする
-            return m.readBy && !m.readBy.includes(userId!);
+            // readByがundefinedの場合は、カラムが存在しない可能性があるため、既読処理をスキップ
+            if (m.readBy === undefined) {
+              return false;
+            }
+            // readByが存在し、既読でない場合は既読にする（空配列の場合は既読にする）
+            return !m.readBy.includes(userId!);
           })
           .map(m => markGroupMessageAsRead(m.id, userId!));
         
-        await Promise.all(readPromises);
+        if (readPromises.length > 0) {
+          await Promise.all(readPromises);
+        }
       }
       
       // 既読処理後にメッセージを再取得して最新のreadByを反映

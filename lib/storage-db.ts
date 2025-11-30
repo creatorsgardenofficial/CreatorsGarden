@@ -1759,11 +1759,16 @@ export async function markGroupMessageAsRead(messageId: string, userId: string):
     const message = await getGroupMessageById(messageId);
     if (!message) return;
     
+    // readByがundefinedの場合は、カラムが存在しない可能性があるため、スキップ
+    if (message.readBy === undefined) {
+      return;
+    }
+    
     if (message.readBy.includes(userId)) {
       return; // 既に既読
     }
 
-    const updatedReadBy = [...message.readBy, userId];
+    const updatedReadBy = [...(message.readBy || []), userId];
     await pool.query(`
       UPDATE group_messages
       SET read_by = $1
