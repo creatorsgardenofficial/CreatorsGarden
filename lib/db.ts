@@ -8,17 +8,37 @@ import { Pool } from 'pg';
  * アプリケーションではプール接続を推奨します。
  */
 
+// Prisma Accelerateのエンドポイントを検出する関数
+const isPrismaAccelerateEndpoint = (connectionString: string): boolean => {
+  try {
+    const url = new URL(connectionString);
+    // Prisma Accelerateのエンドポイント（db.prisma.ioなど）を検出
+    return url.hostname.includes('db.prisma.io') || url.hostname.includes('prisma.io');
+  } catch {
+    return false;
+  }
+};
+
 // 環境変数から接続文字列を取得
 // 優先順位: POSTGRES_PRISMA_URL (プール接続) -> STORAGE_PRISMA_URL (カスタムプレフィックス) -> POSTGRES_URL (直接接続) -> POSTGRES_URL_NON_POOLING
-// 注意: PRISMA_DATABASE_URLがprisma+postgres://形式の場合は、pgライブラリでは使用できないため、完全にスキップする
-const getConnectionString = () => {
+// 注意: PRISMA_DATABASE_URLがprisma+postgres://形式、またはPrisma Accelerateエンドポイントの場合は、pgライブラリでは使用できないため、完全にスキップする
+const getConnectionString = (): string | null => {
   // まず、直接PostgreSQL接続文字列を優先
-  let connectionString =
+  let connectionString: string | null =
     process.env.POSTGRES_PRISMA_URL ||
     process.env.STORAGE_PRISMA_URL ||
     process.env.STORAGE_URL ||
     process.env.POSTGRES_URL ||
-    process.env.POSTGRES_URL_NON_POOLING;
+    process.env.POSTGRES_URL_NON_POOLING ||
+    null;
+
+  // 接続文字列がPrisma Accelerateエンドポイントの場合は使用しない
+  if (connectionString && isPrismaAccelerateEndpoint(connectionString)) {
+    console.error('❌ Connection string points to Prisma Accelerate endpoint (db.prisma.io)');
+    console.error('❌ Prisma Accelerate endpoints cannot be used with pg library directly');
+    console.error('❌ Please use POSTGRES_PRISMA_URL or POSTGRES_URL from Vercel Postgres instead');
+    connectionString = null;
+  }
 
   // PRISMA_DATABASE_URLがprisma+postgres://形式の場合は使用しない
   // Prisma Accelerateの接続文字列は、pgライブラリでは直接使用できない
@@ -32,7 +52,14 @@ const getConnectionString = () => {
       // 接続文字列をnullのまま返す（エラーは後で投げられる）
       return null;
     } else if (prismaUrl.startsWith('postgres://')) {
-      // 既にpostgres://形式の場合はそのまま使用
+      // 既にpostgres://形式の場合でも、Prisma Accelerateエンドポイントの場合は使用しない
+      if (isPrismaAccelerateEndpoint(prismaUrl)) {
+        console.error('❌ PRISMA_DATABASE_URL points to Prisma Accelerate endpoint (db.prisma.io)');
+        console.error('❌ Prisma Accelerate endpoints cannot be used with pg library directly');
+        console.error('❌ Please use POSTGRES_PRISMA_URL or POSTGRES_URL from Vercel Postgres instead');
+        return null;
+      }
+      // 通常のPostgreSQL接続文字列の場合は使用
       connectionString = prismaUrl;
       console.log('✅ Using PRISMA_DATABASE_URL (postgres:// format)');
     }
@@ -58,13 +85,20 @@ if (isVercelEnvironment) {
     const format = connectionString.startsWith('postgres://') ? 'postgres://' : 
                    connectionString.startsWith('prisma+postgres://') ? 'prisma+postgres:// (INVALID)' : 
                    'unknown';
+    const isPrismaEndpoint = isPrismaAccelerateEndpoint(connectionString);
     console.log('  Connection string format:', format);
+    console.log('  Connection string host:', connectionString.includes('@') ? connectionString.split('@')[1]?.split('/')[0] : 'unknown');
     if (connectionString.startsWith('prisma+postgres://')) {
       console.error('  ❌ ERROR: prisma+postgres:// format cannot be used with pg library!');
+    }
+    if (isPrismaEndpoint) {
+      console.error('  ❌ ERROR: Connection string points to Prisma Accelerate endpoint (db.prisma.io)!');
+      console.error('  ❌ ERROR: Prisma Accelerate endpoints cannot be used with pg library!');
     }
   } else {
     console.error('  ❌ ERROR: No valid connection string found!');
     console.error('  💡 Please set POSTGRES_PRISMA_URL or POSTGRES_URL in Vercel dashboard');
+    console.error('  💡 Note: Do NOT use PRISMA_DATABASE_URL if it points to Prisma Accelerate (db.prisma.io)');
   }
 }
 
