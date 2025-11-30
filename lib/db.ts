@@ -8,15 +8,26 @@ import { Pool } from 'pg';
  * アプリケーションではプール接続を推奨します。
  */
 
-// Prisma Accelerateのエンドポイントを検出する関数
-const isPrismaAccelerateEndpoint = (connectionString: string): boolean => {
+// 接続文字列からホスト名を抽出するヘルパー関数
+const extractHostname = (connectionString: string): string | null => {
   try {
     const url = new URL(connectionString);
-    // Prisma Accelerateのエンドポイント（db.prisma.ioなど）を検出
-    return url.hostname.includes('db.prisma.io') || url.hostname.includes('prisma.io');
+    return url.hostname;
   } catch {
-    return false;
+    // URL形式でない場合は、@記号の後を探す
+    const match = connectionString.match(/@([^:/]+)/);
+    return match ? match[1] : null;
   }
+};
+
+// Prisma Accelerateのエンドポイントを検出する関数
+const isPrismaAccelerateEndpoint = (connectionString: string): boolean => {
+  const hostname = extractHostname(connectionString);
+  if (!hostname) return false;
+  // Prisma Accelerateのエンドポイント（db.prisma.io、accelerate.prisma.ioなど）を検出
+  return hostname.includes('db.prisma.io') || 
+         hostname.includes('accelerate.prisma.io') ||
+         hostname.includes('prisma.io');
 };
 
 // 環境変数から接続文字列を取得
@@ -71,23 +82,66 @@ const getConnectionString = (): string | null => {
 const connectionString = getConnectionString();
 const isVercelEnvironment = process.env.VERCEL === '1' || process.env.VERCEL_ENV !== undefined;
 
+// 接続文字列からホスト名を抽出するヘルパー関数
+const extractHostname = (connectionString: string): string | null => {
+  try {
+    const url = new URL(connectionString);
+    return url.hostname;
+  } catch {
+    // URL形式でない場合は、@記号の後を探す
+    const match = connectionString.match(/@([^:/]+)/);
+    return match ? match[1] : null;
+  }
+};
+
 // デバッグ: 環境変数の状態をログ出力（本番環境のみ）
 if (isVercelEnvironment) {
   console.log('🔍 Database environment variables check:');
-  console.log('  POSTGRES_PRISMA_URL:', !!process.env.POSTGRES_PRISMA_URL, process.env.POSTGRES_PRISMA_URL ? `(${process.env.POSTGRES_PRISMA_URL.substring(0, 30)}...)` : '');
-  console.log('  PRISMA_DATABASE_URL:', !!process.env.PRISMA_DATABASE_URL, process.env.PRISMA_DATABASE_URL ? `(${process.env.PRISMA_DATABASE_URL.substring(0, 30)}...)` : '');
+  
+  // 各環境変数のホスト名を表示
+  if (process.env.POSTGRES_PRISMA_URL) {
+    const hostname = extractHostname(process.env.POSTGRES_PRISMA_URL);
+    console.log('  POSTGRES_PRISMA_URL:', true, `(host: ${hostname || 'unknown'})`);
+    if (hostname && (hostname.includes('db.prisma.io') || hostname.includes('prisma.io'))) {
+      console.error('    ❌ This points to Prisma Accelerate endpoint!');
+    }
+  } else {
+    console.log('  POSTGRES_PRISMA_URL:', false);
+  }
+  
+  if (process.env.POSTGRES_URL) {
+    const hostname = extractHostname(process.env.POSTGRES_URL);
+    console.log('  POSTGRES_URL:', true, `(host: ${hostname || 'unknown'})`);
+    if (hostname && (hostname.includes('db.prisma.io') || hostname.includes('prisma.io'))) {
+      console.error('    ❌ This points to Prisma Accelerate endpoint!');
+    }
+  } else {
+    console.log('  POSTGRES_URL:', false);
+  }
+  
+  if (process.env.PRISMA_DATABASE_URL) {
+    const hostname = extractHostname(process.env.PRISMA_DATABASE_URL);
+    console.log('  PRISMA_DATABASE_URL:', true, `(host: ${hostname || 'unknown'}, format: ${process.env.PRISMA_DATABASE_URL.startsWith('prisma+postgres://') ? 'prisma+postgres://' : 'postgres://'})`);
+    if (hostname && (hostname.includes('db.prisma.io') || hostname.includes('prisma.io'))) {
+      console.error('    ❌ This points to Prisma Accelerate endpoint!');
+    }
+  } else {
+    console.log('  PRISMA_DATABASE_URL:', false);
+  }
+  
   console.log('  STORAGE_PRISMA_URL:', !!process.env.STORAGE_PRISMA_URL);
   console.log('  STORAGE_URL:', !!process.env.STORAGE_URL);
-  console.log('  POSTGRES_URL:', !!process.env.POSTGRES_URL, process.env.POSTGRES_URL ? `(${process.env.POSTGRES_URL.substring(0, 30)}...)` : '');
   console.log('  POSTGRES_URL_NON_POOLING:', !!process.env.POSTGRES_URL_NON_POOLING);
   console.log('  Using connection string:', connectionString ? 'Found' : 'Not found');
+  
   if (connectionString) {
     const format = connectionString.startsWith('postgres://') ? 'postgres://' : 
                    connectionString.startsWith('prisma+postgres://') ? 'prisma+postgres:// (INVALID)' : 
                    'unknown';
+    const hostname = extractHostname(connectionString);
     const isPrismaEndpoint = isPrismaAccelerateEndpoint(connectionString);
     console.log('  Connection string format:', format);
-    console.log('  Connection string host:', connectionString.includes('@') ? connectionString.split('@')[1]?.split('/')[0] : 'unknown');
+    console.log('  Connection string host:', hostname || 'unknown');
     if (connectionString.startsWith('prisma+postgres://')) {
       console.error('  ❌ ERROR: prisma+postgres:// format cannot be used with pg library!');
     }
@@ -99,6 +153,8 @@ if (isVercelEnvironment) {
     console.error('  ❌ ERROR: No valid connection string found!');
     console.error('  💡 Please set POSTGRES_PRISMA_URL or POSTGRES_URL in Vercel dashboard');
     console.error('  💡 Note: Do NOT use PRISMA_DATABASE_URL if it points to Prisma Accelerate (db.prisma.io)');
+    console.error('  💡 Note: POSTGRES_PRISMA_URL and POSTGRES_URL must NOT point to db.prisma.io');
+    console.error('  💡 They should point to Vercel Postgres endpoints (e.g., aws-0-*.pooler.supabase.com)');
   }
 }
 
