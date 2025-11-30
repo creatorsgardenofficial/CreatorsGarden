@@ -9,21 +9,34 @@ import { Pool } from 'pg';
  */
 
 // 環境変数から接続文字列を取得
-// 優先順位: POSTGRES_PRISMA_URL (プール接続) -> PRISMA_DATABASE_URL (Prisma Accelerate) -> STORAGE_PRISMA_URL (カスタムプレフィックス) -> POSTGRES_URL (直接接続)
+// 優先順位: POSTGRES_PRISMA_URL (プール接続) -> STORAGE_PRISMA_URL (カスタムプレフィックス) -> POSTGRES_URL (直接接続) -> PRISMA_DATABASE_URL (Prisma Accelerate、変換が必要)
+// 注意: PRISMA_DATABASE_URLがprisma+postgres://形式の場合は、pgライブラリでは直接使用できないため、最後の選択肢とする
 const getConnectionString = () => {
+  // まず、直接PostgreSQL接続文字列を優先
   let connectionString =
     process.env.POSTGRES_PRISMA_URL ||
-    process.env.PRISMA_DATABASE_URL ||
     process.env.STORAGE_PRISMA_URL ||
     process.env.STORAGE_URL ||
     process.env.POSTGRES_URL ||
     process.env.POSTGRES_URL_NON_POOLING;
 
-  // prisma+postgres://形式の場合は、postgres://形式に変換
-  if (connectionString && connectionString.startsWith('prisma+postgres://')) {
-    connectionString = connectionString.replace('prisma+postgres://', 'postgres://');
-    console.log('⚠️  Converting prisma+postgres:// to postgres:// format for pg client');
+  // 直接接続文字列がない場合のみ、PRISMA_DATABASE_URLを確認
+  if (!connectionString && process.env.PRISMA_DATABASE_URL) {
+    const prismaUrl = process.env.PRISMA_DATABASE_URL;
+    // prisma+postgres://形式の場合は、postgres://形式に変換を試みる
+    if (prismaUrl.startsWith('prisma+postgres://')) {
+      // Prisma Accelerateの接続文字列は、pgライブラリでは直接使用できない
+      // 変換を試みるが、接続に失敗する可能性がある
+      connectionString = prismaUrl.replace('prisma+postgres://', 'postgres://');
+      console.log('⚠️  Converting prisma+postgres:// to postgres:// format for pg client');
+      console.log('⚠️  Note: Prisma Accelerate connection strings may not work with pg library directly');
+      console.log('⚠️  Consider using POSTGRES_PRISMA_URL or POSTGRES_URL instead');
+    } else {
+      // 既にpostgres://形式の場合はそのまま使用
+      connectionString = prismaUrl;
+    }
   }
+
   return connectionString;
 };
 
@@ -62,7 +75,17 @@ export const pool = (() => {
       ssl: {
         rejectUnauthorized: false, // Vercel PostgresではSSLが必要
       },
+      // 接続タイムアウトとリトライ設定
+      connectionTimeoutMillis: 10000, // 10秒
+      idleTimeoutMillis: 30000, // 30秒
+      max: 10, // 最大接続数
     });
+    
+    // 接続エラーのハンドリング
+    poolInstance.on('error', (err) => {
+      console.error('❌ Unexpected error on idle database client:', err);
+    });
+    
     console.log('✅ PostgreSQL Pool created successfully');
     return poolInstance;
   } catch (error) {
