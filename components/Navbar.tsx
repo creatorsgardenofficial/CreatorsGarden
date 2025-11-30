@@ -417,7 +417,16 @@ export default function Navbar() {
       <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50 relative">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center h-16 pl-2 sm:pl-4 md:pl-6 lg:pl-8 pr-2 sm:pr-4 md:pr-6 lg:pr-8">
-            <Link href="/" className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-green-600 dark:from-purple-400 dark:to-green-400 bg-clip-text text-transparent hover:from-purple-700 hover:to-green-700 dark:hover:from-purple-300 dark:hover:to-green-300 transition-all flex-shrink-0">
+            <Link 
+              href="/" 
+              onClick={() => {
+                // チャットパネルが開いている場合は閉じる
+                if (showChatPanel) {
+                  setShowChatPanel(false);
+                }
+              }}
+              className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-green-600 dark:from-purple-400 dark:to-green-400 bg-clip-text text-transparent hover:from-purple-700 hover:to-green-700 dark:hover:from-purple-300 dark:hover:to-green-300 transition-all flex-shrink-0"
+            >
               <span className="text-xl sm:text-2xl md:text-3xl mr-1 sm:mr-2">🌱</span>
               Creators Garden
             </Link>
