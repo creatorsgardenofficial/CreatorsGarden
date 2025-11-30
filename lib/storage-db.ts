@@ -1348,6 +1348,227 @@ export async function unblockUser(userId: string, blockedUserId: string): Promis
   }
 }
 
-// 他の関数も同様に実装する必要がありますが、まずはユーザー関連、パスワードリセットトークン、投稿、メッセージ、会話、お知らせ、ブロックユーザーを完成させます
+// ==================== グループチャット管理 ====================
+
+export async function getGroupChats(): Promise<GroupChat[]> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        name,
+        description,
+        creator_id as "createdBy",
+        member_ids as "participantIds",
+        last_message_id as "lastMessageId",
+        last_message_at as "lastMessageAt",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM group_chats
+      ORDER BY COALESCE(last_message_at, created_at) DESC
+    `);
+
+    return result.rows.map(row => ({
+      ...row,
+      participantIds: row.participantIds || [],
+      description: row.description || undefined,
+      lastMessageId: row.lastMessageId || undefined,
+      lastMessageAt: row.lastMessageAt || undefined,
+    })) as GroupChat[];
+  } catch (error) {
+    console.error('Failed to get group chats from database:', error);
+    throw error;
+  }
+}
+
+export async function getGroupChatById(id: string): Promise<GroupChat | null> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        name,
+        description,
+        creator_id as "createdBy",
+        member_ids as "participantIds",
+        last_message_id as "lastMessageId",
+        last_message_at as "lastMessageAt",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM group_chats
+      WHERE id = $1
+    `, [id]);
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    const row = result.rows[0];
+    return {
+      ...row,
+      participantIds: row.participantIds || [],
+      description: row.description || undefined,
+      lastMessageId: row.lastMessageId || undefined,
+      lastMessageAt: row.lastMessageAt || undefined,
+    } as GroupChat;
+  } catch (error) {
+    console.error('Failed to get group chat by id from database:', error);
+    throw error;
+  }
+}
+
+export async function getGroupChatsByUserId(userId: string): Promise<GroupChat[]> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        name,
+        description,
+        creator_id as "createdBy",
+        member_ids as "participantIds",
+        last_message_id as "lastMessageId",
+        last_message_at as "lastMessageAt",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM group_chats
+      WHERE $1 = ANY(member_ids) OR creator_id = $1
+      ORDER BY COALESCE(last_message_at, created_at) DESC
+    `, [userId]);
+
+    return result.rows.map(row => ({
+      ...row,
+      participantIds: row.participantIds || [],
+      description: row.description || undefined,
+      lastMessageId: row.lastMessageId || undefined,
+      lastMessageAt: row.lastMessageAt || undefined,
+    })) as GroupChat[];
+  } catch (error) {
+    console.error('Failed to get group chats by user id from database:', error);
+    throw error;
+  }
+}
+
+export async function createGroupChat(groupChat: Omit<GroupChat, 'id' | 'createdAt' | 'updatedAt'>): Promise<GroupChat> {
+  try {
+    const id = Date.now().toString();
+    const now = new Date().toISOString();
+    
+    await pool.query(`
+      INSERT INTO group_chats (
+        id,
+        name,
+        description,
+        creator_id,
+        member_ids,
+        last_message_id,
+        last_message_at,
+        created_at,
+        updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `, [
+      id,
+      groupChat.name,
+      groupChat.description || null,
+      groupChat.createdBy,
+      groupChat.participantIds,
+      groupChat.lastMessageId || null,
+      groupChat.lastMessageAt || null,
+      now,
+      now,
+    ]);
+
+    return {
+      ...groupChat,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+  } catch (error) {
+    console.error('Failed to create group chat in database:', error);
+    throw error;
+  }
+}
+
+export async function updateGroupChat(id: string, updates: Partial<GroupChat>): Promise<GroupChat | null> {
+  try {
+    const updateFields: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    if (updates.name !== undefined) {
+      updateFields.push(`name = $${paramIndex++}`);
+      values.push(updates.name);
+    }
+    if (updates.description !== undefined) {
+      updateFields.push(`description = $${paramIndex++}`);
+      values.push(updates.description || null);
+    }
+    if (updates.participantIds !== undefined) {
+      updateFields.push(`member_ids = $${paramIndex++}`);
+      values.push(updates.participantIds);
+    }
+    if (updates.lastMessageId !== undefined) {
+      updateFields.push(`last_message_id = $${paramIndex++}`);
+      values.push(updates.lastMessageId || null);
+    }
+    if (updates.lastMessageAt !== undefined) {
+      updateFields.push(`last_message_at = $${paramIndex++}`);
+      values.push(updates.lastMessageAt || null);
+    }
+
+    if (updateFields.length === 0) {
+      return await getGroupChatById(id);
+    }
+
+    updateFields.push(`updated_at = $${paramIndex++}`);
+    values.push(new Date().toISOString());
+    values.push(id);
+
+    await pool.query(`
+      UPDATE group_chats
+      SET ${updateFields.join(', ')}
+      WHERE id = $${paramIndex}
+    `, values);
+
+    return await getGroupChatById(id);
+  } catch (error) {
+    console.error('Failed to update group chat in database:', error);
+    throw error;
+  }
+}
+
+export async function addParticipantToGroupChat(groupChatId: string, userId: string): Promise<GroupChat | null> {
+  try {
+    const groupChat = await getGroupChatById(groupChatId);
+    if (!groupChat) return null;
+    
+    if (groupChat.participantIds.includes(userId)) {
+      return groupChat; // 既に参加している
+    }
+
+    const updatedParticipantIds = [...groupChat.participantIds, userId];
+    return await updateGroupChat(groupChatId, {
+      participantIds: updatedParticipantIds,
+    });
+  } catch (error) {
+    console.error('Failed to add participant to group chat in database:', error);
+    throw error;
+  }
+}
+
+export async function removeParticipantFromGroupChat(groupChatId: string, userId: string): Promise<GroupChat | null> {
+  try {
+    const groupChat = await getGroupChatById(groupChatId);
+    if (!groupChat) return null;
+
+    const updatedParticipantIds = groupChat.participantIds.filter(id => id !== userId);
+    return await updateGroupChat(groupChatId, {
+      participantIds: updatedParticipantIds,
+    });
+  } catch (error) {
+    console.error('Failed to remove participant from group chat in database:', error);
+    throw error;
+  }
+}
+
+// 他の関数も同様に実装する必要がありますが、まずはユーザー関連、パスワードリセットトークン、投稿、メッセージ、会話、お知らせ、ブロックユーザー、グループチャットを完成させました
 // 残りの関数（comments, feedback等）は後で追加します
 

@@ -1198,6 +1198,22 @@ export async function deleteGroupMessage(id: string): Promise<boolean> {
 
 // グループチャット管理
 export async function getGroupChats(): Promise<GroupChat[]> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { getGroupChats: getGroupChatsDb } = await import('./storage-db');
+    return getGroupChatsDb();
+  }
+
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { getGroupChats: getGroupChatsDb } = await import('./storage-db');
+    return getGroupChatsDb();
+  }
+
+  // ファイルシステムを使用する場合
   await ensureDataDir();
   try {
     const data = await fs.readFile(GROUP_CHATS_FILE, 'utf-8');
@@ -1213,11 +1229,43 @@ export async function saveGroupChats(groupChats: GroupChat[]): Promise<void> {
 }
 
 export async function getGroupChatById(id: string): Promise<GroupChat | null> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { getGroupChatById: getGroupChatByIdDb } = await import('./storage-db');
+    return getGroupChatByIdDb(id);
+  }
+
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { getGroupChatById: getGroupChatByIdDb } = await import('./storage-db');
+    return getGroupChatByIdDb(id);
+  }
+
+  // ファイルシステムを使用する場合
   const groupChats = await getGroupChats();
   return groupChats.find(gc => gc.id === id) || null;
 }
 
 export async function getGroupChatsByUserId(userId: string): Promise<GroupChat[]> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { getGroupChatsByUserId: getGroupChatsByUserIdDb } = await import('./storage-db');
+    return getGroupChatsByUserIdDb(userId);
+  }
+
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { getGroupChatsByUserId: getGroupChatsByUserIdDb } = await import('./storage-db');
+    return getGroupChatsByUserIdDb(userId);
+  }
+
+  // ファイルシステムを使用する場合
   const groupChats = await getGroupChats();
   return groupChats.filter(gc => gc.participantIds.includes(userId)).sort((a, b) => {
     const aTime = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : new Date(a.createdAt).getTime();
@@ -1227,6 +1275,22 @@ export async function getGroupChatsByUserId(userId: string): Promise<GroupChat[]
 }
 
 export async function createGroupChat(groupChat: Omit<GroupChat, 'id' | 'createdAt' | 'updatedAt'>): Promise<GroupChat> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { createGroupChat: createGroupChatDb } = await import('./storage-db');
+    return createGroupChatDb(groupChat);
+  }
+
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { createGroupChat: createGroupChatDb } = await import('./storage-db');
+    return createGroupChatDb(groupChat);
+  }
+
+  // ファイルシステムを使用する場合
   const groupChats = await getGroupChats();
   const now = new Date().toISOString();
   const newGroupChat: GroupChat = {
@@ -1241,6 +1305,22 @@ export async function createGroupChat(groupChat: Omit<GroupChat, 'id' | 'created
 }
 
 export async function updateGroupChat(id: string, updates: Partial<GroupChat>): Promise<GroupChat | null> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { updateGroupChat: updateGroupChatDb } = await import('./storage-db');
+    return updateGroupChatDb(id, updates);
+  }
+
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { updateGroupChat: updateGroupChatDb } = await import('./storage-db');
+    return updateGroupChatDb(id, updates);
+  }
+
+  // ファイルシステムを使用する場合
   const groupChats = await getGroupChats();
   const index = groupChats.findIndex(gc => gc.id === id);
   if (index === -1) return null;
@@ -1254,6 +1334,22 @@ export async function updateGroupChat(id: string, updates: Partial<GroupChat>): 
 }
 
 export async function addParticipantToGroupChat(groupChatId: string, userId: string): Promise<GroupChat | null> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { addParticipantToGroupChat: addParticipantToGroupChatDb } = await import('./storage-db');
+    return addParticipantToGroupChatDb(groupChatId, userId);
+  }
+
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { addParticipantToGroupChat: addParticipantToGroupChatDb } = await import('./storage-db');
+    return addParticipantToGroupChatDb(groupChatId, userId);
+  }
+
+  // ファイルシステムを使用する場合
   const groupChat = await getGroupChatById(groupChatId);
   if (!groupChat) return null;
   if (groupChat.participantIds.includes(userId)) return groupChat; // 既に参加している
@@ -1263,6 +1359,22 @@ export async function addParticipantToGroupChat(groupChatId: string, userId: str
 }
 
 export async function removeParticipantFromGroupChat(groupChatId: string, userId: string): Promise<GroupChat | null> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { removeParticipantFromGroupChat: removeParticipantFromGroupChatDb } = await import('./storage-db');
+    return removeParticipantFromGroupChatDb(groupChatId, userId);
+  }
+
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { removeParticipantFromGroupChat: removeParticipantFromGroupChatDb } = await import('./storage-db');
+    return removeParticipantFromGroupChatDb(groupChatId, userId);
+  }
+
+  // ファイルシステムを使用する場合
   const groupChat = await getGroupChatById(groupChatId);
   if (!groupChat) return null;
   return updateGroupChat(groupChatId, {

@@ -104,6 +104,8 @@ CREATE TABLE IF NOT EXISTS group_chats (
   description TEXT,
   creator_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   member_ids TEXT[] DEFAULT '{}',
+  last_message_id TEXT,
+  last_message_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
