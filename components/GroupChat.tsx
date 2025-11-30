@@ -96,22 +96,14 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
       const res = await fetch('/api/group-chats');
       const data = await res.json();
       if (res.ok && data.groupChats) {
-        // 現在開いているチャットの未読数を0にする
-        const updatedGroupChats = data.groupChats.map((gc: GroupChatWithDetails) => {
-          if (gc.id === selectedGroupChat?.id) {
-            // チャット画面を開いている間は未読数を0にする
-            console.log(`[GroupChat] Setting unreadCount to 0 for open chat ${gc.id}, original unreadCount: ${gc.unreadCount}`);
-            return { ...gc, unreadCount: 0 };
-          }
-          return gc;
-        });
-        
-        setGroupChats(updatedGroupChats);
+        // APIから取得した未読数をそのまま使用（既読処理が完了しているため）
+        // 現在開いているチャットの未読数は既に0になっているはず
+        setGroupChats(data.groupChats);
       }
     } catch (err) {
       console.error('[GroupChat] Failed to fetch group chats:', err);
     }
-  }, [selectedGroupChat?.id]);
+  }, []);
 
   // メッセージを取得
   const fetchMessages = useCallback(async (groupChatId: string) => {
