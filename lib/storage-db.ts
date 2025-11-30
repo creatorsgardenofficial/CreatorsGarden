@@ -1466,7 +1466,7 @@ export async function getGroupChatsByUserId(userId: string): Promise<GroupChat[]
         created_at as "createdAt",
         updated_at as "updatedAt"
       FROM group_chats
-      WHERE $1 = ANY(member_ids) OR creator_id = $1
+      WHERE $1 = ANY(member_ids)
       ORDER BY ${orderBy} DESC
     `, [userId]);
 
