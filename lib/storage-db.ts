@@ -1350,8 +1350,30 @@ export async function unblockUser(userId: string, blockedUserId: string): Promis
 
 // ==================== グループチャット管理 ====================
 
+// カラムの存在を確認するヘルパー関数
+async function columnExists(tableName: string, columnName: string): Promise<boolean> {
+  try {
+    const result = await pool.query(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = $1 AND column_name = $2
+    `, [tableName, columnName]);
+    return result.rows.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 export async function getGroupChats(): Promise<GroupChat[]> {
   try {
+    // カラムの存在を確認
+    const hasLastMessageId = await columnExists('group_chats', 'last_message_id');
+    const hasLastMessageAt = await columnExists('group_chats', 'last_message_at');
+    
+    const lastMessageIdSelect = hasLastMessageId ? 'last_message_id as "lastMessageId",' : 'NULL as "lastMessageId",';
+    const lastMessageAtSelect = hasLastMessageAt ? 'last_message_at as "lastMessageAt",' : 'NULL as "lastMessageAt",';
+    const orderBy = hasLastMessageAt ? 'COALESCE(last_message_at, created_at)' : 'created_at';
+    
     const result = await pool.query(`
       SELECT
         id,
@@ -1359,12 +1381,12 @@ export async function getGroupChats(): Promise<GroupChat[]> {
         description,
         creator_id as "createdBy",
         member_ids as "participantIds",
-        last_message_id as "lastMessageId",
-        last_message_at as "lastMessageAt",
+        ${lastMessageIdSelect}
+        ${lastMessageAtSelect}
         created_at as "createdAt",
         updated_at as "updatedAt"
       FROM group_chats
-      ORDER BY COALESCE(last_message_at, created_at) DESC
+      ORDER BY ${orderBy} DESC
     `);
 
     return result.rows.map(row => ({
@@ -1382,6 +1404,13 @@ export async function getGroupChats(): Promise<GroupChat[]> {
 
 export async function getGroupChatById(id: string): Promise<GroupChat | null> {
   try {
+    // カラムの存在を確認
+    const hasLastMessageId = await columnExists('group_chats', 'last_message_id');
+    const hasLastMessageAt = await columnExists('group_chats', 'last_message_at');
+    
+    const lastMessageIdSelect = hasLastMessageId ? 'last_message_id as "lastMessageId",' : 'NULL as "lastMessageId",';
+    const lastMessageAtSelect = hasLastMessageAt ? 'last_message_at as "lastMessageAt",' : 'NULL as "lastMessageAt",';
+    
     const result = await pool.query(`
       SELECT
         id,
@@ -1389,8 +1418,8 @@ export async function getGroupChatById(id: string): Promise<GroupChat | null> {
         description,
         creator_id as "createdBy",
         member_ids as "participantIds",
-        last_message_id as "lastMessageId",
-        last_message_at as "lastMessageAt",
+        ${lastMessageIdSelect}
+        ${lastMessageAtSelect}
         created_at as "createdAt",
         updated_at as "updatedAt"
       FROM group_chats
@@ -1417,6 +1446,14 @@ export async function getGroupChatById(id: string): Promise<GroupChat | null> {
 
 export async function getGroupChatsByUserId(userId: string): Promise<GroupChat[]> {
   try {
+    // カラムの存在を確認
+    const hasLastMessageId = await columnExists('group_chats', 'last_message_id');
+    const hasLastMessageAt = await columnExists('group_chats', 'last_message_at');
+    
+    const lastMessageIdSelect = hasLastMessageId ? 'last_message_id as "lastMessageId",' : 'NULL as "lastMessageId",';
+    const lastMessageAtSelect = hasLastMessageAt ? 'last_message_at as "lastMessageAt",' : 'NULL as "lastMessageAt",';
+    const orderBy = hasLastMessageAt ? 'COALESCE(last_message_at, created_at)' : 'created_at';
+    
     const result = await pool.query(`
       SELECT
         id,
@@ -1424,13 +1461,13 @@ export async function getGroupChatsByUserId(userId: string): Promise<GroupChat[]
         description,
         creator_id as "createdBy",
         member_ids as "participantIds",
-        last_message_id as "lastMessageId",
-        last_message_at as "lastMessageAt",
+        ${lastMessageIdSelect}
+        ${lastMessageAtSelect}
         created_at as "createdAt",
         updated_at as "updatedAt"
       FROM group_chats
       WHERE $1 = ANY(member_ids) OR creator_id = $1
-      ORDER BY COALESCE(last_message_at, created_at) DESC
+      ORDER BY ${orderBy} DESC
     `, [userId]);
 
     return result.rows.map(row => ({
@@ -1451,29 +1488,32 @@ export async function createGroupChat(groupChat: Omit<GroupChat, 'id' | 'created
     const id = Date.now().toString();
     const now = new Date().toISOString();
     
+    // カラムの存在を確認
+    const hasLastMessageId = await columnExists('group_chats', 'last_message_id');
+    const hasLastMessageAt = await columnExists('group_chats', 'last_message_at');
+    
+    let columns = 'id, name, description, creator_id, member_ids';
+    let values = [id, groupChat.name, groupChat.description || null, groupChat.createdBy, groupChat.participantIds];
+    let paramIndex = 6;
+    
+    if (hasLastMessageId) {
+      columns += ', last_message_id';
+      values.push(groupChat.lastMessageId || null);
+      paramIndex++;
+    }
+    if (hasLastMessageAt) {
+      columns += ', last_message_at';
+      values.push(groupChat.lastMessageAt || null);
+      paramIndex++;
+    }
+    
+    columns += ', created_at, updated_at';
+    values.push(now, now);
+    
     await pool.query(`
-      INSERT INTO group_chats (
-        id,
-        name,
-        description,
-        creator_id,
-        member_ids,
-        last_message_id,
-        last_message_at,
-        created_at,
-        updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-    `, [
-      id,
-      groupChat.name,
-      groupChat.description || null,
-      groupChat.createdBy,
-      groupChat.participantIds,
-      groupChat.lastMessageId || null,
-      groupChat.lastMessageAt || null,
-      now,
-      now,
-    ]);
+      INSERT INTO group_chats (${columns})
+      VALUES (${values.map((_, i) => `$${i + 1}`).join(', ')})
+    `, values);
 
     return {
       ...groupChat,
@@ -1489,6 +1529,10 @@ export async function createGroupChat(groupChat: Omit<GroupChat, 'id' | 'created
 
 export async function updateGroupChat(id: string, updates: Partial<GroupChat>): Promise<GroupChat | null> {
   try {
+    // カラムの存在を確認
+    const hasLastMessageId = await columnExists('group_chats', 'last_message_id');
+    const hasLastMessageAt = await columnExists('group_chats', 'last_message_at');
+    
     const updateFields: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
@@ -1505,11 +1549,11 @@ export async function updateGroupChat(id: string, updates: Partial<GroupChat>): 
       updateFields.push(`member_ids = $${paramIndex++}`);
       values.push(updates.participantIds);
     }
-    if (updates.lastMessageId !== undefined) {
+    if (updates.lastMessageId !== undefined && hasLastMessageId) {
       updateFields.push(`last_message_id = $${paramIndex++}`);
       values.push(updates.lastMessageId || null);
     }
-    if (updates.lastMessageAt !== undefined) {
+    if (updates.lastMessageAt !== undefined && hasLastMessageAt) {
       updateFields.push(`last_message_at = $${paramIndex++}`);
       values.push(updates.lastMessageAt || null);
     }
