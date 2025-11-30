@@ -66,19 +66,47 @@ export async function POST(request: NextRequest) {
     // Vercel本番環境ではVERCEL_URLが自動的に設定される
     // それがない場合はNEXT_PUBLIC_BASE_URL、それもない場合はlocalhost
     let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    
+    // デバッグ: 環境変数の状態をログ出力
+    const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+    if (isVercelProduction) {
+      console.log('🔍 Password reset URL generation:');
+      console.log('  NEXT_PUBLIC_BASE_URL:', process.env.NEXT_PUBLIC_BASE_URL || 'not set');
+      console.log('  VERCEL_URL:', process.env.VERCEL_URL || 'not set');
+      console.log('  VERCEL:', process.env.VERCEL);
+      console.log('  VERCEL_ENV:', process.env.VERCEL_ENV);
+    }
+    
     if (!baseUrl) {
       // Vercel環境ではVERCEL_URLを使用
       if (process.env.VERCEL_URL) {
         baseUrl = `https://${process.env.VERCEL_URL}`;
+        if (isVercelProduction) {
+          console.log('  Using VERCEL_URL:', baseUrl);
+        }
       } else if (process.env.VERCEL) {
         // Vercel環境だがVERCEL_URLがない場合（通常はないが念のため）
         baseUrl = 'https://creatorsgarden.vercel.app';
+        if (isVercelProduction) {
+          console.log('  Using fallback Vercel URL:', baseUrl);
+        }
       } else {
         // ローカル開発環境
         baseUrl = 'http://localhost:3000';
+        if (isVercelProduction) {
+          console.log('⚠️  Using localhost (should not happen in production):', baseUrl);
+        }
+      }
+    } else {
+      if (isVercelProduction) {
+        console.log('  Using NEXT_PUBLIC_BASE_URL:', baseUrl);
       }
     }
+    
     const resetLink = `${baseUrl}/reset-password?token=${token}`;
+    if (isVercelProduction) {
+      console.log('  Generated reset link:', resetLink.substring(0, 50) + '...');
+    }
 
     // メール送信
     const isProduction = process.env.NODE_ENV === 'production';
