@@ -956,17 +956,19 @@ export async function removeParticipantFromGroupChat(groupChatId: string, userId
 
 // パスワードリセットトークン管理
 export async function createPasswordResetToken(userId: string, email: string, token: string, expiresInHours: number = 24): Promise<PasswordResetToken> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { createPasswordResetToken: createPasswordResetTokenDb } = await import('./storage-db');
+    return createPasswordResetTokenDb(userId, email, token, expiresInHours);
+  }
+  
   // データベースが利用可能な場合はデータベースを使用
   const { shouldUseDatabase } = await import('./db');
   if (shouldUseDatabase()) {
     const { createPasswordResetToken: createPasswordResetTokenDb } = await import('./storage-db');
     return createPasswordResetTokenDb(userId, email, token, expiresInHours);
-  }
-  
-  // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
   }
   
   // ファイルシステムを使用する場合
@@ -1013,17 +1015,19 @@ export async function createPasswordResetToken(userId: string, email: string, to
 }
 
 export async function getPasswordResetTokenByToken(token: string): Promise<PasswordResetToken | null> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { getPasswordResetTokenByToken: getPasswordResetTokenByTokenDb } = await import('./storage-db');
+    return getPasswordResetTokenByTokenDb(token);
+  }
+  
   // データベースが利用可能な場合はデータベースを使用
   const { shouldUseDatabase } = await import('./db');
   if (shouldUseDatabase()) {
     const { getPasswordResetTokenByToken: getPasswordResetTokenByTokenDb } = await import('./storage-db');
     return getPasswordResetTokenByTokenDb(token);
-  }
-  
-  // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
   }
   
   // ファイルシステムを使用する場合
@@ -1048,17 +1052,19 @@ export async function getPasswordResetTokenByToken(token: string): Promise<Passw
 }
 
 export async function markPasswordResetTokenAsUsed(token: string): Promise<void> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { markPasswordResetTokenAsUsed: markPasswordResetTokenAsUsedDb } = await import('./storage-db');
+    return markPasswordResetTokenAsUsedDb(token);
+  }
+  
   // データベースが利用可能な場合はデータベースを使用
   const { shouldUseDatabase } = await import('./db');
   if (shouldUseDatabase()) {
     const { markPasswordResetTokenAsUsed: markPasswordResetTokenAsUsedDb } = await import('./storage-db');
     return markPasswordResetTokenAsUsedDb(token);
-  }
-  
-  // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
   }
   
   // ファイルシステムを使用する場合
