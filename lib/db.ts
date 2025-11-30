@@ -31,16 +31,17 @@ const isPrismaAccelerateEndpoint = (connectionString: string): boolean => {
 };
 
 // 環境変数から接続文字列を取得
-// 優先順位: POSTGRES_PRISMA_URL (プール接続) -> STORAGE_PRISMA_URL (カスタムプレフィックス) -> POSTGRES_URL (直接接続) -> POSTGRES_URL_NON_POOLING
-// 注意: PRISMA_DATABASE_URLがprisma+postgres://形式、またはPrisma Accelerateエンドポイントの場合は、pgライブラリでは使用できないため、完全にスキップする
+// 優先順位: POSTGRES_URL_NON_POOLING (直接接続、最優先) -> STORAGE_URL (カスタムプレフィックス) -> STORAGE_PRISMA_URL -> POSTGRES_URL -> POSTGRES_PRISMA_URL
+// 注意: Prisma Accelerateエンドポイントは完全にスキップする（planLimitReachedエラーを避けるため）
 const getConnectionString = (): string | null => {
-  // 優先順位に従って接続文字列を探す（Prisma Accelerateエンドポイントは除外）
+  // 優先順位に従って接続文字列を探す（Prisma Accelerateエンドポイントは完全に除外）
+  // POSTGRES_URL_NON_POOLINGを最優先（直接接続用で、Prisma Accelerateではない可能性が高い）
   const candidates = [
-    process.env.POSTGRES_PRISMA_URL,
-    process.env.STORAGE_PRISMA_URL,
-    process.env.STORAGE_URL,
-    process.env.POSTGRES_URL,
     process.env.POSTGRES_URL_NON_POOLING,
+    process.env.STORAGE_URL,
+    process.env.STORAGE_PRISMA_URL,
+    process.env.POSTGRES_URL,
+    process.env.POSTGRES_PRISMA_URL,
   ];
   
   // Prisma Accelerateエンドポイントでない最初の有効な接続文字列を使用
@@ -53,25 +54,14 @@ const getConnectionString = (): string | null => {
   }
   
   // すべての接続文字列がPrisma Accelerateエンドポイントの場合
-  // 一時的な回避策として、POSTGRES_PRISMA_URLまたはPOSTGRES_URLを使用を試みる
-  // ただし、これは動作しない可能性が高い（Prisma Accelerateの制限に達している場合）
-  if (process.env.POSTGRES_PRISMA_URL && isPrismaAccelerateEndpoint(process.env.POSTGRES_PRISMA_URL)) {
-    console.error('❌ All connection strings point to Prisma Accelerate endpoints');
-    console.error('❌ POSTGRES_PRISMA_URL and POSTGRES_URL are pointing to db.prisma.io');
-    console.error('❌ Please update these in Vercel Dashboard → Project → Settings → Environment Variables');
-    console.error('❌ They should point to Vercel Postgres endpoints (e.g., aws-0-*.pooler.supabase.com)');
-    console.error('⚠️  Attempting to use POSTGRES_PRISMA_URL anyway (this may fail due to Prisma Accelerate limits)...');
-    return process.env.POSTGRES_PRISMA_URL;
-  }
-  
-  if (process.env.POSTGRES_URL && isPrismaAccelerateEndpoint(process.env.POSTGRES_URL)) {
-    console.error('❌ All connection strings point to Prisma Accelerate endpoints');
-    console.error('❌ POSTGRES_URL is pointing to db.prisma.io');
-    console.error('❌ Please update this in Vercel Dashboard → Project → Settings → Environment Variables');
-    console.error('❌ It should point to Vercel Postgres endpoint (e.g., aws-0-*.pooler.supabase.com)');
-    console.error('⚠️  Attempting to use POSTGRES_URL anyway (this may fail due to Prisma Accelerate limits)...');
-    return process.env.POSTGRES_URL;
-  }
+  // Prisma Accelerateの制限に達しているため、接続を拒否する
+  console.error('❌ All connection strings point to Prisma Accelerate endpoints');
+  console.error('❌ Prisma Accelerate account limit reached (planLimitReached)');
+  console.error('❌ Please configure Vercel Postgres connection string');
+  console.error('❌ Go to: Vercel Dashboard → Storage → Your Database → Settings');
+  console.error('❌ Copy the "Direct Connection" string and set it as POSTGRES_URL_NON_POOLING');
+  console.error('❌ The connection string should look like: postgres://user:pass@aws-0-*.pooler.supabase.com:5432/db');
+  return null; // 接続を拒否
   
   let connectionString: string | null = null;
 
