@@ -37,19 +37,21 @@ const getConnectionString = (): string | null => {
   // 優先順位に従って接続文字列を探す（Prisma Accelerateエンドポイントは完全に除外）
   // POSTGRES_URL_NON_POOLINGを最優先（直接接続用で、Prisma Accelerateではない可能性が高い）
   const candidates = [
-    process.env.POSTGRES_URL_NON_POOLING,
-    process.env.STORAGE_URL,
-    process.env.STORAGE_PRISMA_URL,
-    process.env.POSTGRES_URL,
-    process.env.POSTGRES_PRISMA_URL,
+    { name: 'POSTGRES_URL_NON_POOLING', value: process.env.POSTGRES_URL_NON_POOLING },
+    { name: 'STORAGE_URL', value: process.env.STORAGE_URL },
+    { name: 'STORAGE_PRISMA_URL', value: process.env.STORAGE_PRISMA_URL },
+    { name: 'POSTGRES_URL', value: process.env.POSTGRES_URL },
+    { name: 'POSTGRES_PRISMA_URL', value: process.env.POSTGRES_PRISMA_URL },
   ];
   
   // Prisma Accelerateエンドポイントでない最初の有効な接続文字列を使用
   for (const candidate of candidates) {
-    if (candidate && !isPrismaAccelerateEndpoint(candidate)) {
-      return candidate;
-    } else if (candidate && isPrismaAccelerateEndpoint(candidate)) {
-      console.warn(`⚠️  Skipping Prisma Accelerate endpoint: ${extractHostname(candidate)}`);
+    if (candidate.value && !isPrismaAccelerateEndpoint(candidate.value)) {
+      console.log(`✅ Using connection string from: ${candidate.name}`);
+      return candidate.value;
+    } else if (candidate.value && isPrismaAccelerateEndpoint(candidate.value)) {
+      const hostname = extractHostname(candidate.value);
+      console.warn(`⚠️  Skipping Prisma Accelerate endpoint (${candidate.name}): ${hostname}`);
     }
   }
   
