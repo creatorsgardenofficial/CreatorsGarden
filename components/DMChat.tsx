@@ -52,39 +52,65 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // スクロール位置をチェックする関数
+  const checkScrollPosition = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return false;
+    
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100; // 100px以内なら一番下とみなす
+    return isNearBottom;
+  }, []);
+
   // スクロール位置を監視して、ユーザーが手動でスクロールしているかどうかを判定
   useEffect(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
 
+    let scrollTimeout: NodeJS.Timeout;
     const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100; // 100px以内なら一番下とみなす
-      
-      // ユーザーが手動でスクロールしている場合は、一番下にいない限り自動スクロールを無効化
-      if (!isNearBottom) {
-        isUserScrollingRef.current = true;
-        setShouldAutoScroll(false);
-      } else {
-        // 一番下に戻った場合は自動スクロールを有効化
-        isUserScrollingRef.current = false;
-        setShouldAutoScroll(true);
-      }
+      // スクロールイベントが頻繁に発火するため、少し遅延させて処理
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        const isNearBottom = checkScrollPosition();
+        
+        // ユーザーが手動でスクロールしている場合は、一番下にいない限り自動スクロールを無効化
+        if (!isNearBottom) {
+          isUserScrollingRef.current = true;
+          setShouldAutoScroll(false);
+        } else {
+          // 一番下に戻った場合は自動スクロールを有効化
+          isUserScrollingRef.current = false;
+          setShouldAutoScroll(true);
+        }
+      }, 150);
     };
 
     container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [selectedConversation?.id]);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, [selectedConversation?.id, checkScrollPosition]);
 
   // メッセージが更新された時、自動スクロールが必要な場合のみスクロール
   useEffect(() => {
-    if (shouldAutoScroll && messages.length > 0) {
-      // 少し遅延させてスクロール（DOM更新を待つ）
+    if (messages.length > 0) {
+      // DOM更新を待ってからスクロール位置をチェック
       setTimeout(() => {
-        scrollToBottom();
-      }, 100);
+        const isNearBottom = checkScrollPosition();
+        
+        // 自動スクロールが必要で、かつ一番下にいる場合のみスクロール
+        // または、ユーザーが手動でスクロールしていない場合（チャット画面を開いた時など）
+        if (shouldAutoScroll && isNearBottom && !isUserScrollingRef.current) {
+          scrollToBottom();
+        } else if (!isNearBottom) {
+          // 一番下にいない場合は自動スクロールを無効化
+          setShouldAutoScroll(false);
+        }
+      }, 150);
     }
-  }, [messages, shouldAutoScroll]);
+  }, [messages, shouldAutoScroll, checkScrollPosition]);
 
   // 会話一覧を取得
   const fetchConversations = useCallback(async () => {
