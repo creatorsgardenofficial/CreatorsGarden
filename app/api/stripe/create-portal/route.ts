@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getUserById } from '@/lib/storage';
+import { getBaseUrl } from '@/lib/getBaseUrl';
 
 // Stripeインスタンスを遅延初期化（環境変数が設定されている場合のみ）
 let stripe: Stripe | null = null;
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
     try {
       const portalSession = await stripeInstance.billingPortal.sessions.create({
         customer: customerId,
-        return_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/profile`,
+        return_url: `${getBaseUrl()}/profile`,
       });
 
       return NextResponse.json({ 

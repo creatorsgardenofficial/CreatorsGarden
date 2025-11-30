@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getUserById, updateUser, getPosts, savePosts } from '@/lib/storage';
 import { PlanType } from '@/types';
+import { getBaseUrl } from '@/lib/getBaseUrl';
 
 // Stripeインスタンスを遅延初期化（環境変数が設定されている場合のみ）
 let stripe: Stripe | null = null;
@@ -275,8 +276,8 @@ export async function POST(request: NextRequest) {
           },
         ],
         mode: 'subscription',
-        success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/pricing?success=true&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/pricing?canceled=true`,
+        success_url: `${getBaseUrl()}/pricing?success=true&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${getBaseUrl()}/pricing?canceled=true`,
         metadata: {
           userId: user.id,
           planType: validPlanType,
