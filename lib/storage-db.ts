@@ -687,6 +687,160 @@ export async function updatePostsByUserId(userId: string, updates: Partial<Post>
   }
 }
 
-// 他の関数も同様に実装する必要がありますが、まずはユーザー関連、パスワードリセットトークン、投稿を完成させます
-// 残りの関数（comments, feedback等）は後で追加します
+// ==================== メッセージ管理 ====================
+
+export async function getMessages(): Promise<Message[]> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        conversation_id as "conversationId",
+        sender_id as "senderId",
+        receiver_id as "receiverId",
+        content,
+        is_read as "read",
+        created_at as "createdAt"
+      FROM messages
+      ORDER BY created_at ASC
+    `);
+    
+    return result.rows.map(row => ({
+      ...row,
+      read: row.read || false,
+    })) as Message[];
+  } catch (error) {
+    console.error('Failed to get messages from database:', error);
+    throw error;
+  }
+}
+
+export async function getMessagesByConversationId(conversationId: string): Promise<Message[]> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        conversation_id as "conversationId",
+        sender_id as "senderId",
+        receiver_id as "receiverId",
+        content,
+        is_read as "read",
+        created_at as "createdAt"
+      FROM messages
+      WHERE conversation_id = $1
+      ORDER BY created_at ASC
+    `, [conversationId]);
+    
+    return result.rows.map(row => ({
+      ...row,
+      read: row.read || false,
+    })) as Message[];
+  } catch (error) {
+    console.error('Failed to get messages by conversation id from database:', error);
+    throw error;
+  }
+}
+
+export async function createMessage(message: Omit<Message, 'id' | 'createdAt' | 'read'>): Promise<Message> {
+  try {
+    const id = Date.now().toString();
+    const now = new Date().toISOString();
+    
+    await pool.query(`
+      INSERT INTO messages (id, conversation_id, sender_id, receiver_id, content, is_read, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `, [
+      id,
+      message.conversationId,
+      message.senderId,
+      message.receiverId,
+      message.content,
+      false,
+      now,
+    ]);
+    
+    return {
+      ...message,
+      id,
+      read: false,
+      createdAt: now,
+    };
+  } catch (error) {
+    console.error('Failed to create message in database:', error);
+    throw error;
+  }
+}
+
+export async function markMessagesAsRead(conversationId: string, userId: string): Promise<void> {
+  try {
+    await pool.query(`
+      UPDATE messages
+      SET is_read = true
+      WHERE conversation_id = $1 AND receiver_id = $2 AND is_read = false
+    `, [conversationId, userId]);
+  } catch (error) {
+    console.error('Failed to mark messages as read in database:', error);
+    throw error;
+  }
+}
+
+export async function getUnreadMessageCount(userId: string): Promise<number> {
+  try {
+    const result = await pool.query(`
+      SELECT COUNT(*) as count
+      FROM messages
+      WHERE receiver_id = $1 AND is_read = false
+    `, [userId]);
+    
+    return parseInt(result.rows[0]?.count || '0', 10);
+  } catch (error) {
+    console.error('Failed to get unread message count from database:', error);
+    throw error;
+  }
+}
+
+export async function getMessageById(id: string): Promise<Message | null> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        conversation_id as "conversationId",
+        sender_id as "senderId",
+        receiver_id as "receiverId",
+        content,
+        is_read as "read",
+        created_at as "createdAt"
+      FROM messages
+      WHERE id = $1
+      LIMIT 1
+    `, [id]);
+    
+    if (result.rows.length === 0) return null;
+    
+    const row = result.rows[0];
+    return {
+      ...row,
+      read: row.read || false,
+    } as Message;
+  } catch (error) {
+    console.error('Failed to get message by id from database:', error);
+    throw error;
+  }
+}
+
+export async function deleteMessage(id: string): Promise<boolean> {
+  try {
+    const result = await pool.query(`
+      DELETE FROM messages
+      WHERE id = $1
+    `, [id]);
+    
+    return result.rowCount !== null && result.rowCount > 0;
+  } catch (error) {
+    console.error('Failed to delete message in database:', error);
+    throw error;
+  }
+}
+
+// 他の関数も同様に実装する必要がありますが、まずはユーザー関連、パスワードリセットトークン、投稿、メッセージを完成させます
+// 残りの関数（comments, feedback, conversations等）は後で追加します
 
