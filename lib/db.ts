@@ -102,19 +102,43 @@ if (isVercelEnvironment) {
   }
 }
 
-// pool を初期化してエクスポート
-export const pool = (() => {
+// pool を遅延初期化（lazy initialization）でエクスポート
+// ビルド時には初期化せず、実際に使用される時点で初期化する
+let poolInstance: Pool | null = null;
+
+const getPool = (): Pool => {
+  // 既に初期化されている場合はそれを返す
+  if (poolInstance) {
+    return poolInstance;
+  }
+
+  // ビルド時（NEXT_PHASE === 'phase-production-build'）の場合は、エラーを投げずに警告だけを出す
+  const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build';
+  
   if (!connectionString) {
     const errorMessage = '⚠️  Database connection string is not set. Please configure POSTGRES_PRISMA_URL or POSTGRES_URL in Vercel dashboard.';
-    console.error(errorMessage);
-    if (isVercelEnvironment) {
-      console.error('   Go to: Vercel Dashboard → Project → Settings → Environment Variables');
+    if (isBuildTime) {
+      // ビルド時は警告だけを出して、ダミーのPoolを返す（実際には使用されない）
+      console.warn(errorMessage);
+      console.warn('   This is a build-time warning. The connection will be validated at runtime.');
+      // ビルド時はダミーのPoolを作成（実際には使用されない）
+      poolInstance = new Pool({
+        connectionString: 'postgres://dummy:dummy@dummy:5432/dummy',
+        ssl: { rejectUnauthorized: false },
+      });
+      return poolInstance;
+    } else {
+      // 実行時はエラーを投げる
+      console.error(errorMessage);
+      if (isVercelEnvironment) {
+        console.error('   Go to: Vercel Dashboard → Project → Settings → Environment Variables');
+      }
+      throw new Error(errorMessage);
     }
-    throw new Error(errorMessage);
   }
 
   try {
-    const poolInstance = new Pool({
+    poolInstance = new Pool({
       connectionString: connectionString,
       ssl: {
         rejectUnauthorized: false, // Vercel PostgresではSSLが必要
@@ -130,14 +154,28 @@ export const pool = (() => {
       console.error('❌ Unexpected error on idle database client:', err);
     });
     
-    console.log('✅ PostgreSQL Pool created successfully');
+    if (!isBuildTime) {
+      console.log('✅ PostgreSQL Pool created successfully');
+    }
     return poolInstance;
   } catch (error) {
     console.error('❌ Failed to create PostgreSQL Pool:', error);
     console.error('Connection string (first 50 chars):', connectionString.substring(0, 50) + '...');
     throw new Error('Failed to initialize database pool.');
   }
-})();
+};
+
+// pool をエクスポート（getterとして実装）
+export const pool = new Proxy({} as Pool, {
+  get(_target, prop) {
+    const pool = getPool();
+    const value = (pool as any)[prop];
+    if (typeof value === 'function') {
+      return value.bind(pool);
+    }
+    return value;
+  },
+});
 
 // データベース接続の確認
 export async function testConnection(): Promise<boolean> {
@@ -201,4 +239,5 @@ export function shouldUseDatabase(): boolean {
 // 以前は @vercel/postgres の sql タグを再エクスポートしていたが、
 // 現在は pg の Pool を使用しているため sql は提供しない。
 // 代わりに pool を経由してクエリを実行する。
+
 
