@@ -33,20 +33,36 @@ async function runMigration(migrationFile) {
       await client.query(migrationSQL);
       console.log('✅ マイグレーションが完了しました！');
       
-      // カラムが追加されたか確認
-      const result = await client.query(`
-        SELECT column_name, data_type 
-        FROM information_schema.columns 
-        WHERE table_name = 'group_chats' 
-        AND column_name IN ('last_message_id', 'last_message_at')
-        ORDER BY column_name
-      `);
-      
-      if (result.rows.length > 0) {
-        console.log('\n追加されたカラム:');
-        result.rows.forEach(row => {
-          console.log(`  ✓ ${row.column_name} (${row.data_type})`);
-        });
+      // カラムが追加されたか確認（マイグレーションファイルに応じて）
+      if (migrationFile.includes('migrate-posts-urls')) {
+        const result = await client.query(`
+          SELECT column_name, data_type 
+          FROM information_schema.columns 
+          WHERE table_name = 'posts' 
+          AND column_name = 'urls'
+        `);
+        
+        if (result.rows.length > 0) {
+          console.log('\n追加されたカラム:');
+          result.rows.forEach(row => {
+            console.log(`  ✓ ${row.column_name} (${row.data_type})`);
+          });
+        }
+      } else if (migrationFile.includes('migrate-group-chats')) {
+        const result = await client.query(`
+          SELECT column_name, data_type 
+          FROM information_schema.columns 
+          WHERE table_name = 'group_chats' 
+          AND column_name IN ('last_message_id', 'last_message_at')
+          ORDER BY column_name
+        `);
+        
+        if (result.rows.length > 0) {
+          console.log('\n追加されたカラム:');
+          result.rows.forEach(row => {
+            console.log(`  ✓ ${row.column_name} (${row.data_type})`);
+          });
+        }
       }
       
     } finally {
