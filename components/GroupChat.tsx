@@ -888,8 +888,8 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                                     {message.updatedAt && (
                                       <span className="ml-1">(編集済み)</span>
                                     )}
-                                    {!isOwn && message.readBy.length > 1 && (
-                                      <span className="ml-2">既読 {message.readBy.length - 1}</span>
+                                    {isOwn && message.readBy && message.readBy.length > 0 && (
+                                      <span className="ml-2">既読 {message.readBy.length}</span>
                                     )}
                                   </p>
                                   {isOwn && (

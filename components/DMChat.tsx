@@ -202,17 +202,14 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
     await fetchMessages(conversation.id);
     
     // 既読処理が完了するまで少し待つ
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 800));
     
-    // 確認済みタイムスタンプを記録
-    const dmViewedData = localStorage.getItem('dmChatViewed');
-    const viewed = dmViewedData ? JSON.parse(dmViewedData) : {};
-    viewed[conversation.id] = new Date().toISOString();
-    localStorage.setItem('dmChatViewed', JSON.stringify(viewed));
+    // 会話一覧を更新して未読数を反映（既読処理後の最新データを取得）
+    await fetchConversations();
     
     // 通知をリセットするためにイベントを発火
     window.dispatchEvent(new CustomEvent('chatViewed'));
-  }, [fetchMessages]);
+  }, [fetchMessages, fetchConversations]);
 
   // 新規会話開始
   const handleStartConversation = useCallback(async (userId: string, skipAutoMessage = false) => {
