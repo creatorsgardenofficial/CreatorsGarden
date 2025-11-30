@@ -100,28 +100,10 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
         const groupViewedData = localStorage.getItem('groupChatViewed');
         const groupViewed = groupViewedData ? JSON.parse(groupViewedData) : {};
         
-        const updatedGroupChats = data.groupChats.map((gc: GroupChatWithDetails) => {
-          const lastViewedTime = groupViewed[gc.id] ? new Date(groupViewed[gc.id]).getTime() : 0;
-          
-          // 確認済みタイムスタンプが設定されている場合、未読数を再計算
-          if (lastViewedTime > 0 && gc.lastMessage) {
-            const messageTime = new Date(gc.lastMessage.createdAt).getTime();
-            // 確認済みタイムスタンプ以前のメッセージのみの場合は未読数0
-            if (messageTime <= lastViewedTime) {
-              return { ...gc, unreadCount: 0 };
-            }
-            // 確認済みタイムスタンプ以降のメッセージがある場合
-            // APIから返されるunreadCountは、データベースのreadByフィールドに基づいて計算されているため、
-            // メッセージを開いたときに既読にしたメッセージは既に除外されている
-            // したがって、APIから返されるunreadCountをそのまま使用する
-            // （確認済みタイムスタンプ以降のメッセージのみがカウントされているはず）
-          } else if (lastViewedTime > 0 && !gc.lastMessage) {
-            // 確認済みタイムスタンプがあり、lastMessageがない場合は未読数0（既に確認済み）
-            return { ...gc, unreadCount: 0 };
-          }
-          
-          return gc;
-        });
+        // ローカルの実装に合わせて、APIから返されるunreadCountをそのまま使用
+        // APIから返されるunreadCountは既にreadByフィールドに基づいて計算されているため、
+        // メッセージを開いたときに既読にしたメッセージは既に除外されている
+        const updatedGroupChats = data.groupChats;
         
         setGroupChats(updatedGroupChats);
       }
