@@ -63,7 +63,21 @@ export async function POST(request: NextRequest) {
     const resetToken = await createPasswordResetToken(user.id, user.email, token, 24);
 
     // パスワードリセットリンクを生成
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    // Vercel本番環境ではVERCEL_URLが自動的に設定される
+    // それがない場合はNEXT_PUBLIC_BASE_URL、それもない場合はlocalhost
+    let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    if (!baseUrl) {
+      // Vercel環境ではVERCEL_URLを使用
+      if (process.env.VERCEL_URL) {
+        baseUrl = `https://${process.env.VERCEL_URL}`;
+      } else if (process.env.VERCEL) {
+        // Vercel環境だがVERCEL_URLがない場合（通常はないが念のため）
+        baseUrl = 'https://creatorsgarden.vercel.app';
+      } else {
+        // ローカル開発環境
+        baseUrl = 'http://localhost:3000';
+      }
+    }
     const resetLink = `${baseUrl}/reset-password?token=${token}`;
 
     // メール送信
