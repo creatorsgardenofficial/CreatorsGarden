@@ -946,12 +946,11 @@ export default function ProfilePage() {
                         </button>
                         {!bumpStatus?.canBump && bumpStatus?.nextBumpAt && (
                           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                            次は{bumpStatus.hoursRemaining > 0 ? `${bumpStatus.hoursRemaining}時間` : ''}{bumpStatus.minutesRemaining > 0 ? `${bumpStatus.minutesRemaining}分` : ''}後から可能です
-                            {bumpStatus.nextBumpAt && (
-                              <span className="ml-2">
-                                ({new Date(bumpStatus.nextBumpAt).toLocaleString('ja-JP', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })})
-                              </span>
-                            )}
+                            次は
+                            {bumpStatus.hoursRemaining > 0 && `${bumpStatus.hoursRemaining}時間`}
+                            {bumpStatus.minutesRemaining > 0 && `${bumpStatus.minutesRemaining}分`}
+                            {bumpStatus.secondsRemaining > 0 && `${bumpStatus.secondsRemaining}秒`}
+                            後から可能です
                           </p>
                         )}
                       </div>
