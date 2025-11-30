@@ -49,12 +49,6 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
           Array.isArray(parsed.publicIds) &&
           Array.isArray(parsed.users)
         ) {
-          console.log('✅ Restored group chat draft from localStorage:', {
-            groupName: parsed.groupName,
-            groupDescription: parsed.groupDescription,
-            publicIds: parsed.publicIds,
-            usersCount: parsed.users.length,
-          });
           return {
             groupName: parsed.groupName || '',
             groupDescription: parsed.groupDescription || '',
@@ -75,7 +69,6 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
   const [newGroupDescription, setNewGroupDescription] = useState(initialDraftState.groupDescription);
   const [participantPublicIds, setParticipantPublicIds] = useState<string[]>(initialDraftState.publicIds);
   const [participantUsers, setParticipantUsers] = useState<User[]>(initialDraftState.users); // 参加者のユーザー情報を保持
-  const [isRestored, setIsRestored] = useState(false); // 復元済みフラグ
   const [searchPublicId, setSearchPublicId] = useState('');
   const [searchedUser, setSearchedUser] = useState<User | null>(null);
   const [searching, setSearching] = useState(false);
@@ -123,44 +116,22 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
     }
   }, []);
 
-  // 復元フラグを設定（初回レンダリング後）
-  useEffect(() => {
-    setIsRestored(true);
-  }, []);
-
-  // グループ作成フォームの状態を一時保存（復元後のみ実行）
-  useEffect(() => {
-    if (!isRestored) return; // 復元前は保存しない
-    
+  // 一時保存ボタンのハンドラー（空欄でも保存可能）
+  const handleSaveDraft = () => {
     try {
-      // グループ名、説明、参加者のいずれかが入力されていれば保存
-      if (
-        newGroupName.trim() ||
-        newGroupDescription.trim() ||
-        participantPublicIds.length > 0 ||
-        participantUsers.length > 0
-      ) {
-        const dataToSave = {
-          groupName: newGroupName,
-          groupDescription: newGroupDescription,
-          publicIds: participantPublicIds,
-          users: participantUsers,
-        };
-        localStorage.setItem('groupChatDraft', JSON.stringify(dataToSave));
-        console.log('💾 Saved group chat draft to localStorage:', {
-          groupName: newGroupName,
-          groupDescription: newGroupDescription,
-          publicIds: participantPublicIds,
-          usersCount: participantUsers.length,
-        });
-      } else {
-        // 全て空の場合は保存データもクリア（グループ作成成功時にもクリアされる）
-        localStorage.removeItem('groupChatDraft');
-      }
+      const dataToSave = {
+        groupName: newGroupName,
+        groupDescription: newGroupDescription,
+        publicIds: participantPublicIds,
+        users: participantUsers,
+      };
+      localStorage.setItem('groupChatDraft', JSON.stringify(dataToSave));
+      alert('一時保存しました');
     } catch (err) {
       console.error('❌ Failed to save draft:', err);
+      alert('一時保存に失敗しました');
     }
-  }, [newGroupName, newGroupDescription, participantPublicIds, participantUsers, isRestored]);
+  };
 
   // 初期データ取得
   useEffect(() => {
@@ -658,7 +629,14 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                     )}
                     </div>
                   </div>
-                  <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                  <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 space-y-2">
+                    <button
+                      type="button"
+                      onClick={handleSaveDraft}
+                      className="w-full px-4 py-2 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors"
+                    >
+                      一時保存
+                    </button>
                     <button
                       type="submit"
                       disabled={sending}
