@@ -20,9 +20,13 @@ export interface SecurityLogEntry {
 
 // データディレクトリの初期化
 async function ensureDataDir() {
+  // データベースを使用する場合は、ファイルシステム操作をスキップ
+  if (await shouldUseDatabaseStorage()) {
+    return;
+  }
+  
   // Vercelの本番環境ではファイルシステムへの書き込みができない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     return; // 本番環境ではスキップ
   }
   
@@ -35,9 +39,13 @@ async function ensureDataDir() {
 
 // ログファイルの読み込み
 async function readLogs(): Promise<SecurityLogEntry[]> {
+  // データベースを使用する場合は、ファイルシステム操作をスキップ
+  if (await shouldUseDatabaseStorage()) {
+    return []; // データベース対応が必要（現在は空配列を返す）
+  }
+  
   // Vercelの本番環境ではファイルシステムへの読み込みもスキップ
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     return []; // 本番環境では空配列を返す
   }
   
@@ -52,9 +60,14 @@ async function readLogs(): Promise<SecurityLogEntry[]> {
 
 // ログファイルの保存
 async function saveLogs(logs: SecurityLogEntry[]): Promise<void> {
+  // データベースを使用する場合は、ファイルシステム操作をスキップ
+  if (await shouldUseDatabaseStorage()) {
+    // データベース対応が必要（現在はスキップ）
+    return;
+  }
+  
   // Vercelの本番環境ではファイルシステムへの書き込みができない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境ではログを保存しない（データベース対応が必要）
     // エラーを発生させないため、静かにスキップ
     return;
