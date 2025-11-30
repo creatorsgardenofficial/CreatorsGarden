@@ -40,29 +40,13 @@ export async function GET(request: NextRequest) {
     if (conversationId) {
       const messages = await getMessagesByConversationId(conversationId);
       
-      // ブロックリストを取得
-      const { getBlockedUserIds } = await import('@/lib/storage');
-      const blockedUserIds = await getBlockedUserIds(userId!);
-      
-      // ブロックされたユーザーからのメッセージをフィルタリング
-      const filteredMessages = messages.filter(m => {
-        // 自分が送信したメッセージは常に表示
-        if (m.senderId === userId) return true;
-        // ブロックされたユーザーからのメッセージは非表示
-        return !blockedUserIds.includes(m.senderId);
-      });
-      
       // メッセージを取得したら既読にする
       await markMessagesAsRead(conversationId, userId!);
-      return NextResponse.json({ messages: filteredMessages }, { status: 200 });
+      return NextResponse.json({ messages }, { status: 200 });
     }
 
     // 会話一覧取得
     const conversations = await getConversationsByUserId(userId!);
-    
-    // ブロックリストを取得
-    const { getBlockedUserIds } = await import('@/lib/storage');
-    const blockedUserIds = await getBlockedUserIds(userId!);
     
     // 各会話の最新メッセージと未読数を取得
     const conversationsWithDetails = await Promise.all(
@@ -70,17 +54,8 @@ export async function GET(request: NextRequest) {
         const otherUserId = conv.participantIds.find(id => id !== userId);
         
         const messages = await getMessagesByConversationId(conv.id);
-        
-        // ブロックされたユーザーからのメッセージをフィルタリング（会話自体は残す）
-        const visibleMessages = messages.filter(m => {
-          // 自分が送信したメッセージは常に表示
-          if (m.senderId === userId) return true;
-          // ブロックされたユーザーからのメッセージは非表示
-          return !blockedUserIds.includes(m.senderId);
-        });
-        
-        const lastMessage = visibleMessages.length > 0 ? visibleMessages[visibleMessages.length - 1] : null;
-        const unreadCount = visibleMessages.filter(m => m.receiverId === userId && !m.read).length;
+        const lastMessage = messages[messages.length - 1];
+        const unreadCount = messages.filter(m => m.receiverId === userId && !m.read).length;
         const otherUser = otherUserId ? await getUserById(otherUserId) : null;
 
         return {
