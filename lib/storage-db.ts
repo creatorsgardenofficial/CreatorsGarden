@@ -1653,7 +1653,8 @@ export async function getGroupMessages(): Promise<GroupMessage[]> {
 
     return result.rows.map(row => ({
       ...row,
-      readBy: row.readBy || [],
+      // readByがnullの場合は空配列、undefinedの場合はundefinedのまま（カラムが存在しない可能性）
+      readBy: row.readBy === null ? [] : (row.readBy !== undefined ? row.readBy : undefined),
       updatedAt: row.updatedAt || undefined,
     })) as GroupMessage[];
   } catch (error) {
@@ -1695,7 +1696,8 @@ export async function getGroupMessagesByGroupChatId(groupChatId: string): Promis
 
     return result.rows.map(row => ({
       ...row,
-      readBy: row.readBy || [],
+      // readByがnullの場合は空配列、undefinedの場合はundefinedのまま（カラムが存在しない可能性）
+      readBy: row.readBy === null ? [] : (row.readBy !== undefined ? row.readBy : undefined),
       updatedAt: row.updatedAt || undefined,
     })) as GroupMessage[];
   } catch (error) {
@@ -1817,7 +1819,8 @@ export async function getGroupMessageById(id: string): Promise<GroupMessage | nu
     const row = result.rows[0];
     return {
       ...row,
-      readBy: row.readBy || [],
+      // readByがnullの場合は空配列、undefinedの場合はundefinedのまま（カラムが存在しない可能性）
+      readBy: row.readBy === null ? [] : (row.readBy !== undefined ? row.readBy : undefined),
       updatedAt: row.updatedAt || undefined,
     } as GroupMessage;
   } catch (error) {

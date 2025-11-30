@@ -116,7 +116,10 @@ export default function Navbar() {
           if (gc.lastMessage && gc.lastMessage.senderId && gc.lastMessage.senderId === user.id) {
             continue;
           }
-          groupUnreadCount += gc.unreadCount || 0;
+          // unreadCountが0より大きい場合のみカウント（既読のメッセージは除外済み）
+          if (gc.unreadCount > 0) {
+            groupUnreadCount += gc.unreadCount;
+          }
         }
       }
       
