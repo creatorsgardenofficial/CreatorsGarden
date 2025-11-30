@@ -205,9 +205,10 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
     await fetchMessages(groupChat.id);
     
     // 既読処理が完了するまで少し待つ（API側で既読処理が完了するのを待つ）
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     // グループチャット一覧を更新して未読数を反映（既読処理後の最新データを取得）
+    // チャット画面を開いている間は未読数を0にする
     await fetchGroupChats();
     
     // 通知をリセットするためにイベントを発火
