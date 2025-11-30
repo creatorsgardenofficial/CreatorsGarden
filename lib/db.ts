@@ -8,8 +8,6 @@ import { Pool } from 'pg';
  * アプリケーションではプール接続を推奨します。
  */
 
-let pool: Pool;
-
 // 環境変数から接続文字列を取得
 // 優先順位: POSTGRES_PRISMA_URL (プール接続) -> PRISMA_DATABASE_URL (Prisma Accelerate) -> STORAGE_PRISMA_URL (カスタムプレフィックス) -> POSTGRES_URL (直接接続)
 const getConnectionString = () => {
@@ -47,28 +45,32 @@ if (isVercelEnvironment) {
   }
 }
 
-if (connectionString) {
+// pool を初期化してエクスポート
+export const pool = (() => {
+  if (!connectionString) {
+    const errorMessage = '⚠️  Database connection string is not set. Please configure POSTGRES_PRISMA_URL or POSTGRES_URL in Vercel dashboard.';
+    console.error(errorMessage);
+    if (isVercelEnvironment) {
+      console.error('   Go to: Vercel Dashboard → Project → Settings → Environment Variables');
+    }
+    throw new Error(errorMessage);
+  }
+
   try {
-    pool = new Pool({
+    const poolInstance = new Pool({
       connectionString: connectionString,
       ssl: {
         rejectUnauthorized: false, // Vercel PostgresではSSLが必要
       },
     });
     console.log('✅ PostgreSQL Pool created successfully');
+    return poolInstance;
   } catch (error) {
     console.error('❌ Failed to create PostgreSQL Pool:', error);
     console.error('Connection string (first 50 chars):', connectionString.substring(0, 50) + '...');
     throw new Error('Failed to initialize database pool.');
   }
-} else {
-  const errorMessage = '⚠️  Database connection string is not set. Please configure POSTGRES_PRISMA_URL or POSTGRES_URL in Vercel dashboard.';
-  console.error(errorMessage);
-  if (isVercelEnvironment) {
-    console.error('   Go to: Vercel Dashboard → Project → Settings → Environment Variables');
-  }
-  throw new Error(errorMessage);
-}
+})();
 
 // データベース接続の確認
 export async function testConnection(): Promise<boolean> {
