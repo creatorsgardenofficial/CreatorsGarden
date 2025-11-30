@@ -1122,9 +1122,16 @@ export async function getGroupMessagesByGroupChatId(groupChatId: string): Promis
 
   // ファイルシステムを使用する場合
   const messages = await getGroupMessages();
-  return messages.filter(m => m.groupChatId === groupChatId).sort((a, b) => 
-    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  );
+  return messages
+    .filter(m => m.groupChatId === groupChatId)
+    .map(m => ({
+      ...m,
+      // readByがundefined/nullの場合は空配列として扱う（DB版と統一）
+      readBy: Array.isArray(m.readBy) ? m.readBy : [],
+    }))
+    .sort((a, b) => 
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
 }
 
 export async function createGroupMessage(message: Omit<GroupMessage, 'id' | 'createdAt' | 'readBy'>): Promise<GroupMessage> {
@@ -1171,8 +1178,10 @@ export async function markGroupMessageAsRead(messageId: string, userId: string):
   // ファイルシステムを使用する場合
   const messages = await getGroupMessages();
   const updated = messages.map(m => {
-    if (m.id === messageId && !m.readBy.includes(userId)) {
-      return { ...m, readBy: [...m.readBy, userId] };
+    // readByがundefined/nullの場合は空配列として扱う（DB版と統一）
+    const currentReadBy = Array.isArray(m.readBy) ? m.readBy : [];
+    if (m.id === messageId && !currentReadBy.includes(userId)) {
+      return { ...m, readBy: [...currentReadBy, userId] };
     }
     return m;
   });

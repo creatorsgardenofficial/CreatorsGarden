@@ -44,8 +44,11 @@ export async function GET(request: NextRequest) {
       // ローカルの実装に合わせて、すべての未読メッセージを既読にする
       await markMessagesAsRead(conversationId, userId!);
       
-      // 既読処理が完了するまで少し待つ（データベースへの反映を待つ）
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // 既読処理が完了するまで少し待つ
+      // ファイルシステム使用時は600ms、データベース使用時は300ms待機
+      const { shouldUseDatabaseStorage } = await import('@/lib/storage-common');
+      const waitTime = (await shouldUseDatabaseStorage()) ? 300 : 600;
+      await new Promise(resolve => setTimeout(resolve, waitTime));
       
       // 既読処理後にメッセージを再取得して最新のreadフラグを反映
       const updatedMessages = await getMessagesByConversationId(conversationId);

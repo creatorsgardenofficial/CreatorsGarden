@@ -39,18 +39,25 @@ export async function GET(request: NextRequest) {
       for (const gc of groupChats) {
         const messages = await getGroupMessagesByGroupChatId(gc.id);
         // 未読数の計算：送信者自身が送信したメッセージは除外
-        // readByが空配列の場合は、カラムが存在しない可能性があるため、すべて未読として扱う
         const unreadMessages = messages.filter(m => {
           // 送信者自身のメッセージは除外
           if (m.senderId === userId) {
             return false;
           }
-          // readByが存在し、既読でない場合は未読
-          if (m.readBy && m.readBy.length > 0) {
-            return !m.readBy.includes(userId!);
+          // readByがundefinedの場合は、カラムが存在しない可能性があるため、既読として扱う（未読として扱わない）
+          if (m.readBy === undefined) {
+            return false;
           }
-          // readByが空配列の場合は未読として扱う（カラムが存在しない可能性）
-          return true;
+          // readByが配列でない場合は既読として扱う
+          if (!Array.isArray(m.readBy)) {
+            return false;
+          }
+          // readByが空配列の場合は未読
+          if (m.readBy.length === 0) {
+            return true;
+          }
+          // readByにユーザーIDが含まれていない場合は未読
+          return !m.readBy.includes(userId!);
         });
         totalUnreadCount += unreadMessages.length;
       }
@@ -100,8 +107,12 @@ export async function GET(request: NextRequest) {
           // ローカルの実装に合わせて、すべての未読メッセージを既読にする
           const readPromises = messagesToMarkAsRead.map(m => markGroupMessageAsRead(m.id, userId!));
           await Promise.all(readPromises);
-          // 既読処理が完了するまで少し待つ（データベースへの反映を待つ）
-          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // 既読処理が完了するまで少し待つ
+          // ファイルシステム使用時は600ms、データベース使用時は300ms待機
+          const { shouldUseDatabaseStorage } = await import('@/lib/storage-common');
+          const waitTime = (await shouldUseDatabaseStorage()) ? 300 : 600;
+          await new Promise(resolve => setTimeout(resolve, waitTime));
         }
       }
       
@@ -126,12 +137,15 @@ export async function GET(request: NextRequest) {
           if (m.senderId === userId) {
             return false;
           }
-          // readByがundefinedの場合は、カラムが存在しない可能性があるため、未読として扱う
+          // readByがundefinedの場合は、カラムが存在しない可能性があるため、既読として扱う（未読として扱わない）
           if (m.readBy === undefined) {
-            return true;
+            return false;
           }
-          // readByが存在する場合（カラムが存在する場合）
-          // readByが空配列の場合は未読（nullの場合は空配列として扱われている）
+          // readByが配列でない場合は既読として扱う
+          if (!Array.isArray(m.readBy)) {
+            return false;
+          }
+          // readByが空配列の場合は未読
           if (m.readBy.length === 0) {
             return true;
           }
