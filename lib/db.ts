@@ -211,15 +211,10 @@ const getPool = (): Pool => {
       ssl: {
         rejectUnauthorized: false, // Vercel PostgresではSSLが必要
       },
-      // 接続タイムアウトとリトライ設定
+      // 接続タイムアウト設定
       connectionTimeoutMillis: 10000, // 10秒
       idleTimeoutMillis: 30000, // 30秒
       max: 10, // 最大接続数
-      // 接続リトライ設定
-      retry: {
-        max: 3, // 最大3回リトライ
-        delay: 1000, // 1秒待機
-      },
     });
     
     // 接続エラーのハンドリング
