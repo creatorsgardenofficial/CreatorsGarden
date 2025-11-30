@@ -282,6 +282,102 @@ export async function updateUser(id: string, updates: Partial<User>): Promise<Us
   }
 }
 
-// 他の関数も同様に実装する必要がありますが、まずはユーザー関連を完成させます
+// ==================== パスワードリセットトークン管理 ====================
+
+export async function createPasswordResetToken(userId: string, email: string, token: string, expiresInHours: number = 24): Promise<PasswordResetToken> {
+  try {
+    const id = Date.now().toString();
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + expiresInHours * 60 * 60 * 1000);
+    
+    await pool.query(
+      `INSERT INTO password_reset_tokens (id, user_id, token, expires_at, used, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [id, userId, token, expiresAt.toISOString(), false, now.toISOString()]
+    );
+    
+    return {
+      id,
+      userId,
+      token,
+      email,
+      expiresAt: expiresAt.toISOString(),
+      used: false,
+      createdAt: now.toISOString(),
+    };
+  } catch (error) {
+    console.error('Failed to create password reset token in database:', error);
+    throw error;
+  }
+}
+
+export async function getPasswordResetTokenByToken(token: string): Promise<PasswordResetToken | null> {
+  try {
+    const result = await pool.query(
+      `SELECT 
+        prt.id,
+        prt.user_id as "userId",
+        prt.token,
+        u.email,
+        prt.expires_at as "expiresAt",
+        prt.used,
+        prt.created_at as "createdAt"
+      FROM password_reset_tokens prt
+      JOIN users u ON prt.user_id = u.id
+      WHERE prt.token = $1 AND prt.used = false
+      LIMIT 1`,
+      [token]
+    );
+    
+    if (result.rows.length === 0) return null;
+    
+    const row = result.rows[0];
+    
+    // 有効期限チェック
+    const expiresAt = new Date(row.expiresAt);
+    if (expiresAt < new Date()) {
+      return null; // 期限切れ
+    }
+    
+    return {
+      id: row.id,
+      userId: row.userId,
+      token: row.token,
+      email: row.email,
+      expiresAt: row.expiresAt,
+      used: row.used,
+      createdAt: row.createdAt,
+    };
+  } catch (error) {
+    console.error('Failed to get password reset token from database:', error);
+    throw error;
+  }
+}
+
+export async function markPasswordResetTokenAsUsed(token: string): Promise<void> {
+  try {
+    await pool.query(
+      `UPDATE password_reset_tokens SET used = true WHERE token = $1`,
+      [token]
+    );
+  } catch (error) {
+    console.error('Failed to mark password reset token as used in database:', error);
+    throw error;
+  }
+}
+
+export async function deleteExpiredPasswordResetTokens(): Promise<void> {
+  try {
+    await pool.query(
+      `DELETE FROM password_reset_tokens 
+       WHERE expires_at < NOW() OR used = true`
+    );
+  } catch (error) {
+    console.error('Failed to delete expired password reset tokens from database:', error);
+    throw error;
+  }
+}
+
+// 他の関数も同様に実装する必要がありますが、まずはユーザー関連とパスワードリセットトークンを完成させます
 // 残りの関数（posts, comments, feedback等）は後で追加します
 

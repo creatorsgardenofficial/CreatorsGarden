@@ -955,76 +955,158 @@ export async function removeParticipantFromGroupChat(groupChatId: string, userId
 }
 
 // パスワードリセットトークン管理
-export async function getPasswordResetTokens(): Promise<PasswordResetToken[]> {
+export async function createPasswordResetToken(userId: string, email: string, token: string, expiresInHours: number = 24): Promise<PasswordResetToken> {
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { createPasswordResetToken: createPasswordResetTokenDb } = await import('./storage-db');
+    return createPasswordResetTokenDb(userId, email, token, expiresInHours);
+  }
+  
+  // Vercelの本番環境ではファイルシステムを使用できない
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  }
+  
+  // ファイルシステムを使用する場合
   await ensureDataDir();
   try {
     const data = await fs.readFile(PASSWORD_RESET_TOKENS_FILE, 'utf-8');
-    return JSON.parse(data);
+    const tokens: PasswordResetToken[] = JSON.parse(data);
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + expiresInHours * 60 * 60 * 1000);
+    
+    const resetToken: PasswordResetToken = {
+      id: Date.now().toString(),
+      userId,
+      token,
+      email,
+      expiresAt: expiresAt.toISOString(),
+      used: false,
+      createdAt: now.toISOString(),
+    };
+    
+    tokens.push(resetToken);
+    await fs.writeFile(PASSWORD_RESET_TOKENS_FILE, JSON.stringify(tokens, null, 2), 'utf-8');
+    return resetToken;
   } catch {
-    return [];
+    // ファイルが存在しない場合は新規作成
+    const tokens: PasswordResetToken[] = [];
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + expiresInHours * 60 * 60 * 1000);
+    
+    const resetToken: PasswordResetToken = {
+      id: Date.now().toString(),
+      userId,
+      token,
+      email,
+      expiresAt: expiresAt.toISOString(),
+      used: false,
+      createdAt: now.toISOString(),
+    };
+    
+    tokens.push(resetToken);
+    await fs.writeFile(PASSWORD_RESET_TOKENS_FILE, JSON.stringify(tokens, null, 2), 'utf-8');
+    return resetToken;
   }
-}
-
-export async function savePasswordResetTokens(tokens: PasswordResetToken[]): Promise<void> {
-  await ensureDataDir();
-  await fs.writeFile(PASSWORD_RESET_TOKENS_FILE, JSON.stringify(tokens, null, 2), 'utf-8');
-}
-
-export async function createPasswordResetToken(userId: string, email: string, token: string, expiresInHours: number = 24): Promise<PasswordResetToken> {
-  const tokens = await getPasswordResetTokens();
-  const now = new Date();
-  const expiresAt = new Date(now.getTime() + expiresInHours * 60 * 60 * 1000);
-  
-  const resetToken: PasswordResetToken = {
-    id: Date.now().toString(),
-    userId,
-    token,
-    email,
-    expiresAt: expiresAt.toISOString(),
-    used: false,
-    createdAt: now.toISOString(),
-  };
-  
-  tokens.push(resetToken);
-  await savePasswordResetTokens(tokens);
-  return resetToken;
 }
 
 export async function getPasswordResetTokenByToken(token: string): Promise<PasswordResetToken | null> {
-  const tokens = await getPasswordResetTokens();
-  const resetToken = tokens.find(t => t.token === token && !t.used);
-  
-  if (!resetToken) return null;
-  
-  // 有効期限チェック
-  const expiresAt = new Date(resetToken.expiresAt);
-  if (expiresAt < new Date()) {
-    return null; // 期限切れ
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { getPasswordResetTokenByToken: getPasswordResetTokenByTokenDb } = await import('./storage-db');
+    return getPasswordResetTokenByTokenDb(token);
   }
   
-  return resetToken;
+  // Vercelの本番環境ではファイルシステムを使用できない
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  }
+  
+  // ファイルシステムを使用する場合
+  await ensureDataDir();
+  try {
+    const data = await fs.readFile(PASSWORD_RESET_TOKENS_FILE, 'utf-8');
+    const tokens: PasswordResetToken[] = JSON.parse(data);
+    const resetToken = tokens.find(t => t.token === token && !t.used);
+    
+    if (!resetToken) return null;
+    
+    // 有効期限チェック
+    const expiresAt = new Date(resetToken.expiresAt);
+    if (expiresAt < new Date()) {
+      return null; // 期限切れ
+    }
+    
+    return resetToken;
+  } catch {
+    return null;
+  }
 }
 
 export async function markPasswordResetTokenAsUsed(token: string): Promise<void> {
-  const tokens = await getPasswordResetTokens();
-  const index = tokens.findIndex(t => t.token === token);
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { markPasswordResetTokenAsUsed: markPasswordResetTokenAsUsedDb } = await import('./storage-db');
+    return markPasswordResetTokenAsUsedDb(token);
+  }
   
-  if (index !== -1) {
-    tokens[index].used = true;
-    await savePasswordResetTokens(tokens);
+  // Vercelの本番環境ではファイルシステムを使用できない
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  }
+  
+  // ファイルシステムを使用する場合
+  await ensureDataDir();
+  try {
+    const data = await fs.readFile(PASSWORD_RESET_TOKENS_FILE, 'utf-8');
+    const tokens: PasswordResetToken[] = JSON.parse(data);
+    const index = tokens.findIndex(t => t.token === token);
+    
+    if (index !== -1) {
+      tokens[index].used = true;
+      await fs.writeFile(PASSWORD_RESET_TOKENS_FILE, JSON.stringify(tokens, null, 2), 'utf-8');
+    }
+  } catch (error) {
+    console.error('Failed to mark password reset token as used:', error);
   }
 }
 
 export async function deleteExpiredPasswordResetTokens(): Promise<void> {
-  const tokens = await getPasswordResetTokens();
-  const now = new Date();
-  const validTokens = tokens.filter(t => {
-    const expiresAt = new Date(t.expiresAt);
-    return expiresAt >= now && !t.used;
-  });
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { deleteExpiredPasswordResetTokens: deleteExpiredPasswordResetTokensDb } = await import('./storage-db');
+    return deleteExpiredPasswordResetTokensDb();
+  }
   
-  if (validTokens.length !== tokens.length) {
-    await savePasswordResetTokens(validTokens);
+  // Vercelの本番環境ではファイルシステムを使用できない
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    return; // 本番環境ではスキップ（データベースを使用する必要がある）
+  }
+  
+  // ファイルシステムを使用する場合
+  await ensureDataDir();
+  try {
+    const data = await fs.readFile(PASSWORD_RESET_TOKENS_FILE, 'utf-8');
+    const tokens: PasswordResetToken[] = JSON.parse(data);
+    const now = new Date();
+    const validTokens = tokens.filter(t => {
+      const expiresAt = new Date(t.expiresAt);
+      return expiresAt >= now && !t.used;
+    });
+    
+    if (validTokens.length !== tokens.length) {
+      await fs.writeFile(PASSWORD_RESET_TOKENS_FILE, JSON.stringify(validTokens, null, 2), 'utf-8');
+    }
+  } catch (error) {
+    console.error('Failed to delete expired password reset tokens:', error);
   }
 }
 
