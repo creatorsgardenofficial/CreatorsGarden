@@ -782,6 +782,40 @@ export default function PostsPage() {
                        </div>
                      )}
 
+                     {/* URLリンクの表示 */}
+                     {((post.urls && post.urls.length > 0) || post.url) && (
+                       <div className="mb-3 sm:mb-4">
+                         {(() => {
+                           // URLデータを正規化
+                           let urlItems: Array<{ url: string; description?: string }> = [];
+                           if (post.urls && post.urls.length > 0) {
+                             if (typeof post.urls[0] === 'object' && post.urls[0] !== null) {
+                               urlItems = post.urls as Array<{ url: string; description?: string }>;
+                             } else {
+                               urlItems = (post.urls as string[]).map(url => ({ url }));
+                             }
+                           } else if (post.url) {
+                             urlItems = [{ url: post.url }];
+                           }
+                           return urlItems.map((urlItem, index) => (
+                             <a
+                               key={index}
+                               href={urlItem.url}
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               onClick={(e) => e.stopPropagation()}
+                               className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-xs sm:text-sm hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors mr-2 mb-2"
+                             >
+                               <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                               </svg>
+                               {urlItem.description || urlItem.url}
+                             </a>
+                           ));
+                         })()}
+                       </div>
+                     )}
+
                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                          <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
@@ -905,6 +939,40 @@ export default function PostsPage() {
                           #{tag}
                         </span>
                       ))}
+                    </div>
+                  )}
+
+                  {/* URLリンクの表示 */}
+                  {((post.urls && post.urls.length > 0) || post.url) && (
+                    <div className="mb-3 sm:mb-4">
+                      {(() => {
+                        // URLデータを正規化
+                        let urlItems: Array<{ url: string; description?: string }> = [];
+                        if (post.urls && post.urls.length > 0) {
+                          if (typeof post.urls[0] === 'object' && post.urls[0] !== null) {
+                            urlItems = post.urls as Array<{ url: string; description?: string }>;
+                          } else {
+                            urlItems = (post.urls as string[]).map(url => ({ url }));
+                          }
+                        } else if (post.url) {
+                          urlItems = [{ url: post.url }];
+                        }
+                        return urlItems.map((urlItem, index) => (
+                          <a
+                            key={index}
+                            href={urlItem.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-xs sm:text-sm hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors mr-2 mb-2"
+                          >
+                            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            {urlItem.description || urlItem.url}
+                          </a>
+                        ));
+                      })()}
                     </div>
                   )}
 

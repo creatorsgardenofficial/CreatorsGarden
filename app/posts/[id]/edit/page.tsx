@@ -197,17 +197,26 @@ export default function EditPostPage() {
     setSubmitting(true);
 
     try {
+      const requestBody: any = {
+        type: formData.type,
+        title: formData.title,
+        content: formData.content,
+        tags,
+        status: formData.status,
+      };
+      
+      // urlsが空でない場合のみ追加
+      if (urls.length > 0) {
+        requestBody.urls = urls;
+      } else {
+        // urlsが空の場合は明示的にundefinedを設定（API側で削除される）
+        requestBody.urls = undefined;
+      }
+      
       const res = await fetch(`/api/posts/${params.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: formData.type,
-          title: formData.title,
-          content: formData.content,
-          tags,
-          urls: urls.length > 0 ? urls : undefined,
-          status: formData.status,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await res.json();

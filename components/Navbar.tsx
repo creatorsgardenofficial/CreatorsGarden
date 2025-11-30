@@ -129,6 +129,11 @@ export default function Navbar() {
         for (const gc of groupData.groupChats) {
           const lastViewedTime = groupViewed[gc.id] ? new Date(groupViewed[gc.id]).getTime() : 0;
           
+          // 未読数が0の場合はスキップ
+          if (gc.unreadCount === 0) {
+            continue;
+          }
+          
           // 確認済みタイムスタンプがある場合、その時点以降のメッセージのみを未読としてカウント
           if (gc.lastMessage) {
             // 自分が送信したメッセージは通知対象外（senderIdが存在する場合のみチェック）
