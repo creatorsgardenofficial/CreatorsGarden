@@ -118,10 +118,13 @@ export default function Navbar() {
           }
           // unreadCountが0より大きい場合のみカウント（既読のメッセージは除外済み）
           if (gc.unreadCount > 0) {
+            console.log(`[Navbar] Group ${gc.id} has unreadCount: ${gc.unreadCount}`);
             groupUnreadCount += gc.unreadCount;
           }
         }
       }
+      
+      console.log(`[Navbar] Total unread count: DM=${dmUnreadCount}, Group=${groupUnreadCount}, Total=${dmUnreadCount + groupUnreadCount}`);
       
       setUnreadCount(dmUnreadCount + groupUnreadCount);
     } catch (err) {

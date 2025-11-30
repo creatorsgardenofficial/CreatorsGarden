@@ -100,6 +100,7 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
         const updatedGroupChats = data.groupChats.map((gc: GroupChatWithDetails) => {
           if (gc.id === selectedGroupChat?.id) {
             // チャット画面を開いている間は未読数を0にする
+            console.log(`[GroupChat] Setting unreadCount to 0 for open chat ${gc.id}, original unreadCount: ${gc.unreadCount}`);
             return { ...gc, unreadCount: 0 };
           }
           return gc;
@@ -108,7 +109,7 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
         setGroupChats(updatedGroupChats);
       }
     } catch (err) {
-      // エラーは静かに無視
+      console.error('[GroupChat] Failed to fetch group chats:', err);
     }
   }, [selectedGroupChat?.id]);
 
