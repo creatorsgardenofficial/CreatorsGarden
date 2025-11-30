@@ -278,6 +278,11 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
     // メッセージを取得（既読にする処理も含まれる）
     await fetchMessages(conversation.id);
     
+    // メッセージ取得後、確実に一番下にスクロール（チャット画面を開いた時）
+    setTimeout(() => {
+      scrollToBottom();
+    }, 200);
+    
     // 既読処理が完了したら一覧を更新（API から最新のデータを取得）
     // API側で300ms待機 + フロントエンドで500ms待機 = 合計800ms待機
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -485,6 +490,7 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
         
         // メッセージ送信時は自動スクロールを有効化
         setShouldAutoScroll(true);
+        isUserScrollingRef.current = false;
         
         // 仮の会話の場合は、実際の会話に切り替え
         if (selectedConversation.id.startsWith('temp-')) {
@@ -495,11 +501,19 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
             if (newConv) {
               setSelectedConversation(newConv);
               await fetchMessages(newConv.id);
+              // メッセージ取得後、確実に一番下にスクロール
+              setTimeout(() => {
+                scrollToBottom();
+              }, 200);
             }
           }
         } else {
           // メッセージを即座に追加（リアルタイム感を出す）
           setMessages([...messages, data.message]);
+          // メッセージ追加後、確実に一番下にスクロール
+          setTimeout(() => {
+            scrollToBottom();
+          }, 100);
           // 会話一覧も更新
           await fetchConversations();
         }

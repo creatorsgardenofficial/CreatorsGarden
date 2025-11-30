@@ -280,6 +280,11 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
     // メッセージを取得（既読にする処理も含まれる）
     await fetchMessages(groupChat.id);
     
+    // メッセージ取得後、確実に一番下にスクロール（チャット画面を開いた時）
+    setTimeout(() => {
+      scrollToBottom();
+    }, 200);
+    
     // 既読処理が完了したら一覧を更新（API から最新のデータを取得）
     // API側で300ms待機 + フロントエンドで500ms待機 = 合計800ms待機
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -447,8 +452,13 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
         setMessageContent('');
         // メッセージ送信時は自動スクロールを有効化
         setShouldAutoScroll(true);
+        isUserScrollingRef.current = false;
         // メッセージを即座に追加（リアルタイム感を出す）
         setMessages([...messages, data.message]);
+        // メッセージ追加後、確実に一番下にスクロール
+        setTimeout(() => {
+          scrollToBottom();
+        }, 100);
         // グループチャット一覧も更新
         await fetchGroupChats();
       } else {
