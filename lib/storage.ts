@@ -1440,6 +1440,21 @@ interface BlockedUser {
 }
 
 export async function getBlockedUsers(): Promise<BlockedUser[]> {
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    // データベースから取得する場合は、getBlockedUserIdsを使用
+    // この関数は後方互換性のため残すが、通常はgetBlockedUserIdsを使用
+    throw new Error('getBlockedUsers should not be called when using database. Use getBlockedUserIds instead.');
+  }
+  
+  // Vercelの本番環境ではファイルシステムを使用できない
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  }
+  
+  // ファイルシステムを使用する場合
   await ensureDataDir();
   try {
     const data = await fs.readFile(BLOCKED_USERS_FILE, 'utf-8');
@@ -1450,11 +1465,39 @@ export async function getBlockedUsers(): Promise<BlockedUser[]> {
 }
 
 export async function saveBlockedUsers(blockedUsers: BlockedUser[]): Promise<void> {
+  // データベースを使用する場合は、この関数を呼び出さない（storage-dbを使用）
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    throw new Error('saveBlockedUsers should not be called when using database. Use storage-db functions instead.');
+  }
+  
+  // Vercelの本番環境ではファイルシステムへの書き込みができない
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    throw new Error('File system is read-only in Vercel production. Database storage is required.');
+  }
+  
   await ensureDataDir();
   await fs.writeFile(BLOCKED_USERS_FILE, JSON.stringify(blockedUsers, null, 2), 'utf-8');
 }
 
 export async function getBlockedUserIds(userId: string): Promise<string[]> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { getBlockedUserIds: getBlockedUserIdsDb } = await import('./storage-db');
+    return getBlockedUserIdsDb(userId);
+  }
+  
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { getBlockedUserIds: getBlockedUserIdsDb } = await import('./storage-db');
+    return getBlockedUserIdsDb(userId);
+  }
+  
+  // ファイルシステムを使用する場合
   const blockedUsers = await getBlockedUsers();
   return blockedUsers
     .filter(bu => bu.userId === userId)
@@ -1462,11 +1505,43 @@ export async function getBlockedUserIds(userId: string): Promise<string[]> {
 }
 
 export async function isUserBlocked(userId: string, blockedUserId: string): Promise<boolean> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { isUserBlocked: isUserBlockedDb } = await import('./storage-db');
+    return isUserBlockedDb(userId, blockedUserId);
+  }
+  
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { isUserBlocked: isUserBlockedDb } = await import('./storage-db');
+    return isUserBlockedDb(userId, blockedUserId);
+  }
+  
+  // ファイルシステムを使用する場合
   const blockedUsers = await getBlockedUsers();
   return blockedUsers.some(bu => bu.userId === userId && bu.blockedUserId === blockedUserId);
 }
 
 export async function blockUser(userId: string, blockedUserId: string): Promise<void> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { blockUser: blockUserDb } = await import('./storage-db');
+    return blockUserDb(userId, blockedUserId);
+  }
+  
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { blockUser: blockUserDb } = await import('./storage-db');
+    return blockUserDb(userId, blockedUserId);
+  }
+  
+  // ファイルシステムを使用する場合
   const blockedUsers = await getBlockedUsers();
   
   // 既にブロックされているかチェック
@@ -1486,6 +1561,22 @@ export async function blockUser(userId: string, blockedUserId: string): Promise<
 }
 
 export async function unblockUser(userId: string, blockedUserId: string): Promise<void> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { unblockUser: unblockUserDb } = await import('./storage-db');
+    return unblockUserDb(userId, blockedUserId);
+  }
+  
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { unblockUser: unblockUserDb } = await import('./storage-db');
+    return unblockUserDb(userId, blockedUserId);
+  }
+  
+  // ファイルシステムを使用する場合
   const blockedUsers = await getBlockedUsers();
   const filtered = blockedUsers.filter(
     bu => !(bu.userId === userId && bu.blockedUserId === blockedUserId)

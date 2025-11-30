@@ -1275,6 +1275,79 @@ export async function deleteAnnouncement(id: string): Promise<boolean> {
   }
 }
 
-// 他の関数も同様に実装する必要がありますが、まずはユーザー関連、パスワードリセットトークン、投稿、メッセージ、会話、お知らせを完成させます
+// ==================== ブロックユーザー管理 ====================
+
+interface BlockedUser {
+  userId: string;
+  blockedUserId: string;
+  createdAt: string;
+}
+
+export async function getBlockedUserIds(userId: string): Promise<string[]> {
+  try {
+    const result = await pool.query(`
+      SELECT blocked_user_id as "blockedUserId"
+      FROM blocked_users
+      WHERE user_id = $1
+    `, [userId]);
+    
+    return result.rows.map(row => row.blockedUserId);
+  } catch (error) {
+    console.error('Failed to get blocked user ids from database:', error);
+    throw error;
+  }
+}
+
+export async function isUserBlocked(userId: string, blockedUserId: string): Promise<boolean> {
+  try {
+    const result = await pool.query(`
+      SELECT id
+      FROM blocked_users
+      WHERE user_id = $1 AND blocked_user_id = $2
+      LIMIT 1
+    `, [userId, blockedUserId]);
+    
+    return result.rows.length > 0;
+  } catch (error) {
+    console.error('Failed to check if user is blocked from database:', error);
+    throw error;
+  }
+}
+
+export async function blockUser(userId: string, blockedUserId: string): Promise<void> {
+  try {
+    // 既にブロックされているかチェック
+    const alreadyBlocked = await isUserBlocked(userId, blockedUserId);
+    if (alreadyBlocked) {
+      return; // 既にブロック済み
+    }
+    
+    const id = Date.now().toString();
+    const now = new Date().toISOString();
+    
+    await pool.query(`
+      INSERT INTO blocked_users (id, user_id, blocked_user_id, created_at)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (user_id, blocked_user_id) DO NOTHING
+    `, [id, userId, blockedUserId, now]);
+  } catch (error) {
+    console.error('Failed to block user in database:', error);
+    throw error;
+  }
+}
+
+export async function unblockUser(userId: string, blockedUserId: string): Promise<void> {
+  try {
+    await pool.query(`
+      DELETE FROM blocked_users
+      WHERE user_id = $1 AND blocked_user_id = $2
+    `, [userId, blockedUserId]);
+  } catch (error) {
+    console.error('Failed to unblock user in database:', error);
+    throw error;
+  }
+}
+
+// 他の関数も同様に実装する必要がありますが、まずはユーザー関連、パスワードリセットトークン、投稿、メッセージ、会話、お知らせ、ブロックユーザーを完成させます
 // 残りの関数（comments, feedback等）は後で追加します
 
