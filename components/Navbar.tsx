@@ -127,27 +127,27 @@ export default function Navbar() {
       let groupUnreadCount = 0;
       if (groupRes.ok && groupData.groupChats) {
         for (const gc of groupData.groupChats) {
-          // 未読数が0の場合はスキップ
-          if (gc.unreadCount === 0) {
-            continue;
-          }
-          
           const lastViewedTime = groupViewed[gc.id] ? new Date(groupViewed[gc.id]).getTime() : 0;
           
-          // 確認済みタイムスタンプがない場合、または確認済みタイムスタンプ以降のメッセージがある場合
+          // 確認済みタイムスタンプがある場合、その時点以降のメッセージのみを未読としてカウント
           if (gc.lastMessage) {
             // 自分が送信したメッセージは通知対象外（senderIdが存在する場合のみチェック）
             if (gc.lastMessage.senderId && gc.lastMessage.senderId === user.id) {
               continue;
             }
             const messageTime = new Date(gc.lastMessage.createdAt).getTime();
-            // 確認済みタイムスタンプ以降のメッセージがある場合、または確認済みタイムスタンプがない場合
+            // 確認済みタイムスタンプ以降のメッセージがある場合のみ未読としてカウント
+            if (lastViewedTime > 0 && messageTime <= lastViewedTime) {
+              // 確認済みタイムスタンプ以前のメッセージは既読として扱う
+              continue;
+            }
+            // 確認済みタイムスタンプがない場合、または確認済みタイムスタンプ以降のメッセージがある場合
             if (lastViewedTime === 0 || messageTime > lastViewedTime) {
               // 確認済みタイムスタンプ以降の未読メッセージ数をカウント
               // readByカラムが存在しない場合でも、確認済みタイムスタンプで管理される
               groupUnreadCount += gc.unreadCount;
             }
-          } else if (lastViewedTime === 0) {
+          } else if (lastViewedTime === 0 && gc.unreadCount > 0) {
             // 確認済みタイムスタンプがなく、未読メッセージがある場合
             groupUnreadCount += gc.unreadCount;
           }
