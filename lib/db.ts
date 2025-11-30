@@ -52,6 +52,27 @@ const getConnectionString = (): string | null => {
     }
   }
   
+  // すべての接続文字列がPrisma Accelerateエンドポイントの場合
+  // 一時的な回避策として、POSTGRES_PRISMA_URLまたはPOSTGRES_URLを使用を試みる
+  // ただし、これは動作しない可能性が高い
+  if (process.env.POSTGRES_PRISMA_URL && isPrismaAccelerateEndpoint(process.env.POSTGRES_PRISMA_URL)) {
+    console.error('❌ All connection strings point to Prisma Accelerate endpoints');
+    console.error('❌ POSTGRES_PRISMA_URL and POSTGRES_URL are pointing to db.prisma.io');
+    console.error('❌ Please update these in Vercel Dashboard → Project → Settings → Environment Variables');
+    console.error('❌ They should point to Vercel Postgres endpoints (e.g., aws-0-*.pooler.supabase.com)');
+    console.error('⚠️  Attempting to use POSTGRES_PRISMA_URL anyway (this will likely fail)...');
+    return process.env.POSTGRES_PRISMA_URL;
+  }
+  
+  if (process.env.POSTGRES_URL && isPrismaAccelerateEndpoint(process.env.POSTGRES_URL)) {
+    console.error('❌ All connection strings point to Prisma Accelerate endpoints');
+    console.error('❌ POSTGRES_URL is pointing to db.prisma.io');
+    console.error('❌ Please update this in Vercel Dashboard → Project → Settings → Environment Variables');
+    console.error('❌ It should point to Vercel Postgres endpoint (e.g., aws-0-*.pooler.supabase.com)');
+    console.error('⚠️  Attempting to use POSTGRES_URL anyway (this will likely fail)...');
+    return process.env.POSTGRES_URL;
+  }
+  
   let connectionString: string | null = null;
 
   // PRISMA_DATABASE_URLがprisma+postgres://形式の場合は使用しない
