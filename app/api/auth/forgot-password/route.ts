@@ -110,7 +110,6 @@ export async function POST(request: NextRequest) {
 
     // メール送信
     const isProduction = process.env.NODE_ENV === 'production';
-    const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
     
     if (isEmailConfigured() || isProduction) {
       // SMTP設定がある場合、または本番環境の場合: 実際にメールを送信を試行
