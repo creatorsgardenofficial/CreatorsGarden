@@ -191,6 +191,9 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
     // メッセージを取得（既読にする処理も含まれる）
     await fetchMessages(groupChat.id);
     
+    // 既読処理が完了するまで少し待つ
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     // 確認済みタイムスタンプを記録
     const groupViewedData = localStorage.getItem('groupChatViewed');
     const viewed = groupViewedData ? JSON.parse(groupViewedData) : {};
@@ -199,9 +202,6 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
     
     // グループチャット一覧を更新して未読数を反映
     await fetchGroupChats();
-    
-    // 既読処理とグループチャット一覧の更新が完了するまで少し待つ
-    await new Promise(resolve => setTimeout(resolve, 100));
     
     // 通知をリセットするためにイベントを発火
     window.dispatchEvent(new CustomEvent('chatViewed'));

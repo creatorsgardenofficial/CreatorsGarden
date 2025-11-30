@@ -298,13 +298,15 @@ export default function Navbar() {
     }
   }, [user, isAdmin, pathname]);
 
-  // チャットを閲覧したら通知をリセット
+    // チャットを閲覧したら通知をリセット
   useEffect(() => {
     if (!user) return;
     
     const handleChatViewed = () => {
-      // fetchUnreadCountを直接呼び出す（依存配列の問題を回避）
-      fetchUnreadCount();
+      // 既読処理が完了するまで少し待ってから通知数を更新
+      setTimeout(() => {
+        fetchUnreadCount();
+      }, 600);
     };
 
     window.addEventListener('chatViewed', handleChatViewed);

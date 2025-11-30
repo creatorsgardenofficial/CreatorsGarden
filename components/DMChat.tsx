@@ -192,14 +192,17 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
   }, [showUserList, hasMoreUsers, userPage, fetchUsers]);
 
   // 会話選択
-  const handleSelectConversation = useCallback((conversation: ConversationWithDetails) => {
+  const handleSelectConversation = useCallback(async (conversation: ConversationWithDetails) => {
     // まずメッセージをクリア（前のチャットのメッセージが残らないように）
     setMessages([]);
     setSelectedConversation(conversation);
     setShowUserList(false);
     
-    // メッセージを取得
-    fetchMessages(conversation.id);
+    // メッセージを取得（既読にする処理も含まれる）
+    await fetchMessages(conversation.id);
+    
+    // 既読処理が完了するまで少し待つ
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     // 確認済みタイムスタンプを記録
     const dmViewedData = localStorage.getItem('dmChatViewed');
