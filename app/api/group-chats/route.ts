@@ -38,10 +38,20 @@ export async function GET(request: NextRequest) {
       
       for (const gc of groupChats) {
         const messages = await getGroupMessagesByGroupChatId(gc.id);
-        // 送信者自身が送信したメッセージは未読数から除外
-        const unreadMessages = messages.filter(m => 
-          m.senderId !== userId && !m.readBy.includes(userId!)
-        );
+        // 未読数の計算：送信者自身が送信したメッセージは除外
+        // readByが空配列の場合は、カラムが存在しない可能性があるため、すべて未読として扱う
+        const unreadMessages = messages.filter(m => {
+          // 送信者自身のメッセージは除外
+          if (m.senderId === userId) {
+            return false;
+          }
+          // readByが存在し、既読でない場合は未読
+          if (m.readBy && m.readBy.length > 0) {
+            return !m.readBy.includes(userId!);
+          }
+          // readByが空配列の場合は未読として扱う（カラムが存在しない可能性）
+          return true;
+        });
         totalUnreadCount += unreadMessages.length;
       }
       
@@ -85,10 +95,21 @@ export async function GET(request: NextRequest) {
       groupChats.map(async (gc) => {
         const messages = await getGroupMessagesByGroupChatId(gc.id);
         const lastMessage = messages[messages.length - 1];
-        // 送信者自身が送信したメッセージは未読数から除外
-        const unreadCount = messages.filter(m => 
-          m.senderId !== userId && !m.readBy.includes(userId!)
-        ).length;
+        
+        // 未読数の計算：送信者自身が送信したメッセージは除外
+        // readByが空配列の場合は、カラムが存在しない可能性があるため、すべて未読として扱う
+        const unreadCount = messages.filter(m => {
+          // 送信者自身のメッセージは除外
+          if (m.senderId === userId) {
+            return false;
+          }
+          // readByが存在し、既読でない場合は未読
+          if (m.readBy && m.readBy.length > 0) {
+            return !m.readBy.includes(userId!);
+          }
+          // readByが空配列の場合は未読として扱う（カラムが存在しない可能性）
+          return true;
+        }).length;
         
         // 参加者情報を取得
         const participants = await Promise.all(

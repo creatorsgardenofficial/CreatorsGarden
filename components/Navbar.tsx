@@ -141,8 +141,10 @@ export default function Navbar() {
               continue;
             }
             const messageTime = new Date(gc.lastMessage.createdAt).getTime();
+            // 確認済みタイムスタンプ以降のメッセージがある場合、または確認済みタイムスタンプがない場合
             if (lastViewedTime === 0 || messageTime > lastViewedTime) {
               // 確認済みタイムスタンプ以降の未読メッセージ数をカウント
+              // readByカラムが存在しない場合でも、確認済みタイムスタンプで管理される
               groupUnreadCount += gc.unreadCount;
             }
           } else if (lastViewedTime === 0) {
