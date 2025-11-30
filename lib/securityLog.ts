@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
+import { shouldUseDatabaseStorage, isVercelProduction } from './storage-common';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const SECURITY_LOG_FILE = path.join(DATA_DIR, 'security-log.json');
