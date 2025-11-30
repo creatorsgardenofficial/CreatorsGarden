@@ -160,16 +160,31 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
   }, [currentUserId, fetchGroupChats]);
 
   // リアルタイム更新（ポーリング）
-  // ローカルの実装に合わせて、チャット画面を開いている間、定期的にメッセージを更新
+  // チャット画面を開いている間、定期的にメッセージを更新
+  // チャットを開いている間は unreadCount を 0 に保つ
   useEffect(() => {
     if (selectedGroupChat) {
       // 初回は即座に実行（ページを切り替えた時にも実行される）
       fetchMessages(selectedGroupChat.id);
       
+      // チャットを開いている間は unreadCount を 0 に保つ（楽観的更新）
+      setGroupChats(prev => prev.map(gc => 
+        gc.id === selectedGroupChat.id 
+          ? { ...gc, unreadCount: 0 }
+          : gc
+      ));
+      
       // 選択中のグループチャットのメッセージを定期的に更新
       const interval = setInterval(() => {
         fetchMessages(selectedGroupChat.id);
         fetchGroupChats(); // グループチャット一覧も更新（未読数など）
+        
+        // チャットを開いている間は unreadCount を 0 に保つ
+        setGroupChats(prev => prev.map(gc => 
+          gc.id === selectedGroupChat.id 
+            ? { ...gc, unreadCount: 0 }
+            : gc
+        ));
       }, 2000); // 2秒ごと
 
       return () => {
@@ -179,18 +194,24 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
   }, [selectedGroupChat?.id, fetchMessages, fetchGroupChats]);
 
   // グループチャット選択
-  // ローカルの実装に合わせて、チャットを選択した時にメッセージを取得し、既読処理を実行
+  // チャットを開いた瞬間に既読処理を実行し、unreadCount を即座に 0 に更新
   const handleSelectGroupChat = async (groupChat: GroupChatWithDetails) => {
     // まずメッセージをクリア（前のチャットのメッセージが残らないように）
     setMessages([]);
     setSelectedGroupChat(groupChat);
     setShowCreateModal(false);
     
+    // 楽観的更新：選択したチャットの unreadCount を即座に 0 に更新してバッジを非表示にする
+    setGroupChats(prev => prev.map(gc => 
+      gc.id === groupChat.id 
+        ? { ...gc, unreadCount: 0 }
+        : gc
+    ));
+    
     // メッセージを取得（既読にする処理も含まれる）
     await fetchMessages(groupChat.id);
     
-    // ローカルの実装に合わせて、既読処理が完了したら一覧を更新
-    // 既読処理はAPI側で実行されるため、少し待ってから一覧を更新
+    // 既読処理が完了したら一覧を更新（API から最新のデータを取得）
     // API側で300ms待機 + フロントエンドで500ms待機 = 合計800ms待機
     await new Promise(resolve => setTimeout(resolve, 500));
     await fetchGroupChats();

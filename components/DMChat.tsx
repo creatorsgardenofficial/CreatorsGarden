@@ -192,18 +192,24 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
   }, [showUserList, hasMoreUsers, userPage, fetchUsers]);
 
   // 会話選択
-  // ローカルの実装に合わせて、会話を選択した時にメッセージを取得し、既読処理を実行
+  // チャットを開いた瞬間に既読処理を実行し、unreadCount を即座に 0 に更新
   const handleSelectConversation = useCallback(async (conversation: ConversationWithDetails) => {
     // まずメッセージをクリア（前のチャットのメッセージが残らないように）
     setMessages([]);
     setSelectedConversation(conversation);
     setShowUserList(false);
     
+    // 楽観的更新：選択した会話の unreadCount を即座に 0 に更新してバッジを非表示にする
+    setConversations(prev => prev.map(conv => 
+      conv.id === conversation.id 
+        ? { ...conv, unreadCount: 0 }
+        : conv
+    ));
+    
     // メッセージを取得（既読にする処理も含まれる）
     await fetchMessages(conversation.id);
     
-    // ローカルの実装に合わせて、既読処理が完了したら一覧を更新
-    // 既読処理はAPI側で実行されるため、少し待ってから一覧を更新
+    // 既読処理が完了したら一覧を更新（API から最新のデータを取得）
     // API側で300ms待機 + フロントエンドで500ms待機 = 合計800ms待機
     await new Promise(resolve => setTimeout(resolve, 500));
     await fetchConversations();
@@ -289,12 +295,31 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
   }, [selectedConversation?.id, fetchMessages, checkBlockStatus, currentUserId]);
 
   // リアルタイム更新（ポーリング）
+  // チャット画面を開いている間、定期的にメッセージを更新
+  // チャットを開いている間は unreadCount を 0 に保つ
   useEffect(() => {
     if (selectedConversation) {
+      // 初回は即座に実行
+      fetchMessages(selectedConversation.id);
+      
+      // チャットを開いている間は unreadCount を 0 に保つ（楽観的更新）
+      setConversations(prev => prev.map(conv => 
+        conv.id === selectedConversation.id 
+          ? { ...conv, unreadCount: 0 }
+          : conv
+      ));
+      
       // 選択中の会話のメッセージを定期的に更新
       const interval = setInterval(() => {
         fetchMessages(selectedConversation.id);
         fetchConversations(); // 会話一覧も更新（未読数など）
+        
+        // チャットを開いている間は unreadCount を 0 に保つ
+        setConversations(prev => prev.map(conv => 
+          conv.id === selectedConversation.id 
+            ? { ...conv, unreadCount: 0 }
+            : conv
+        ));
       }, 2000); // 2秒ごと
 
       return () => {
