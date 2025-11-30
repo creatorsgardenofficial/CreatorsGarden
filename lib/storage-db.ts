@@ -1617,18 +1617,32 @@ export async function removeParticipantFromGroupChat(groupChatId: string, userId
 
 export async function getGroupMessages(): Promise<GroupMessage[]> {
   try {
+    // カラムの存在を確認
+    const hasSenderUsername = await columnExists('group_messages', 'sender_username');
+    const hasReadBy = await columnExists('group_messages', 'read_by');
+    const hasUpdatedAt = await columnExists('group_messages', 'updated_at');
+    
+    // sender_usernameカラムが存在しない場合はJOINで取得
+    const senderUsernameSelect = hasSenderUsername 
+      ? 'gm.sender_username as "senderUsername",'
+      : 'u.username as "senderUsername",';
+    const readBySelect = hasReadBy ? 'gm.read_by as "readBy",' : 'ARRAY[]::TEXT[] as "readBy",';
+    const updatedAtSelect = hasUpdatedAt ? 'gm.updated_at as "updatedAt"' : 'NULL as "updatedAt"';
+    const joinClause = hasSenderUsername ? '' : 'LEFT JOIN users u ON gm.user_id = u.id';
+    
     const result = await pool.query(`
       SELECT
-        id,
-        group_chat_id as "groupChatId",
-        user_id as "senderId",
-        sender_username as "senderUsername",
-        content,
-        read_by as "readBy",
-        created_at as "createdAt",
-        updated_at as "updatedAt"
-      FROM group_messages
-      ORDER BY created_at ASC
+        gm.id,
+        gm.group_chat_id as "groupChatId",
+        gm.user_id as "senderId",
+        ${senderUsernameSelect}
+        gm.content,
+        ${readBySelect}
+        gm.created_at as "createdAt",
+        ${updatedAtSelect}
+      FROM group_messages gm
+      ${joinClause}
+      ORDER BY gm.created_at ASC
     `);
 
     return result.rows.map(row => ({
@@ -1644,19 +1658,33 @@ export async function getGroupMessages(): Promise<GroupMessage[]> {
 
 export async function getGroupMessagesByGroupChatId(groupChatId: string): Promise<GroupMessage[]> {
   try {
+    // カラムの存在を確認
+    const hasSenderUsername = await columnExists('group_messages', 'sender_username');
+    const hasReadBy = await columnExists('group_messages', 'read_by');
+    const hasUpdatedAt = await columnExists('group_messages', 'updated_at');
+    
+    // sender_usernameカラムが存在しない場合はJOINで取得
+    const senderUsernameSelect = hasSenderUsername 
+      ? 'gm.sender_username as "senderUsername",'
+      : 'u.username as "senderUsername",';
+    const readBySelect = hasReadBy ? 'gm.read_by as "readBy",' : 'ARRAY[]::TEXT[] as "readBy",';
+    const updatedAtSelect = hasUpdatedAt ? 'gm.updated_at as "updatedAt"' : 'NULL as "updatedAt"';
+    const joinClause = hasSenderUsername ? '' : 'LEFT JOIN users u ON gm.user_id = u.id';
+    
     const result = await pool.query(`
       SELECT
-        id,
-        group_chat_id as "groupChatId",
-        user_id as "senderId",
-        sender_username as "senderUsername",
-        content,
-        read_by as "readBy",
-        created_at as "createdAt",
-        updated_at as "updatedAt"
-      FROM group_messages
-      WHERE group_chat_id = $1
-      ORDER BY created_at ASC
+        gm.id,
+        gm.group_chat_id as "groupChatId",
+        gm.user_id as "senderId",
+        ${senderUsernameSelect}
+        gm.content,
+        ${readBySelect}
+        gm.created_at as "createdAt",
+        ${updatedAtSelect}
+      FROM group_messages gm
+      ${joinClause}
+      WHERE gm.group_chat_id = $1
+      ORDER BY gm.created_at ASC
     `, [groupChatId]);
 
     return result.rows.map(row => ({
@@ -1676,25 +1704,32 @@ export async function createGroupMessage(message: Omit<GroupMessage, 'id' | 'cre
     const now = new Date().toISOString();
     const readBy = [message.senderId]; // 送信者は自動的に既読
     
+    // カラムの存在を確認
+    const hasSenderUsername = await columnExists('group_messages', 'sender_username');
+    const hasReadBy = await columnExists('group_messages', 'read_by');
+    
+    let columns = 'id, group_chat_id, user_id';
+    let values: any[] = [id, message.groupChatId, message.senderId];
+    let paramIndex = 4;
+    
+    if (hasSenderUsername) {
+      columns += ', sender_username';
+      values.push(message.senderUsername);
+      paramIndex++;
+    }
+    if (hasReadBy) {
+      columns += ', read_by';
+      values.push(readBy);
+      paramIndex++;
+    }
+    
+    columns += ', created_at';
+    values.push(now);
+    
     await pool.query(`
-      INSERT INTO group_messages (
-        id,
-        group_chat_id,
-        user_id,
-        sender_username,
-        content,
-        read_by,
-        created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-    `, [
-      id,
-      message.groupChatId,
-      message.senderId,
-      message.senderUsername,
-      message.content,
-      readBy,
-      now,
-    ]);
+      INSERT INTO group_messages (${columns})
+      VALUES (${values.map((_, i) => `$${i + 1}`).join(', ')})
+    `, values);
 
     return {
       ...message,
@@ -1710,6 +1745,11 @@ export async function createGroupMessage(message: Omit<GroupMessage, 'id' | 'cre
 
 export async function markGroupMessageAsRead(messageId: string, userId: string): Promise<void> {
   try {
+    const hasReadBy = await columnExists('group_messages', 'read_by');
+    if (!hasReadBy) {
+      return; // read_byカラムが存在しない場合は何もしない
+    }
+    
     const message = await getGroupMessageById(messageId);
     if (!message) return;
     
@@ -1731,18 +1771,32 @@ export async function markGroupMessageAsRead(messageId: string, userId: string):
 
 export async function getGroupMessageById(id: string): Promise<GroupMessage | null> {
   try {
+    // カラムの存在を確認
+    const hasSenderUsername = await columnExists('group_messages', 'sender_username');
+    const hasReadBy = await columnExists('group_messages', 'read_by');
+    const hasUpdatedAt = await columnExists('group_messages', 'updated_at');
+    
+    // sender_usernameカラムが存在しない場合はJOINで取得
+    const senderUsernameSelect = hasSenderUsername 
+      ? 'gm.sender_username as "senderUsername",'
+      : 'u.username as "senderUsername",';
+    const readBySelect = hasReadBy ? 'gm.read_by as "readBy",' : 'ARRAY[]::TEXT[] as "readBy",';
+    const updatedAtSelect = hasUpdatedAt ? 'gm.updated_at as "updatedAt"' : 'NULL as "updatedAt"';
+    const joinClause = hasSenderUsername ? '' : 'LEFT JOIN users u ON gm.user_id = u.id';
+    
     const result = await pool.query(`
       SELECT
-        id,
-        group_chat_id as "groupChatId",
-        user_id as "senderId",
-        sender_username as "senderUsername",
-        content,
-        read_by as "readBy",
-        created_at as "createdAt",
-        updated_at as "updatedAt"
-      FROM group_messages
-      WHERE id = $1
+        gm.id,
+        gm.group_chat_id as "groupChatId",
+        gm.user_id as "senderId",
+        ${senderUsernameSelect}
+        gm.content,
+        ${readBySelect}
+        gm.created_at as "createdAt",
+        ${updatedAtSelect}
+      FROM group_messages gm
+      ${joinClause}
+      WHERE gm.id = $1
     `, [id]);
 
     if (result.rows.length === 0) {
@@ -1763,6 +1817,10 @@ export async function getGroupMessageById(id: string): Promise<GroupMessage | nu
 
 export async function updateGroupMessage(id: string, updates: Partial<GroupMessage>): Promise<GroupMessage | null> {
   try {
+    // カラムの存在を確認
+    const hasReadBy = await columnExists('group_messages', 'read_by');
+    const hasUpdatedAt = await columnExists('group_messages', 'updated_at');
+    
     const updateFields: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
@@ -1771,7 +1829,7 @@ export async function updateGroupMessage(id: string, updates: Partial<GroupMessa
       updateFields.push(`content = $${paramIndex++}`);
       values.push(updates.content);
     }
-    if (updates.readBy !== undefined) {
+    if (updates.readBy !== undefined && hasReadBy) {
       updateFields.push(`read_by = $${paramIndex++}`);
       values.push(updates.readBy);
     }
@@ -1780,8 +1838,10 @@ export async function updateGroupMessage(id: string, updates: Partial<GroupMessa
       return await getGroupMessageById(id);
     }
 
-    updateFields.push(`updated_at = $${paramIndex++}`);
-    values.push(new Date().toISOString());
+    if (hasUpdatedAt) {
+      updateFields.push(`updated_at = $${paramIndex++}`);
+      values.push(new Date().toISOString());
+    }
     values.push(id);
 
     await pool.query(`
