@@ -79,6 +79,7 @@ export async function GET(request: NextRequest) {
       const messages = await getGroupMessagesByGroupChatId(groupChatId);
       
       // メッセージを取得したら既読にする（チャット画面を開いた時に既読データを登録）
+      // ローカルの実装に合わせて、すべての未読メッセージを既読にする
       if (messages.length > 0) {
         // 既読処理を並列で実行（パフォーマンス向上）
         const messagesToMarkAsRead = messages.filter(m => {
@@ -91,16 +92,14 @@ export async function GET(request: NextRequest) {
             return false;
           }
           // readByが存在し、既読でない場合は既読にする（空配列の場合は既読にする）
-          // readByがnullの場合は空配列として扱われているので、既読処理を実行
+          // ローカルの実装: !m.readBy.includes(userId) の場合に既読にする
           return !m.readBy.includes(userId!);
         });
         
         if (messagesToMarkAsRead.length > 0) {
-          console.log(`[GroupChat] Marking ${messagesToMarkAsRead.length} messages as read for user ${userId} in group ${groupChatId}`);
+          // ローカルの実装に合わせて、すべての未読メッセージを既読にする
           const readPromises = messagesToMarkAsRead.map(m => markGroupMessageAsRead(m.id, userId!));
           await Promise.all(readPromises);
-          // 既読処理が完了したことを確認するため、少し待つ
-          await new Promise(resolve => setTimeout(resolve, 200));
         }
       }
       

@@ -192,6 +192,7 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
   }, [showUserList, hasMoreUsers, userPage, fetchUsers]);
 
   // 会話選択
+  // ローカルの実装に合わせて、会話を選択した時にメッセージを取得し、既読処理を実行
   const handleSelectConversation = useCallback(async (conversation: ConversationWithDetails) => {
     // まずメッセージをクリア（前のチャットのメッセージが残らないように）
     setMessages([]);
@@ -201,10 +202,9 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
     // メッセージを取得（既読にする処理も含まれる）
     await fetchMessages(conversation.id);
     
-    // 既読処理が完了するまで少し待つ（API側で既読処理が完了するのを待つ）
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // 会話一覧を更新して未読数を反映（既読処理後の最新データを取得）
+    // ローカルの実装に合わせて、既読処理が完了したら一覧を更新
+    // 既読処理はAPI側で実行されるため、少し待ってから一覧を更新
+    await new Promise(resolve => setTimeout(resolve, 500));
     await fetchConversations();
     
     // 通知をリセットするためにイベントを発火

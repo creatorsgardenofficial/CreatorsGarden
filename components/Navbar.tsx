@@ -306,14 +306,16 @@ export default function Navbar() {
   }, [user, isAdmin, pathname, fetchUnreadCount]);
 
     // チャットを閲覧したら通知をリセット
+    // ローカルの実装に合わせて、既読処理が完了したら通知数を更新
   useEffect(() => {
     if (!user) return;
     
     const handleChatViewed = () => {
-      // 既読処理とグループチャット一覧の更新が完了するまで少し待ってから通知数を更新
+      // ローカルの実装に合わせて、既読処理が完了したら通知数を更新
+      // 既読処理はAPI側で実行されるため、少し待ってから通知数を更新
       setTimeout(() => {
         fetchUnreadCount();
-      }, 1200);
+      }, 800);
     };
 
     window.addEventListener('chatViewed', handleChatViewed);
