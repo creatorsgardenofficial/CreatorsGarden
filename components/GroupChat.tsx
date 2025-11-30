@@ -111,12 +111,11 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
               if (messageTime <= lastViewedTime) {
                 return { ...gc, unreadCount: 0 };
               }
-              // 確認済みタイムスタンプ以降のメッセージがある場合、未読数はそのまま（APIから返される値を使用）
-              // ただし、確認済みタイムスタンプ以前のメッセージも含まれている可能性があるため、
+              // 確認済みタイムスタンプ以降のメッセージがある場合
+              // APIから返されるunreadCountは確認済みタイムスタンプを考慮していないため、
               // 確認済みタイムスタンプ以降のメッセージのみをカウントする必要がある
-              // しかし、APIからは詳細な情報が返されないため、ここでは未読数を0にする
-              // （確認済みタイムスタンプが設定されている場合、その時点で既に確認済みとして扱う）
-              return { ...gc, unreadCount: 0 };
+              // しかし、APIからは詳細な情報が返されないため、ここでは未読数をそのまま使用
+              // （確認済みタイムスタンプ以降のメッセージがある場合のみカウント）
             } else {
               // lastMessageがない場合も未読数0（既に確認済み）
               return { ...gc, unreadCount: 0 };
