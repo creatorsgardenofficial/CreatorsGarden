@@ -158,16 +158,21 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
   }, [selectedGroupChat?.id, fetchMessages, fetchGroupChats]);
 
   // グループチャット選択
-  const handleSelectGroupChat = (groupChat: GroupChatWithDetails) => {
+  const handleSelectGroupChat = async (groupChat: GroupChatWithDetails) => {
     setSelectedGroupChat(groupChat);
-    fetchMessages(groupChat.id);
     setShowCreateModal(false);
+    
+    // メッセージを取得（既読にする処理も含まれる）
+    await fetchMessages(groupChat.id);
     
     // 確認済みタイムスタンプを記録
     const groupViewedData = localStorage.getItem('groupChatViewed');
     const viewed = groupViewedData ? JSON.parse(groupViewedData) : {};
     viewed[groupChat.id] = new Date().toISOString();
     localStorage.setItem('groupChatViewed', JSON.stringify(viewed));
+    
+    // グループチャット一覧を更新して未読数を反映
+    await fetchGroupChats();
     
     // 通知をリセットするためにイベントを発火
     window.dispatchEvent(new CustomEvent('chatViewed'));
