@@ -437,9 +437,6 @@ export default function PostsPage() {
                     }}
                   >
                     <div className="flex items-start gap-4">
-                      <div className={`flex-shrink-0 mt-1 ${style.iconColor}`}>
-                        {style.icon}
-                      </div>
                       <div className="flex-1">
                         <h3 className={`text-xl sm:text-2xl font-extrabold ${style.titleColor} mb-3 flex items-center gap-2`}>
                           <span className="inline-block">{style.emoji}</span>
