@@ -96,7 +96,27 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
       const res = await fetch('/api/group-chats');
       const data = await res.json();
       if (res.ok && data.groupChats) {
-        setGroupChats(data.groupChats);
+        // 確認済みタイムスタンプを考慮して未読数を再計算
+        const groupViewedData = localStorage.getItem('groupChatViewed');
+        const groupViewed = groupViewedData ? JSON.parse(groupViewedData) : {};
+        
+        const updatedGroupChats = data.groupChats.map((gc: GroupChatWithDetails) => {
+          const lastViewedTime = groupViewed[gc.id] ? new Date(groupViewed[gc.id]).getTime() : 0;
+          
+          // 確認済みタイムスタンプが設定されている場合、未読数を再計算
+          if (lastViewedTime > 0 && gc.lastMessage) {
+            const messageTime = new Date(gc.lastMessage.createdAt).getTime();
+            // 確認済みタイムスタンプ以前のメッセージのみの場合は未読数0
+            if (messageTime <= lastViewedTime) {
+              return { ...gc, unreadCount: 0 };
+            }
+            // 確認済みタイムスタンプ以降のメッセージがある場合、未読数はそのまま（APIから返される値を使用）
+          }
+          
+          return gc;
+        });
+        
+        setGroupChats(updatedGroupChats);
       }
     } catch (err) {
       // エラーは静かに無視
