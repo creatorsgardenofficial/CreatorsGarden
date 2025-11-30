@@ -34,23 +34,25 @@ const isPrismaAccelerateEndpoint = (connectionString: string): boolean => {
 // 優先順位: POSTGRES_PRISMA_URL (プール接続) -> STORAGE_PRISMA_URL (カスタムプレフィックス) -> POSTGRES_URL (直接接続) -> POSTGRES_URL_NON_POOLING
 // 注意: PRISMA_DATABASE_URLがprisma+postgres://形式、またはPrisma Accelerateエンドポイントの場合は、pgライブラリでは使用できないため、完全にスキップする
 const getConnectionString = (): string | null => {
-  // まず、直接PostgreSQL接続文字列を優先
-  let connectionString: string | null =
-    process.env.POSTGRES_PRISMA_URL ||
-    process.env.STORAGE_PRISMA_URL ||
-    process.env.STORAGE_URL ||
-    process.env.POSTGRES_URL ||
-    process.env.POSTGRES_URL_NON_POOLING ||
-    null;
-
-  // 接続文字列がPrisma Accelerateエンドポイントの場合は警告を出すが、使用を試みる
-  // 以前は動作していた可能性があるため、警告のみとする
-  if (connectionString && isPrismaAccelerateEndpoint(connectionString)) {
-    console.warn('⚠️  Connection string points to Prisma Accelerate endpoint (db.prisma.io)');
-    console.warn('⚠️  Prisma Accelerate endpoints may not work with pg library directly');
-    console.warn('⚠️  If connection fails, please use POSTGRES_PRISMA_URL or POSTGRES_URL from Vercel Postgres instead');
-    // 警告を出すが、接続文字列は使用を試みる（以前は動作していた可能性があるため）
+  // 優先順位に従って接続文字列を探す（Prisma Accelerateエンドポイントは除外）
+  const candidates = [
+    process.env.POSTGRES_PRISMA_URL,
+    process.env.STORAGE_PRISMA_URL,
+    process.env.STORAGE_URL,
+    process.env.POSTGRES_URL,
+    process.env.POSTGRES_URL_NON_POOLING,
+  ];
+  
+  // Prisma Accelerateエンドポイントでない最初の有効な接続文字列を使用
+  for (const candidate of candidates) {
+    if (candidate && !isPrismaAccelerateEndpoint(candidate)) {
+      return candidate;
+    } else if (candidate && isPrismaAccelerateEndpoint(candidate)) {
+      console.warn(`⚠️  Skipping Prisma Accelerate endpoint: ${extractHostname(candidate)}`);
+    }
   }
+  
+  let connectionString: string | null = null;
 
   // PRISMA_DATABASE_URLがprisma+postgres://形式の場合は使用しない
   // Prisma Accelerateの接続文字列は、pgライブラリでは直接使用できない
