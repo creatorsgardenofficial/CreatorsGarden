@@ -41,17 +41,50 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
   const [editingContent, setEditingContent] = useState('');
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const isUserScrollingRef = useRef(false);
 
   // メッセージを最下部にスクロール
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // スクロール位置を監視して、ユーザーが手動でスクロールしているかどうかを判定
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100; // 100px以内なら一番下とみなす
+      
+      // ユーザーが手動でスクロールしている場合は、一番下にいない限り自動スクロールを無効化
+      if (!isNearBottom) {
+        isUserScrollingRef.current = true;
+        setShouldAutoScroll(false);
+      } else {
+        // 一番下に戻った場合は自動スクロールを有効化
+        isUserScrollingRef.current = false;
+        setShouldAutoScroll(true);
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [selectedConversation?.id]);
+
+  // メッセージが更新された時、自動スクロールが必要な場合のみスクロール
+  useEffect(() => {
+    if (shouldAutoScroll && messages.length > 0) {
+      // 少し遅延させてスクロール（DOM更新を待つ）
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    }
+  }, [messages, shouldAutoScroll]);
 
   // 会話一覧を取得
   const fetchConversations = useCallback(async () => {
@@ -198,6 +231,10 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
     setMessages([]);
     setSelectedConversation(conversation);
     setShowUserList(false);
+    
+    // チャット画面を開いた時は自動スクロールを有効化
+    setShouldAutoScroll(true);
+    isUserScrollingRef.current = false;
     
     // 楽観的更新：選択した会話の unreadCount を即座に 0 に更新してバッジを非表示にする
     setConversations(prev => prev.map(conv => 
@@ -413,6 +450,9 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
       const data = await res.json();
       if (res.ok && data.message) {
         setMessageContent('');
+        
+        // メッセージ送信時は自動スクロールを有効化
+        setShouldAutoScroll(true);
         
         // 仮の会話の場合は、実際の会話に切り替え
         if (selectedConversation.id.startsWith('temp-')) {
@@ -672,7 +712,7 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
             {selectedConversation ? (
               <>
                 {/* メッセージリスト */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
                   {messages.map((message) => {
                     const isOwn = message.senderId === currentUserId;
                     const isEditing = editingMessageId === message.id;
