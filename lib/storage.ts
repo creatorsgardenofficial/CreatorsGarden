@@ -1,21 +1,20 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { User, Post, Comment, Feedback, Message, Conversation, GroupMessage, GroupChat, Bookmark, PasswordResetToken, Announcement } from '@/types';
+import { shouldUseDatabaseStorage, isVercelProduction, throwDatabaseRequiredError } from './storage-common';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 
 // データディレクトリの初期化
 async function ensureDataDir() {
-  // Vercelの本番環境ではファイルシステムへの書き込みができない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    return; // 本番環境ではスキップ
+  // データベースを使用する場合は、ファイルシステム操作をスキップ
+  if (await shouldUseDatabaseStorage()) {
+    return;
   }
   
-  // データベースを使用する場合は、ファイルシステム操作をスキップ
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
-    return;
+  // Vercelの本番環境ではファイルシステムへの書き込みができない
+  if (isVercelProduction()) {
+    return; // 本番環境ではスキップ
   }
   
   try {
@@ -42,16 +41,14 @@ const ANNOUNCEMENTS_FILE = path.join(DATA_DIR, 'announcements.json');
 // ユーザー管理
 export async function getUsers(): Promise<User[]> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getUsers: getUsersDb } = await import('./storage-db');
     return getUsersDb();
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合のみディレクトリを作成
@@ -66,15 +63,12 @@ export async function getUsers(): Promise<User[]> {
 
 export async function saveUsers(users: User[]): Promise<void> {
   // データベースを使用する場合は、この関数を呼び出さない（storage-dbを使用）
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     throw new Error('saveUsers should not be called when using database. Use storage-db functions instead.');
   }
   
   // Vercelの本番環境ではファイルシステムへの書き込みができない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     const error = new Error('File system is read-only in Vercel production. Database storage is required.');
     console.error('Cannot write to file system in Vercel production environment.');
     console.error('Error details:', {
@@ -104,10 +98,13 @@ export async function saveUsers(users: User[]): Promise<void> {
 }
 
 export async function getUserById(id: string): Promise<User | null> {
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getUserById: getUserByIdDb } = await import('./storage-db');
     return getUserByIdDb(id);
+  }
+  
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   const users = await getUsers();
@@ -115,10 +112,13 @@ export async function getUserById(id: string): Promise<User | null> {
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getUserByEmail: getUserByEmailDb } = await import('./storage-db');
     return getUserByEmailDb(email);
+  }
+  
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   const users = await getUsers();
@@ -225,16 +225,14 @@ export async function updateUser(id: string, updates: Partial<User>): Promise<Us
 // 投稿管理
 export async function getPosts(): Promise<Post[]> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getPosts: getPostsDb } = await import('./storage-db');
     return getPostsDb();
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -257,14 +255,12 @@ export async function getPosts(): Promise<Post[]> {
 
 export async function savePosts(posts: Post[]): Promise<void> {
   // データベースを使用する場合は、この関数を呼び出さない（storage-dbを使用）
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     throw new Error('savePosts should not be called when using database. Use storage-db functions instead.');
   }
   
   // Vercelの本番環境ではファイルシステムへの書き込みができない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     throw new Error('File system is read-only in Vercel production. Database storage is required.');
   }
   
@@ -274,16 +270,14 @@ export async function savePosts(posts: Post[]): Promise<void> {
 
 export async function getPostById(id: string): Promise<Post | null> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getPostById: getPostByIdDb } = await import('./storage-db');
     return getPostByIdDb(id);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -293,16 +287,14 @@ export async function getPostById(id: string): Promise<Post | null> {
 
 export async function createPost(post: Omit<Post, 'id' | 'createdAt' | 'updatedAt' | 'likes'>): Promise<Post> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { createPost: createPostDb } = await import('./storage-db');
     return createPostDb(post);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -331,16 +323,14 @@ export async function createPost(post: Omit<Post, 'id' | 'createdAt' | 'updatedA
 
 export async function updatePost(id: string, updates: Partial<Post>): Promise<Post | null> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { updatePost: updatePostDb } = await import('./storage-db');
     return updatePostDb(id, updates);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -366,16 +356,14 @@ export async function updatePost(id: string, updates: Partial<Post>): Promise<Po
 
 export async function togglePostLike(postId: string, userIdOrSessionId: string): Promise<Post | null> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { togglePostLike: togglePostLikeDb } = await import('./storage-db');
     return togglePostLikeDb(postId, userIdOrSessionId);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -407,16 +395,14 @@ export async function togglePostLike(postId: string, userIdOrSessionId: string):
 
 export async function deletePost(id: string): Promise<boolean> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { deletePost: deletePostDb } = await import('./storage-db');
     return deletePostDb(id);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -434,16 +420,14 @@ export async function deletePost(id: string): Promise<boolean> {
  */
 export async function adminDeletePost(id: string): Promise<boolean> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { adminDeletePost: adminDeletePostDb } = await import('./storage-db');
     return adminDeletePostDb(id);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -468,16 +452,14 @@ export async function adminDeletePost(id: string): Promise<boolean> {
 
 export async function updatePostsByUserId(userId: string, updates: Partial<Post>): Promise<number> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { updatePostsByUserId: updatePostsByUserIdDb } = await import('./storage-db');
     return updatePostsByUserIdDb(userId, updates);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -685,16 +667,14 @@ export async function deleteFeedback(id: string): Promise<boolean> {
 // メッセージ管理
 export async function getMessages(): Promise<Message[]> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getMessages: getMessagesDb } = await import('./storage-db');
     return getMessagesDb();
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -709,14 +689,12 @@ export async function getMessages(): Promise<Message[]> {
 
 export async function saveMessages(messages: Message[]): Promise<void> {
   // データベースを使用する場合は、この関数を呼び出さない（storage-dbを使用）
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     throw new Error('saveMessages should not be called when using database. Use storage-db functions instead.');
   }
   
   // Vercelの本番環境ではファイルシステムへの書き込みができない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     throw new Error('File system is read-only in Vercel production. Database storage is required.');
   }
   
@@ -726,16 +704,14 @@ export async function saveMessages(messages: Message[]): Promise<void> {
 
 export async function getMessagesByConversationId(conversationId: string): Promise<Message[]> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getMessagesByConversationId: getMessagesByConversationIdDb } = await import('./storage-db');
     return getMessagesByConversationIdDb(conversationId);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -747,16 +723,14 @@ export async function getMessagesByConversationId(conversationId: string): Promi
 
 export async function createMessage(message: Omit<Message, 'id' | 'createdAt' | 'read'>): Promise<Message> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { createMessage: createMessageDb } = await import('./storage-db');
     return createMessageDb(message);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -774,16 +748,14 @@ export async function createMessage(message: Omit<Message, 'id' | 'createdAt' | 
 
 export async function markMessagesAsRead(conversationId: string, userId: string): Promise<void> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { markMessagesAsRead: markMessagesAsReadDb } = await import('./storage-db');
     return markMessagesAsReadDb(conversationId, userId);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -799,16 +771,14 @@ export async function markMessagesAsRead(conversationId: string, userId: string)
 
 export async function getUnreadMessageCount(userId: string): Promise<number> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getUnreadMessageCount: getUnreadMessageCountDb } = await import('./storage-db');
     return getUnreadMessageCountDb(userId);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -818,16 +788,14 @@ export async function getUnreadMessageCount(userId: string): Promise<number> {
 
 export async function getMessageById(id: string): Promise<Message | null> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getMessageById: getMessageByIdDb } = await import('./storage-db');
     return getMessageByIdDb(id);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -851,16 +819,14 @@ export async function updateMessage(id: string, updates: Partial<Message>): Prom
 
 export async function deleteMessage(id: string): Promise<boolean> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { deleteMessage: deleteMessageDb } = await import('./storage-db');
     return deleteMessageDb(id);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -874,16 +840,14 @@ export async function deleteMessage(id: string): Promise<boolean> {
 // 会話管理
 export async function getConversations(): Promise<Conversation[]> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getConversations: getConversationsDb } = await import('./storage-db');
     return getConversationsDb();
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -898,14 +862,12 @@ export async function getConversations(): Promise<Conversation[]> {
 
 export async function saveConversations(conversations: Conversation[]): Promise<void> {
   // データベースを使用する場合は、この関数を呼び出さない（storage-dbを使用）
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     throw new Error('saveConversations should not be called when using database. Use storage-db functions instead.');
   }
   
   // Vercelの本番環境ではファイルシステムへの書き込みができない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     throw new Error('File system is read-only in Vercel production. Database storage is required.');
   }
   
@@ -915,16 +877,14 @@ export async function saveConversations(conversations: Conversation[]): Promise<
 
 export async function getConversationByParticipants(userId1: string, userId2: string): Promise<Conversation | null> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getConversationByParticipants: getConversationByParticipantsDb } = await import('./storage-db');
     return getConversationByParticipantsDb(userId1, userId2);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -938,16 +898,14 @@ export async function getConversationByParticipants(userId1: string, userId2: st
 
 export async function getConversationsByUserId(userId: string): Promise<Conversation[]> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getConversationsByUserId: getConversationsByUserIdDb } = await import('./storage-db');
     return getConversationsByUserIdDb(userId);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -961,16 +919,14 @@ export async function getConversationsByUserId(userId: string): Promise<Conversa
 
 export async function createConversation(participantIds: [string, string]): Promise<Conversation> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { createConversation: createConversationDb } = await import('./storage-db');
     return createConversationDb(participantIds);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -987,16 +943,14 @@ export async function createConversation(participantIds: [string, string]): Prom
 
 export async function updateConversation(conversationId: string, updates: Partial<Conversation>): Promise<Conversation | null> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { updateConversation: updateConversationDb } = await import('./storage-db');
     return updateConversationDb(conversationId, updates);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -1125,16 +1079,14 @@ export async function assignPublicIdsToExistingUsers(): Promise<number> {
 // グループメッセージ管理
 export async function getGroupMessages(): Promise<GroupMessage[]> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { getGroupMessages: getGroupMessagesDb } = await import('./storage-db');
     return getGroupMessagesDb();
   }
 
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getGroupMessages: getGroupMessagesDb } = await import('./storage-db');
     return getGroupMessagesDb();
   }
@@ -1156,16 +1108,14 @@ export async function saveGroupMessages(messages: GroupMessage[]): Promise<void>
 
 export async function getGroupMessagesByGroupChatId(groupChatId: string): Promise<GroupMessage[]> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { getGroupMessagesByGroupChatId: getGroupMessagesByGroupChatIdDb } = await import('./storage-db');
     return getGroupMessagesByGroupChatIdDb(groupChatId);
   }
 
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getGroupMessagesByGroupChatId: getGroupMessagesByGroupChatIdDb } = await import('./storage-db');
     return getGroupMessagesByGroupChatIdDb(groupChatId);
   }
@@ -1179,16 +1129,14 @@ export async function getGroupMessagesByGroupChatId(groupChatId: string): Promis
 
 export async function createGroupMessage(message: Omit<GroupMessage, 'id' | 'createdAt' | 'readBy'>): Promise<GroupMessage> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { createGroupMessage: createGroupMessageDb } = await import('./storage-db');
     return createGroupMessageDb(message);
   }
 
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { createGroupMessage: createGroupMessageDb } = await import('./storage-db');
     return createGroupMessageDb(message);
   }
@@ -1208,16 +1156,14 @@ export async function createGroupMessage(message: Omit<GroupMessage, 'id' | 'cre
 
 export async function markGroupMessageAsRead(messageId: string, userId: string): Promise<void> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { markGroupMessageAsRead: markGroupMessageAsReadDb } = await import('./storage-db');
     return markGroupMessageAsReadDb(messageId, userId);
   }
 
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { markGroupMessageAsRead: markGroupMessageAsReadDb } = await import('./storage-db');
     return markGroupMessageAsReadDb(messageId, userId);
   }
@@ -1235,16 +1181,14 @@ export async function markGroupMessageAsRead(messageId: string, userId: string):
 
 export async function getGroupMessageById(id: string): Promise<GroupMessage | null> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { getGroupMessageById: getGroupMessageByIdDb } = await import('./storage-db');
     return getGroupMessageByIdDb(id);
   }
 
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getGroupMessageById: getGroupMessageByIdDb } = await import('./storage-db');
     return getGroupMessageByIdDb(id);
   }
@@ -1256,16 +1200,14 @@ export async function getGroupMessageById(id: string): Promise<GroupMessage | nu
 
 export async function updateGroupMessage(id: string, updates: Partial<GroupMessage>): Promise<GroupMessage | null> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { updateGroupMessage: updateGroupMessageDb } = await import('./storage-db');
     return updateGroupMessageDb(id, updates);
   }
 
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { updateGroupMessage: updateGroupMessageDb } = await import('./storage-db');
     return updateGroupMessageDb(id, updates);
   }
@@ -1286,16 +1228,14 @@ export async function updateGroupMessage(id: string, updates: Partial<GroupMessa
 
 export async function deleteGroupMessage(id: string): Promise<boolean> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { deleteGroupMessage: deleteGroupMessageDb } = await import('./storage-db');
     return deleteGroupMessageDb(id);
   }
 
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { deleteGroupMessage: deleteGroupMessageDb } = await import('./storage-db');
     return deleteGroupMessageDb(id);
   }
@@ -1311,16 +1251,14 @@ export async function deleteGroupMessage(id: string): Promise<boolean> {
 // グループチャット管理
 export async function getGroupChats(): Promise<GroupChat[]> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { getGroupChats: getGroupChatsDb } = await import('./storage-db');
     return getGroupChatsDb();
   }
 
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getGroupChats: getGroupChatsDb } = await import('./storage-db');
     return getGroupChatsDb();
   }
@@ -1342,16 +1280,14 @@ export async function saveGroupChats(groupChats: GroupChat[]): Promise<void> {
 
 export async function getGroupChatById(id: string): Promise<GroupChat | null> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { getGroupChatById: getGroupChatByIdDb } = await import('./storage-db');
     return getGroupChatByIdDb(id);
   }
 
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getGroupChatById: getGroupChatByIdDb } = await import('./storage-db');
     return getGroupChatByIdDb(id);
   }
@@ -1363,16 +1299,14 @@ export async function getGroupChatById(id: string): Promise<GroupChat | null> {
 
 export async function getGroupChatsByUserId(userId: string): Promise<GroupChat[]> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { getGroupChatsByUserId: getGroupChatsByUserIdDb } = await import('./storage-db');
     return getGroupChatsByUserIdDb(userId);
   }
 
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getGroupChatsByUserId: getGroupChatsByUserIdDb } = await import('./storage-db');
     return getGroupChatsByUserIdDb(userId);
   }
@@ -1388,16 +1322,14 @@ export async function getGroupChatsByUserId(userId: string): Promise<GroupChat[]
 
 export async function createGroupChat(groupChat: Omit<GroupChat, 'id' | 'createdAt' | 'updatedAt'>): Promise<GroupChat> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { createGroupChat: createGroupChatDb } = await import('./storage-db');
     return createGroupChatDb(groupChat);
   }
 
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { createGroupChat: createGroupChatDb } = await import('./storage-db');
     return createGroupChatDb(groupChat);
   }
@@ -1418,16 +1350,14 @@ export async function createGroupChat(groupChat: Omit<GroupChat, 'id' | 'created
 
 export async function updateGroupChat(id: string, updates: Partial<GroupChat>): Promise<GroupChat | null> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { updateGroupChat: updateGroupChatDb } = await import('./storage-db');
     return updateGroupChatDb(id, updates);
   }
 
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { updateGroupChat: updateGroupChatDb } = await import('./storage-db');
     return updateGroupChatDb(id, updates);
   }
@@ -1447,16 +1377,14 @@ export async function updateGroupChat(id: string, updates: Partial<GroupChat>): 
 
 export async function addParticipantToGroupChat(groupChatId: string, userId: string): Promise<GroupChat | null> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { addParticipantToGroupChat: addParticipantToGroupChatDb } = await import('./storage-db');
     return addParticipantToGroupChatDb(groupChatId, userId);
   }
 
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { addParticipantToGroupChat: addParticipantToGroupChatDb } = await import('./storage-db');
     return addParticipantToGroupChatDb(groupChatId, userId);
   }
@@ -1472,16 +1400,14 @@ export async function addParticipantToGroupChat(groupChatId: string, userId: str
 
 export async function removeParticipantFromGroupChat(groupChatId: string, userId: string): Promise<GroupChat | null> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { removeParticipantFromGroupChat: removeParticipantFromGroupChatDb } = await import('./storage-db');
     return removeParticipantFromGroupChatDb(groupChatId, userId);
   }
 
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { removeParticipantFromGroupChat: removeParticipantFromGroupChatDb } = await import('./storage-db');
     return removeParticipantFromGroupChatDb(groupChatId, userId);
   }
@@ -1497,16 +1423,14 @@ export async function removeParticipantFromGroupChat(groupChatId: string, userId
 // パスワードリセットトークン管理
 export async function createPasswordResetToken(userId: string, email: string, token: string, expiresInHours: number = 24): Promise<PasswordResetToken> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { createPasswordResetToken: createPasswordResetTokenDb } = await import('./storage-db');
     return createPasswordResetTokenDb(userId, email, token, expiresInHours);
   }
   
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { createPasswordResetToken: createPasswordResetTokenDb } = await import('./storage-db');
     return createPasswordResetTokenDb(userId, email, token, expiresInHours);
   }
@@ -1556,16 +1480,14 @@ export async function createPasswordResetToken(userId: string, email: string, to
 
 export async function getPasswordResetTokenByToken(token: string): Promise<PasswordResetToken | null> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { getPasswordResetTokenByToken: getPasswordResetTokenByTokenDb } = await import('./storage-db');
     return getPasswordResetTokenByTokenDb(token);
   }
   
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getPasswordResetTokenByToken: getPasswordResetTokenByTokenDb } = await import('./storage-db');
     return getPasswordResetTokenByTokenDb(token);
   }
@@ -1593,16 +1515,14 @@ export async function getPasswordResetTokenByToken(token: string): Promise<Passw
 
 export async function markPasswordResetTokenAsUsed(token: string): Promise<void> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { markPasswordResetTokenAsUsed: markPasswordResetTokenAsUsedDb } = await import('./storage-db');
     return markPasswordResetTokenAsUsedDb(token);
   }
   
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { markPasswordResetTokenAsUsed: markPasswordResetTokenAsUsedDb } = await import('./storage-db');
     return markPasswordResetTokenAsUsedDb(token);
   }
@@ -1625,8 +1545,7 @@ export async function markPasswordResetTokenAsUsed(token: string): Promise<void>
 
 export async function deleteExpiredPasswordResetTokens(): Promise<void> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { deleteExpiredPasswordResetTokens: deleteExpiredPasswordResetTokensDb } = await import('./storage-db');
     return deleteExpiredPasswordResetTokensDb();
   }
@@ -1665,17 +1584,15 @@ interface BlockedUser {
 
 export async function getBlockedUsers(): Promise<BlockedUser[]> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     // データベースから取得する場合は、getBlockedUserIdsを使用
     // この関数は後方互換性のため残すが、通常はgetBlockedUserIdsを使用
     throw new Error('getBlockedUsers should not be called when using database. Use getBlockedUserIds instead.');
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -1690,14 +1607,12 @@ export async function getBlockedUsers(): Promise<BlockedUser[]> {
 
 export async function saveBlockedUsers(blockedUsers: BlockedUser[]): Promise<void> {
   // データベースを使用する場合は、この関数を呼び出さない（storage-dbを使用）
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     throw new Error('saveBlockedUsers should not be called when using database. Use storage-db functions instead.');
   }
   
   // Vercelの本番環境ではファイルシステムへの書き込みができない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     throw new Error('File system is read-only in Vercel production. Database storage is required.');
   }
   
@@ -1707,16 +1622,14 @@ export async function saveBlockedUsers(blockedUsers: BlockedUser[]): Promise<voi
 
 export async function getBlockedUserIds(userId: string): Promise<string[]> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { getBlockedUserIds: getBlockedUserIdsDb } = await import('./storage-db');
     return getBlockedUserIdsDb(userId);
   }
   
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getBlockedUserIds: getBlockedUserIdsDb } = await import('./storage-db');
     return getBlockedUserIdsDb(userId);
   }
@@ -1730,16 +1643,14 @@ export async function getBlockedUserIds(userId: string): Promise<string[]> {
 
 export async function isUserBlocked(userId: string, blockedUserId: string): Promise<boolean> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { isUserBlocked: isUserBlockedDb } = await import('./storage-db');
     return isUserBlockedDb(userId, blockedUserId);
   }
   
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { isUserBlocked: isUserBlockedDb } = await import('./storage-db');
     return isUserBlockedDb(userId, blockedUserId);
   }
@@ -1751,16 +1662,14 @@ export async function isUserBlocked(userId: string, blockedUserId: string): Prom
 
 export async function blockUser(userId: string, blockedUserId: string): Promise<void> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { blockUser: blockUserDb } = await import('./storage-db');
     return blockUserDb(userId, blockedUserId);
   }
   
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { blockUser: blockUserDb } = await import('./storage-db');
     return blockUserDb(userId, blockedUserId);
   }
@@ -1786,16 +1695,14 @@ export async function blockUser(userId: string, blockedUserId: string): Promise<
 
 export async function unblockUser(userId: string, blockedUserId: string): Promise<void> {
   // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     // 本番環境では必ずデータベースを使用
     const { unblockUser: unblockUserDb } = await import('./storage-db');
     return unblockUserDb(userId, blockedUserId);
   }
   
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { unblockUser: unblockUserDb } = await import('./storage-db');
     return unblockUserDb(userId, blockedUserId);
   }
@@ -1814,16 +1721,14 @@ export async function unblockUser(userId: string, blockedUserId: string): Promis
 // お知らせ管理
 export async function getAnnouncements(): Promise<Announcement[]> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getAnnouncements: getAnnouncementsDb } = await import('./storage-db');
     return getAnnouncementsDb();
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -1838,14 +1743,12 @@ export async function getAnnouncements(): Promise<Announcement[]> {
 
 export async function saveAnnouncements(announcements: Announcement[]): Promise<void> {
   // データベースを使用する場合は、この関数を呼び出さない（storage-dbを使用）
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     throw new Error('saveAnnouncements should not be called when using database. Use storage-db functions instead.');
   }
   
   // Vercelの本番環境ではファイルシステムへの書き込みができない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
+  if (isVercelProduction()) {
     throw new Error('File system is read-only in Vercel production. Database storage is required.');
   }
   
@@ -1855,16 +1758,14 @@ export async function saveAnnouncements(announcements: Announcement[]): Promise<
 
 export async function getVisibleAnnouncements(): Promise<Announcement[]> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getVisibleAnnouncements: getVisibleAnnouncementsDb } = await import('./storage-db');
     return getVisibleAnnouncementsDb();
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -1904,16 +1805,14 @@ export async function getVisibleAnnouncements(): Promise<Announcement[]> {
 
 export async function getAnnouncementById(id: string): Promise<Announcement | null> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { getAnnouncementById: getAnnouncementByIdDb } = await import('./storage-db');
     return getAnnouncementByIdDb(id);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -1923,16 +1822,14 @@ export async function getAnnouncementById(id: string): Promise<Announcement | nu
 
 export async function createAnnouncement(announcement: Omit<Announcement, 'id' | 'createdAt' | 'updatedAt'>): Promise<Announcement> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { createAnnouncement: createAnnouncementDb } = await import('./storage-db');
     return createAnnouncementDb(announcement);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -1954,16 +1851,14 @@ export async function createAnnouncement(announcement: Omit<Announcement, 'id' |
 
 export async function updateAnnouncement(id: string, updates: Partial<Announcement>): Promise<Announcement | null> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { updateAnnouncement: updateAnnouncementDb } = await import('./storage-db');
     return updateAnnouncementDb(id, updates);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
@@ -1986,16 +1881,14 @@ export async function updateAnnouncement(id: string, updates: Partial<Announceme
 
 export async function deleteAnnouncement(id: string): Promise<boolean> {
   // データベースが利用可能な場合はデータベースを使用
-  const { shouldUseDatabase } = await import('./db');
-  if (shouldUseDatabase()) {
+  if (await shouldUseDatabaseStorage()) {
     const { deleteAnnouncement: deleteAnnouncementDb } = await import('./storage-db');
     return deleteAnnouncementDb(id);
   }
   
   // Vercelの本番環境ではファイルシステムを使用できない
-  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-  if (isVercelProduction) {
-    throw new Error('Database is required in production environment. Please configure POSTGRES_PRISMA_URL.');
+  if (isVercelProduction()) {
+    throwDatabaseRequiredError();
   }
   
   // ファイルシステムを使用する場合
