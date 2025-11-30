@@ -1755,18 +1755,24 @@ export async function markGroupMessageAsRead(messageId: string, userId: string):
   try {
     const hasReadBy = await columnExists('group_messages', 'read_by');
     if (!hasReadBy) {
+      console.log(`[markGroupMessageAsRead] read_by column does not exist, skipping message ${messageId}`);
       return; // read_byカラムが存在しない場合は何もしない
     }
     
     const message = await getGroupMessageById(messageId);
-    if (!message) return;
+    if (!message) {
+      console.log(`[markGroupMessageAsRead] Message ${messageId} not found`);
+      return;
+    }
     
     // readByがundefinedの場合は、カラムが存在しない可能性があるため、スキップ
     if (message.readBy === undefined) {
+      console.log(`[markGroupMessageAsRead] readBy is undefined for message ${messageId}, skipping`);
       return;
     }
     
     if (message.readBy.includes(userId)) {
+      console.log(`[markGroupMessageAsRead] Message ${messageId} already read by user ${userId}`);
       return; // 既に既読
     }
 
@@ -1776,6 +1782,7 @@ export async function markGroupMessageAsRead(messageId: string, userId: string):
       SET read_by = $1
       WHERE id = $2
     `, [updatedReadBy, messageId]);
+    console.log(`[markGroupMessageAsRead] Marked message ${messageId} as read for user ${userId}, readBy: ${JSON.stringify(updatedReadBy)}`);
   } catch (error) {
     console.error('Failed to mark group message as read in database:', error);
     throw error;

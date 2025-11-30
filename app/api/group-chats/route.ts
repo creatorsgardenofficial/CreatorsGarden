@@ -81,26 +81,26 @@ export async function GET(request: NextRequest) {
       // メッセージを取得したら既読にする（チャット画面を開いた時に既読データを登録）
       if (messages.length > 0) {
         // 既読処理を並列で実行（パフォーマンス向上）
-        const readPromises = messages
-          .filter(m => {
-            // 送信者自身のメッセージは既読処理をスキップ
-            if (m.senderId === userId) {
-              return false;
-            }
-            // readByがundefinedの場合は、カラムが存在しない可能性があるため、既読処理をスキップ
-            if (m.readBy === undefined) {
-              return false;
-            }
-            // readByが存在し、既読でない場合は既読にする（空配列の場合は既読にする）
-            // readByがnullの場合は空配列として扱われているので、既読処理を実行
-            return !m.readBy.includes(userId!);
-          })
-          .map(m => markGroupMessageAsRead(m.id, userId!));
+        const messagesToMarkAsRead = messages.filter(m => {
+          // 送信者自身のメッセージは既読処理をスキップ
+          if (m.senderId === userId) {
+            return false;
+          }
+          // readByがundefinedの場合は、カラムが存在しない可能性があるため、既読処理をスキップ
+          if (m.readBy === undefined) {
+            return false;
+          }
+          // readByが存在し、既読でない場合は既読にする（空配列の場合は既読にする）
+          // readByがnullの場合は空配列として扱われているので、既読処理を実行
+          return !m.readBy.includes(userId!);
+        });
         
-        if (readPromises.length > 0) {
+        if (messagesToMarkAsRead.length > 0) {
+          console.log(`[GroupChat] Marking ${messagesToMarkAsRead.length} messages as read for user ${userId} in group ${groupChatId}`);
+          const readPromises = messagesToMarkAsRead.map(m => markGroupMessageAsRead(m.id, userId!));
           await Promise.all(readPromises);
           // 既読処理が完了したことを確認するため、少し待つ
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 200));
         }
       }
       
@@ -135,8 +135,11 @@ export async function GET(request: NextRequest) {
             return true;
           }
           // readByにユーザーIDが含まれていない場合は未読
-          return !m.readBy.includes(userId!);
+          const isUnread = !m.readBy.includes(userId!);
+          return isUnread;
         }).length;
+        
+        console.log(`[GroupChat] Group ${gc.id} unreadCount: ${unreadCount} for user ${userId}, total messages: ${messages.length}`);
         
         // 参加者情報を取得
         const participants = await Promise.all(
