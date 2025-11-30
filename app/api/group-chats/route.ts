@@ -78,10 +78,16 @@ export async function GET(request: NextRequest) {
 
       const messages = await getGroupMessagesByGroupChatId(groupChatId);
       // メッセージを取得したら既読にする
+      // readByが空配列の場合は、カラムが存在しない可能性があるため、既読処理をスキップ
       for (const message of messages) {
-        if (!message.readBy.includes(userId!)) {
-          await markGroupMessageAsRead(message.id, userId!);
+        // readByが存在し、既読でない場合のみ既読にする
+        if (message.readBy && message.readBy.length > 0) {
+          if (!message.readBy.includes(userId!)) {
+            await markGroupMessageAsRead(message.id, userId!);
+          }
         }
+        // readByが空配列の場合は、カラムが存在しない可能性があるため、既読処理をスキップ
+        // この場合、クライアント側のlocalStorageで管理される
       }
 
       return NextResponse.json({ messages }, { status: 200 });
