@@ -9,8 +9,8 @@ import { Pool } from 'pg';
  */
 
 // 環境変数から接続文字列を取得
-// 優先順位: POSTGRES_PRISMA_URL (プール接続) -> STORAGE_PRISMA_URL (カスタムプレフィックス) -> POSTGRES_URL (直接接続) -> PRISMA_DATABASE_URL (Prisma Accelerate、変換が必要)
-// 注意: PRISMA_DATABASE_URLがprisma+postgres://形式の場合は、pgライブラリでは直接使用できないため、最後の選択肢とする
+// 優先順位: POSTGRES_PRISMA_URL (プール接続) -> STORAGE_PRISMA_URL (カスタムプレフィックス) -> POSTGRES_URL (直接接続) -> POSTGRES_URL_NON_POOLING
+// 注意: PRISMA_DATABASE_URLがprisma+postgres://形式の場合は、pgライブラリでは使用できないため、完全にスキップする
 const getConnectionString = () => {
   // まず、直接PostgreSQL接続文字列を優先
   let connectionString =
@@ -20,20 +20,21 @@ const getConnectionString = () => {
     process.env.POSTGRES_URL ||
     process.env.POSTGRES_URL_NON_POOLING;
 
-  // 直接接続文字列がない場合のみ、PRISMA_DATABASE_URLを確認
+  // PRISMA_DATABASE_URLがprisma+postgres://形式の場合は使用しない
+  // Prisma Accelerateの接続文字列は、pgライブラリでは直接使用できない
   if (!connectionString && process.env.PRISMA_DATABASE_URL) {
     const prismaUrl = process.env.PRISMA_DATABASE_URL;
-    // prisma+postgres://形式の場合は、postgres://形式に変換を試みる
     if (prismaUrl.startsWith('prisma+postgres://')) {
-      // Prisma Accelerateの接続文字列は、pgライブラリでは直接使用できない
-      // 変換を試みるが、接続に失敗する可能性がある
-      connectionString = prismaUrl.replace('prisma+postgres://', 'postgres://');
-      console.log('⚠️  Converting prisma+postgres:// to postgres:// format for pg client');
-      console.log('⚠️  Note: Prisma Accelerate connection strings may not work with pg library directly');
-      console.log('⚠️  Consider using POSTGRES_PRISMA_URL or POSTGRES_URL instead');
-    } else {
+      // Prisma Accelerateの接続文字列は使用できない
+      console.error('❌ PRISMA_DATABASE_URL is a Prisma Accelerate connection string (prisma+postgres://)');
+      console.error('❌ Prisma Accelerate connection strings cannot be used with pg library directly');
+      console.error('❌ Please use POSTGRES_PRISMA_URL or POSTGRES_URL instead');
+      // 接続文字列をnullのまま返す（エラーは後で投げられる）
+      return null;
+    } else if (prismaUrl.startsWith('postgres://')) {
       // 既にpostgres://形式の場合はそのまま使用
       connectionString = prismaUrl;
+      console.log('✅ Using PRISMA_DATABASE_URL (postgres:// format)');
     }
   }
 
@@ -46,15 +47,24 @@ const isVercelEnvironment = process.env.VERCEL === '1' || process.env.VERCEL_ENV
 // デバッグ: 環境変数の状態をログ出力（本番環境のみ）
 if (isVercelEnvironment) {
   console.log('🔍 Database environment variables check:');
-  console.log('  POSTGRES_PRISMA_URL:', !!process.env.POSTGRES_PRISMA_URL);
-  console.log('  PRISMA_DATABASE_URL:', !!process.env.PRISMA_DATABASE_URL);
+  console.log('  POSTGRES_PRISMA_URL:', !!process.env.POSTGRES_PRISMA_URL, process.env.POSTGRES_PRISMA_URL ? `(${process.env.POSTGRES_PRISMA_URL.substring(0, 30)}...)` : '');
+  console.log('  PRISMA_DATABASE_URL:', !!process.env.PRISMA_DATABASE_URL, process.env.PRISMA_DATABASE_URL ? `(${process.env.PRISMA_DATABASE_URL.substring(0, 30)}...)` : '');
   console.log('  STORAGE_PRISMA_URL:', !!process.env.STORAGE_PRISMA_URL);
   console.log('  STORAGE_URL:', !!process.env.STORAGE_URL);
-  console.log('  POSTGRES_URL:', !!process.env.POSTGRES_URL);
+  console.log('  POSTGRES_URL:', !!process.env.POSTGRES_URL, process.env.POSTGRES_URL ? `(${process.env.POSTGRES_URL.substring(0, 30)}...)` : '');
   console.log('  POSTGRES_URL_NON_POOLING:', !!process.env.POSTGRES_URL_NON_POOLING);
   console.log('  Using connection string:', connectionString ? 'Found' : 'Not found');
   if (connectionString) {
-    console.log('  Connection string format:', connectionString.startsWith('postgres://') ? 'postgres://' : 'unknown');
+    const format = connectionString.startsWith('postgres://') ? 'postgres://' : 
+                   connectionString.startsWith('prisma+postgres://') ? 'prisma+postgres:// (INVALID)' : 
+                   'unknown';
+    console.log('  Connection string format:', format);
+    if (connectionString.startsWith('prisma+postgres://')) {
+      console.error('  ❌ ERROR: prisma+postgres:// format cannot be used with pg library!');
+    }
+  } else {
+    console.error('  ❌ ERROR: No valid connection string found!');
+    console.error('  💡 Please set POSTGRES_PRISMA_URL or POSTGRES_URL in Vercel dashboard');
   }
 }
 
