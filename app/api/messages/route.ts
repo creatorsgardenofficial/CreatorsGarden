@@ -69,14 +69,18 @@ export async function GET(request: NextRequest) {
       conversations.map(async (conv) => {
         const otherUserId = conv.participantIds.find(id => id !== userId);
         
-        // ブロックされたユーザーの会話は除外
-        if (otherUserId && blockedUserIds.includes(otherUserId)) {
-          return null;
-        }
-        
         const messages = await getMessagesByConversationId(conv.id);
-        const lastMessage = messages[messages.length - 1];
-        const unreadCount = messages.filter(m => m.receiverId === userId && !m.read).length;
+        
+        // ブロックされたユーザーからのメッセージをフィルタリング（会話自体は残す）
+        const visibleMessages = messages.filter(m => {
+          // 自分が送信したメッセージは常に表示
+          if (m.senderId === userId) return true;
+          // ブロックされたユーザーからのメッセージは非表示
+          return !blockedUserIds.includes(m.senderId);
+        });
+        
+        const lastMessage = visibleMessages.length > 0 ? visibleMessages[visibleMessages.length - 1] : null;
+        const unreadCount = visibleMessages.filter(m => m.receiverId === userId && !m.read).length;
         const otherUser = otherUserId ? await getUserById(otherUserId) : null;
 
         return {
@@ -92,8 +96,7 @@ export async function GET(request: NextRequest) {
       })
     );
     
-    // nullを除外
-    const filteredConversations = conversationsWithDetails.filter(conv => conv !== null);
+    const filteredConversations = conversationsWithDetails;
 
     return NextResponse.json({ conversations: filteredConversations }, { status: 200 });
   } catch (error) {
