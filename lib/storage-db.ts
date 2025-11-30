@@ -382,6 +382,10 @@ export async function deleteExpiredPasswordResetTokens(): Promise<void> {
 
 export async function getPosts(): Promise<Post[]> {
   try {
+    // カラムの存在を確認
+    const hasUrls = await columnExists('posts', 'urls');
+    const urlsSelect = hasUrls ? 'p.urls,' : 'NULL::JSONB as urls,';
+    
     const result = await pool.query(`
       SELECT
         p.id,
@@ -396,7 +400,7 @@ export async function getPosts(): Promise<Post[]> {
         p.priority_display as "priorityDisplay",
         p.featured_display as "featuredDisplay",
         p.likes,
-        p.urls,
+        ${urlsSelect}
         p.created_at as "createdAt",
         p.updated_at as "updatedAt",
         p.is_deleted as "isDeleted"
@@ -431,6 +435,10 @@ export async function getPosts(): Promise<Post[]> {
 
 export async function getPostById(id: string): Promise<Post | null> {
   try {
+    // カラムの存在を確認
+    const hasUrls = await columnExists('posts', 'urls');
+    const urlsSelect = hasUrls ? 'p.urls,' : 'NULL::JSONB as urls,';
+    
     const result = await pool.query(`
       SELECT
         p.id,
@@ -445,7 +453,7 @@ export async function getPostById(id: string): Promise<Post | null> {
         p.priority_display as "priorityDisplay",
         p.featured_display as "featuredDisplay",
         p.likes,
-        p.urls,
+        ${urlsSelect}
         p.created_at as "createdAt",
         p.updated_at as "updatedAt",
         p.is_deleted as "isDeleted"
@@ -493,28 +501,55 @@ export async function createPost(post: Omit<Post, 'id' | 'createdAt' | 'updatedA
     const priorityDisplay = (planType === 'grow' || planType === 'bloom') && isActive;
     const featuredDisplay = (planType === 'grow' || planType === 'bloom') && isActive;
     
-    await pool.query(`
-      INSERT INTO posts (
-        id, user_id, type, title, content, tags, status,
-        priority_display, featured_display, likes, urls, created_at, updated_at
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
-      )
-    `, [
-      id,
-      post.userId,
-      post.type,
-      post.title,
-      post.content,
-      post.tags || [],
-      post.status || 'open',
-      priorityDisplay,
-      featuredDisplay,
-      [],
-      post.urls || null,
-      now,
-      now,
-    ]);
+    // カラムの存在を確認
+    const hasUrls = await columnExists('posts', 'urls');
+    
+    if (hasUrls) {
+      await pool.query(`
+        INSERT INTO posts (
+          id, user_id, type, title, content, tags, status,
+          priority_display, featured_display, likes, urls, created_at, updated_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+        )
+      `, [
+        id,
+        post.userId,
+        post.type,
+        post.title,
+        post.content,
+        post.tags || [],
+        post.status || 'open',
+        priorityDisplay,
+        featuredDisplay,
+        [],
+        post.urls || null,
+        now,
+        now,
+      ]);
+    } else {
+      await pool.query(`
+        INSERT INTO posts (
+          id, user_id, type, title, content, tags, status,
+          priority_display, featured_display, likes, created_at, updated_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+        )
+      `, [
+        id,
+        post.userId,
+        post.type,
+        post.title,
+        post.content,
+        post.tags || [],
+        post.status || 'open',
+        priorityDisplay,
+        featuredDisplay,
+        [],
+        now,
+        now,
+      ]);
+    }
     
     return {
       ...post,
@@ -551,29 +586,56 @@ export async function updatePost(id: string, updates: Partial<Post>): Promise<Po
     const urls = updates.urls !== undefined ? updates.urls : existingPost.urls;
     const updatedAt = new Date().toISOString();
     
-    await pool.query(`
-      UPDATE posts
-      SET
-        title = $1,
-        content = $2,
-        tags = $3,
-        status = $4,
-        urls = $5,
-        priority_display = $6,
-        featured_display = $7,
-        updated_at = $8
-      WHERE id = $9
-    `, [
-      title,
-      content,
-      tags || [],
-      status,
-      urls || null,
-      priorityDisplay,
-      featuredDisplay,
-      updatedAt,
-      id,
-    ]);
+    // カラムの存在を確認
+    const hasUrls = await columnExists('posts', 'urls');
+    
+    if (hasUrls) {
+      await pool.query(`
+        UPDATE posts
+        SET
+          title = $1,
+          content = $2,
+          tags = $3,
+          status = $4,
+          urls = $5,
+          priority_display = $6,
+          featured_display = $7,
+          updated_at = $8
+        WHERE id = $9
+      `, [
+        title,
+        content,
+        tags || [],
+        status,
+        urls || null,
+        priorityDisplay,
+        featuredDisplay,
+        updatedAt,
+        id,
+      ]);
+    } else {
+      await pool.query(`
+        UPDATE posts
+        SET
+          title = $1,
+          content = $2,
+          tags = $3,
+          status = $4,
+          priority_display = $5,
+          featured_display = $6,
+          updated_at = $7
+        WHERE id = $8
+      `, [
+        title,
+        content,
+        tags || [],
+        status,
+        priorityDisplay,
+        featuredDisplay,
+        updatedAt,
+        id,
+      ]);
+    }
     
     return getPostById(id);
   } catch (error) {
