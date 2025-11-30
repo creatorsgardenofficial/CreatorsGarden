@@ -81,6 +81,43 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
     }
   }, []);
 
+  // 一時保存された参加者を復元
+  useEffect(() => {
+    try {
+      const savedParticipants = localStorage.getItem('groupChatDraftParticipants');
+      if (savedParticipants) {
+        const parsed = JSON.parse(savedParticipants);
+        if (Array.isArray(parsed.publicIds) && Array.isArray(parsed.users)) {
+          setParticipantPublicIds(parsed.publicIds);
+          setParticipantUsers(parsed.users);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load saved participants:', err);
+    }
+  }, []);
+
+  // 参加者を一時保存
+  useEffect(() => {
+    if (participantPublicIds.length > 0 || participantUsers.length > 0) {
+      try {
+        localStorage.setItem('groupChatDraftParticipants', JSON.stringify({
+          publicIds: participantPublicIds,
+          users: participantUsers,
+        }));
+      } catch (err) {
+        console.error('Failed to save participants:', err);
+      }
+    } else {
+      // 参加者が空の場合は保存データもクリア
+      try {
+        localStorage.removeItem('groupChatDraftParticipants');
+      } catch (err) {
+        console.error('Failed to clear saved participants:', err);
+      }
+    }
+  }, [participantPublicIds, participantUsers]);
+
   // 初期データ取得
   useEffect(() => {
     const loadData = async () => {
@@ -234,6 +271,12 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
         setParticipantUsers([]);
         setSearchPublicId('');
         setSearchedUser(null);
+        // 一時保存データをクリア
+        try {
+          localStorage.removeItem('groupChatDraftParticipants');
+        } catch (err) {
+          console.error('Failed to clear saved participants:', err);
+        }
         // 作成したグループチャットを選択
         const updated = await fetch('/api/group-chats').then(r => r.json());
         if (updated.groupChats) {
