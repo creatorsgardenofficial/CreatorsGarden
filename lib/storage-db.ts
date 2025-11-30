@@ -1708,9 +1708,9 @@ export async function createGroupMessage(message: Omit<GroupMessage, 'id' | 'cre
     const hasSenderUsername = await columnExists('group_messages', 'sender_username');
     const hasReadBy = await columnExists('group_messages', 'read_by');
     
-    let columns = 'id, group_chat_id, user_id';
-    let values: any[] = [id, message.groupChatId, message.senderId];
-    let paramIndex = 4;
+    let columns = 'id, group_chat_id, user_id, content';
+    let values: any[] = [id, message.groupChatId, message.senderId, message.content];
+    let paramIndex = 5;
     
     if (hasSenderUsername) {
       columns += ', sender_username';
