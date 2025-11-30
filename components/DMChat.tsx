@@ -68,14 +68,29 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
 
   // メッセージを取得
   const fetchMessages = useCallback(async (conversationId: string) => {
+    if (!conversationId) {
+      setMessages([]);
+      return;
+    }
+    
     try {
       const res = await fetch(`/api/messages?conversationId=${conversationId}`);
+      if (!res.ok) {
+        console.error('❌ Failed to fetch messages:', res.status, res.statusText);
+        setMessages([]);
+        return;
+      }
+      
       const data = await res.json();
-      if (res.ok && data.messages) {
+      if (data.messages && Array.isArray(data.messages)) {
         setMessages(data.messages);
+      } else {
+        console.warn('⚠️ Invalid messages data:', data);
+        setMessages([]);
       }
     } catch (err) {
-      // エラーは静かに無視
+      console.error('❌ Error fetching messages:', err);
+      setMessages([]);
     }
   }, []);
 
@@ -178,9 +193,13 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
 
   // 会話選択
   const handleSelectConversation = useCallback((conversation: ConversationWithDetails) => {
+    // まずメッセージをクリア（前のチャットのメッセージが残らないように）
+    setMessages([]);
     setSelectedConversation(conversation);
-    fetchMessages(conversation.id);
     setShowUserList(false);
+    
+    // メッセージを取得
+    fetchMessages(conversation.id);
     
     // 確認済みタイムスタンプを記録
     const dmViewedData = localStorage.getItem('dmChatViewed');

@@ -105,14 +105,29 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
 
   // メッセージを取得
   const fetchMessages = useCallback(async (groupChatId: string) => {
+    if (!groupChatId) {
+      setMessages([]);
+      return;
+    }
+    
     try {
       const res = await fetch(`/api/group-chats?groupChatId=${groupChatId}`);
+      if (!res.ok) {
+        console.error('❌ Failed to fetch messages:', res.status, res.statusText);
+        setMessages([]);
+        return;
+      }
+      
       const data = await res.json();
-      if (res.ok && data.messages) {
+      if (data.messages && Array.isArray(data.messages)) {
         setMessages(data.messages);
+      } else {
+        console.warn('⚠️ Invalid messages data:', data);
+        setMessages([]);
       }
     } catch (err) {
-      // エラーは静かに無視
+      console.error('❌ Error fetching messages:', err);
+      setMessages([]);
     }
   }, []);
 
@@ -159,6 +174,8 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
 
   // グループチャット選択
   const handleSelectGroupChat = async (groupChat: GroupChatWithDetails) => {
+    // まずメッセージをクリア（前のチャットのメッセージが残らないように）
+    setMessages([]);
     setSelectedGroupChat(groupChat);
     setShowCreateModal(false);
     
