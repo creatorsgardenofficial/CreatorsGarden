@@ -147,7 +147,7 @@ const getPool = (): Pool => {
   const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build';
   
   if (!connectionString) {
-    const errorMessage = '⚠️  Database connection string is not set. Please configure POSTGRES_PRISMA_URL or POSTGRES_URL in Vercel dashboard.';
+    const errorMessage = '❌ Database connection string is not set or all connection strings point to Prisma Accelerate endpoints. Please configure POSTGRES_URL_NON_POOLING with Vercel Postgres connection string in Vercel dashboard.';
     if (isBuildTime) {
       // ビルド時は警告だけを出して、ダミーのPoolを返す（実際には使用されない）
       console.warn(errorMessage);
@@ -162,7 +162,8 @@ const getPool = (): Pool => {
       // 実行時はエラーを投げる
       console.error(errorMessage);
       if (isVercelEnvironment) {
-        console.error('   Go to: Vercel Dashboard → Project → Settings → Environment Variables');
+        console.error('   Go to: Vercel Dashboard → Storage → Your Database → Settings');
+        console.error('   Copy the "Direct Connection" string and set it as POSTGRES_URL_NON_POOLING');
       }
       throw new Error(errorMessage);
     }
