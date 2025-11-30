@@ -215,20 +215,40 @@ const getPool = (): Pool => {
       connectionTimeoutMillis: 10000, // 10秒
       idleTimeoutMillis: 30000, // 30秒
       max: 10, // 最大接続数
+      // 接続リトライ設定
+      retry: {
+        max: 3, // 最大3回リトライ
+        delay: 1000, // 1秒待機
+      },
     });
     
     // 接続エラーのハンドリング
-    poolInstance.on('error', (err) => {
+    poolInstance.on('error', (err: any) => {
       console.error('❌ Unexpected error on idle database client:', err);
+      // Prisma Accelerateの制限エラーの場合、より明確なメッセージを表示
+      if (err?.message?.includes('planLimitReached') || err?.message?.includes('account has restrictions')) {
+        console.error('❌ Prisma Accelerate account limit reached');
+        console.error('❌ Please use Vercel Postgres connection string instead');
+        console.error('❌ Go to: Vercel Dashboard → Storage → Your Database → Settings');
+        console.error('❌ Copy the "Direct Connection" string and set it as POSTGRES_URL_NON_POOLING');
+      }
     });
     
     if (!isBuildTime) {
       console.log('✅ PostgreSQL Pool created successfully');
     }
     return poolInstance;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Failed to create PostgreSQL Pool:', error);
     console.error('Connection string (first 50 chars):', connectionString.substring(0, 50) + '...');
+    
+    // Prisma Accelerateの制限エラーの場合、より明確なメッセージを表示
+    if (error?.message?.includes('planLimitReached') || error?.message?.includes('account has restrictions')) {
+      const errorMessage = '❌ Prisma Accelerate account limit reached. Please use Vercel Postgres connection string. Go to: Vercel Dashboard → Storage → Your Database → Settings → Copy "Direct Connection" string and set as POSTGRES_URL_NON_POOLING';
+      console.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+    
     throw new Error('Failed to initialize database pool.');
   }
 };
@@ -257,7 +277,15 @@ export async function testConnection(): Promise<boolean> {
     console.error('Error message:', error?.message);
     console.error('Error name:', error?.name);
     console.error('Error stack:', error?.stack);
-    if (error?.code === 'ECONNREFUSED') {
+    
+    // Prisma Accelerateの制限エラーの場合、より明確なメッセージを表示
+    if (error?.message?.includes('planLimitReached') || error?.message?.includes('account has restrictions')) {
+      console.error('❌ Prisma Accelerate account limit reached');
+      console.error('❌ Please use Vercel Postgres connection string instead');
+      console.error('❌ Go to: Vercel Dashboard → Storage → Your Database → Settings');
+      console.error('❌ Copy the "Direct Connection" string and set it as POSTGRES_URL_NON_POOLING');
+      console.error('❌ The connection string should look like: postgres://user:pass@aws-0-*.pooler.supabase.com:5432/db');
+    } else if (error?.code === 'ECONNREFUSED') {
       console.error('⚠️  Connection refused. Check database server status and firewall rules.');
     } else if (error?.code === '28P01') {
       console.error('⚠️  Authentication failed. Check database credentials (username/password).');

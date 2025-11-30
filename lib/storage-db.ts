@@ -35,8 +35,15 @@ export async function getUsers(): Promise<User[]> {
       subscription: row.subscription || { planType: 'free', status: 'active' },
       portfolioUrls: row.portfolioUrls || undefined,
     })) as User[];
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to get users from database:', error);
+    // Prisma Accelerateの制限エラーの場合、より明確なメッセージを表示
+    if (error?.message?.includes('planLimitReached') || error?.message?.includes('account has restrictions')) {
+      console.error('❌ Prisma Accelerate account limit reached');
+      console.error('❌ Please configure Vercel Postgres connection string');
+      console.error('❌ Go to: Vercel Dashboard → Storage → Your Database → Settings');
+      console.error('❌ Copy the "Direct Connection" string and set it as POSTGRES_URL_NON_POOLING');
+    }
     throw error;
   }
 }
