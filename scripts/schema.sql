@@ -91,10 +91,13 @@ CREATE TABLE IF NOT EXISTS conversations (
 -- グループメッセージテーブル
 CREATE TABLE IF NOT EXISTS group_messages (
   id TEXT PRIMARY KEY,
-  group_chat_id TEXT NOT NULL,
+  group_chat_id TEXT NOT NULL REFERENCES group_chats(id) ON DELETE CASCADE,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  sender_username TEXT NOT NULL,
   content TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  read_by TEXT[] DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE
 );
 
 -- グループチャットテーブル

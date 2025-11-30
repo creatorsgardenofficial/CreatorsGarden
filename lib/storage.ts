@@ -1124,6 +1124,22 @@ export async function assignPublicIdsToExistingUsers(): Promise<number> {
 
 // グループメッセージ管理
 export async function getGroupMessages(): Promise<GroupMessage[]> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { getGroupMessages: getGroupMessagesDb } = await import('./storage-db');
+    return getGroupMessagesDb();
+  }
+
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { getGroupMessages: getGroupMessagesDb } = await import('./storage-db');
+    return getGroupMessagesDb();
+  }
+
+  // ファイルシステムを使用する場合
   await ensureDataDir();
   try {
     const data = await fs.readFile(GROUP_MESSAGES_FILE, 'utf-8');
@@ -1139,6 +1155,22 @@ export async function saveGroupMessages(messages: GroupMessage[]): Promise<void>
 }
 
 export async function getGroupMessagesByGroupChatId(groupChatId: string): Promise<GroupMessage[]> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { getGroupMessagesByGroupChatId: getGroupMessagesByGroupChatIdDb } = await import('./storage-db');
+    return getGroupMessagesByGroupChatIdDb(groupChatId);
+  }
+
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { getGroupMessagesByGroupChatId: getGroupMessagesByGroupChatIdDb } = await import('./storage-db');
+    return getGroupMessagesByGroupChatIdDb(groupChatId);
+  }
+
+  // ファイルシステムを使用する場合
   const messages = await getGroupMessages();
   return messages.filter(m => m.groupChatId === groupChatId).sort((a, b) => 
     new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -1146,6 +1178,22 @@ export async function getGroupMessagesByGroupChatId(groupChatId: string): Promis
 }
 
 export async function createGroupMessage(message: Omit<GroupMessage, 'id' | 'createdAt' | 'readBy'>): Promise<GroupMessage> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { createGroupMessage: createGroupMessageDb } = await import('./storage-db');
+    return createGroupMessageDb(message);
+  }
+
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { createGroupMessage: createGroupMessageDb } = await import('./storage-db');
+    return createGroupMessageDb(message);
+  }
+
+  // ファイルシステムを使用する場合
   const messages = await getGroupMessages();
   const newMessage: GroupMessage = {
     ...message,
@@ -1159,6 +1207,22 @@ export async function createGroupMessage(message: Omit<GroupMessage, 'id' | 'cre
 }
 
 export async function markGroupMessageAsRead(messageId: string, userId: string): Promise<void> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { markGroupMessageAsRead: markGroupMessageAsReadDb } = await import('./storage-db');
+    return markGroupMessageAsReadDb(messageId, userId);
+  }
+
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { markGroupMessageAsRead: markGroupMessageAsReadDb } = await import('./storage-db');
+    return markGroupMessageAsReadDb(messageId, userId);
+  }
+
+  // ファイルシステムを使用する場合
   const messages = await getGroupMessages();
   const updated = messages.map(m => {
     if (m.id === messageId && !m.readBy.includes(userId)) {
@@ -1170,11 +1234,43 @@ export async function markGroupMessageAsRead(messageId: string, userId: string):
 }
 
 export async function getGroupMessageById(id: string): Promise<GroupMessage | null> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { getGroupMessageById: getGroupMessageByIdDb } = await import('./storage-db');
+    return getGroupMessageByIdDb(id);
+  }
+
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { getGroupMessageById: getGroupMessageByIdDb } = await import('./storage-db');
+    return getGroupMessageByIdDb(id);
+  }
+
+  // ファイルシステムを使用する場合
   const messages = await getGroupMessages();
   return messages.find(m => m.id === id) || null;
 }
 
 export async function updateGroupMessage(id: string, updates: Partial<GroupMessage>): Promise<GroupMessage | null> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { updateGroupMessage: updateGroupMessageDb } = await import('./storage-db');
+    return updateGroupMessageDb(id, updates);
+  }
+
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { updateGroupMessage: updateGroupMessageDb } = await import('./storage-db');
+    return updateGroupMessageDb(id, updates);
+  }
+
+  // ファイルシステムを使用する場合
   const messages = await getGroupMessages();
   const index = messages.findIndex(m => m.id === id);
   if (index === -1) return null;
@@ -1189,6 +1285,22 @@ export async function updateGroupMessage(id: string, updates: Partial<GroupMessa
 }
 
 export async function deleteGroupMessage(id: string): Promise<boolean> {
+  // Vercelの本番環境ではファイルシステムを使用できない（先にチェック）
+  const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
+  if (isVercelProduction) {
+    // 本番環境では必ずデータベースを使用
+    const { deleteGroupMessage: deleteGroupMessageDb } = await import('./storage-db');
+    return deleteGroupMessageDb(id);
+  }
+
+  // データベースが利用可能な場合はデータベースを使用
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { deleteGroupMessage: deleteGroupMessageDb } = await import('./storage-db');
+    return deleteGroupMessageDb(id);
+  }
+
+  // ファイルシステムを使用する場合
   const messages = await getGroupMessages();
   const filtered = messages.filter(m => m.id !== id);
   if (filtered.length === messages.length) return false;

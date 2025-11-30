@@ -1613,6 +1613,204 @@ export async function removeParticipantFromGroupChat(groupChatId: string, userId
   }
 }
 
-// 他の関数も同様に実装する必要がありますが、まずはユーザー関連、パスワードリセットトークン、投稿、メッセージ、会話、お知らせ、ブロックユーザー、グループチャットを完成させました
+// ==================== グループメッセージ管理 ====================
+
+export async function getGroupMessages(): Promise<GroupMessage[]> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        group_chat_id as "groupChatId",
+        user_id as "senderId",
+        sender_username as "senderUsername",
+        content,
+        read_by as "readBy",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM group_messages
+      ORDER BY created_at ASC
+    `);
+
+    return result.rows.map(row => ({
+      ...row,
+      readBy: row.readBy || [],
+      updatedAt: row.updatedAt || undefined,
+    })) as GroupMessage[];
+  } catch (error) {
+    console.error('Failed to get group messages from database:', error);
+    throw error;
+  }
+}
+
+export async function getGroupMessagesByGroupChatId(groupChatId: string): Promise<GroupMessage[]> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        group_chat_id as "groupChatId",
+        user_id as "senderId",
+        sender_username as "senderUsername",
+        content,
+        read_by as "readBy",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM group_messages
+      WHERE group_chat_id = $1
+      ORDER BY created_at ASC
+    `, [groupChatId]);
+
+    return result.rows.map(row => ({
+      ...row,
+      readBy: row.readBy || [],
+      updatedAt: row.updatedAt || undefined,
+    })) as GroupMessage[];
+  } catch (error) {
+    console.error('Failed to get group messages by group chat id from database:', error);
+    throw error;
+  }
+}
+
+export async function createGroupMessage(message: Omit<GroupMessage, 'id' | 'createdAt' | 'readBy'>): Promise<GroupMessage> {
+  try {
+    const id = Date.now().toString();
+    const now = new Date().toISOString();
+    const readBy = [message.senderId]; // 送信者は自動的に既読
+    
+    await pool.query(`
+      INSERT INTO group_messages (
+        id,
+        group_chat_id,
+        user_id,
+        sender_username,
+        content,
+        read_by,
+        created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `, [
+      id,
+      message.groupChatId,
+      message.senderId,
+      message.senderUsername,
+      message.content,
+      readBy,
+      now,
+    ]);
+
+    return {
+      ...message,
+      id,
+      readBy,
+      createdAt: now,
+    };
+  } catch (error) {
+    console.error('Failed to create group message in database:', error);
+    throw error;
+  }
+}
+
+export async function markGroupMessageAsRead(messageId: string, userId: string): Promise<void> {
+  try {
+    const message = await getGroupMessageById(messageId);
+    if (!message) return;
+    
+    if (message.readBy.includes(userId)) {
+      return; // 既に既読
+    }
+
+    const updatedReadBy = [...message.readBy, userId];
+    await pool.query(`
+      UPDATE group_messages
+      SET read_by = $1
+      WHERE id = $2
+    `, [updatedReadBy, messageId]);
+  } catch (error) {
+    console.error('Failed to mark group message as read in database:', error);
+    throw error;
+  }
+}
+
+export async function getGroupMessageById(id: string): Promise<GroupMessage | null> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        group_chat_id as "groupChatId",
+        user_id as "senderId",
+        sender_username as "senderUsername",
+        content,
+        read_by as "readBy",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM group_messages
+      WHERE id = $1
+    `, [id]);
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    const row = result.rows[0];
+    return {
+      ...row,
+      readBy: row.readBy || [],
+      updatedAt: row.updatedAt || undefined,
+    } as GroupMessage;
+  } catch (error) {
+    console.error('Failed to get group message by id from database:', error);
+    throw error;
+  }
+}
+
+export async function updateGroupMessage(id: string, updates: Partial<GroupMessage>): Promise<GroupMessage | null> {
+  try {
+    const updateFields: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    if (updates.content !== undefined) {
+      updateFields.push(`content = $${paramIndex++}`);
+      values.push(updates.content);
+    }
+    if (updates.readBy !== undefined) {
+      updateFields.push(`read_by = $${paramIndex++}`);
+      values.push(updates.readBy);
+    }
+
+    if (updateFields.length === 0) {
+      return await getGroupMessageById(id);
+    }
+
+    updateFields.push(`updated_at = $${paramIndex++}`);
+    values.push(new Date().toISOString());
+    values.push(id);
+
+    await pool.query(`
+      UPDATE group_messages
+      SET ${updateFields.join(', ')}
+      WHERE id = $${paramIndex}
+    `, values);
+
+    return await getGroupMessageById(id);
+  } catch (error) {
+    console.error('Failed to update group message in database:', error);
+    throw error;
+  }
+}
+
+export async function deleteGroupMessage(id: string): Promise<boolean> {
+  try {
+    const result = await pool.query(`
+      DELETE FROM group_messages
+      WHERE id = $1
+    `, [id]);
+
+    return result.rowCount !== null && result.rowCount > 0;
+  } catch (error) {
+    console.error('Failed to delete group message in database:', error);
+    throw error;
+  }
+}
+
+// 他の関数も同様に実装する必要がありますが、まずはユーザー関連、パスワードリセットトークン、投稿、メッセージ、会話、お知らせ、ブロックユーザー、グループチャット、グループメッセージを完成させました
 // 残りの関数（comments, feedback等）は後で追加します
 
