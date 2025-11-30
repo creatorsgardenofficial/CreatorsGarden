@@ -43,12 +43,13 @@ const getConnectionString = (): string | null => {
     process.env.POSTGRES_URL_NON_POOLING ||
     null;
 
-  // 接続文字列がPrisma Accelerateエンドポイントの場合は使用しない
+  // 接続文字列がPrisma Accelerateエンドポイントの場合は警告を出すが、使用を試みる
+  // 以前は動作していた可能性があるため、警告のみとする
   if (connectionString && isPrismaAccelerateEndpoint(connectionString)) {
-    console.error('❌ Connection string points to Prisma Accelerate endpoint (db.prisma.io)');
-    console.error('❌ Prisma Accelerate endpoints cannot be used with pg library directly');
-    console.error('❌ Please use POSTGRES_PRISMA_URL or POSTGRES_URL from Vercel Postgres instead');
-    connectionString = null;
+    console.warn('⚠️  Connection string points to Prisma Accelerate endpoint (db.prisma.io)');
+    console.warn('⚠️  Prisma Accelerate endpoints may not work with pg library directly');
+    console.warn('⚠️  If connection fails, please use POSTGRES_PRISMA_URL or POSTGRES_URL from Vercel Postgres instead');
+    // 警告を出すが、接続文字列は使用を試みる（以前は動作していた可能性があるため）
   }
 
   // PRISMA_DATABASE_URLがprisma+postgres://形式の場合は使用しない
