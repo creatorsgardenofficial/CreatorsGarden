@@ -523,7 +523,7 @@ export async function createPost(post: Omit<Post, 'id' | 'createdAt' | 'updatedA
         priorityDisplay,
         featuredDisplay,
         [],
-        post.urls || null,
+        post.urls ? JSON.stringify(post.urls) : null,
         now,
         now,
       ]);
@@ -607,7 +607,7 @@ export async function updatePost(id: string, updates: Partial<Post>): Promise<Po
         content,
         tags || [],
         status,
-        urls || null,
+        urls ? JSON.stringify(urls) : null,
         priorityDisplay,
         featuredDisplay,
         updatedAt,
