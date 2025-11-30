@@ -29,35 +29,52 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
   const [messageContent, setMessageContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newGroupName, setNewGroupName] = useState('');
-  const [newGroupDescription, setNewGroupDescription] = useState('');
-  // 一時保存された参加者を初期値として復元
-  const getInitialParticipants = (): { publicIds: string[]; users: User[] } => {
+  // 一時保存されたグループ作成フォームの状態を初期値として復元
+  const getInitialDraftState = (): {
+    groupName: string;
+    groupDescription: string;
+    publicIds: string[];
+    users: User[];
+  } => {
     if (typeof window === 'undefined') {
-      return { publicIds: [], users: [] };
+      return { groupName: '', groupDescription: '', publicIds: [], users: [] };
     }
     try {
-      const savedParticipants = localStorage.getItem('groupChatDraftParticipants');
-      if (savedParticipants) {
-        const parsed = JSON.parse(savedParticipants);
-        if (Array.isArray(parsed.publicIds) && Array.isArray(parsed.users)) {
-          console.log('✅ Restored participants from localStorage:', {
+      const savedDraft = localStorage.getItem('groupChatDraft');
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft);
+        if (
+          typeof parsed.groupName === 'string' &&
+          typeof parsed.groupDescription === 'string' &&
+          Array.isArray(parsed.publicIds) &&
+          Array.isArray(parsed.users)
+        ) {
+          console.log('✅ Restored group chat draft from localStorage:', {
+            groupName: parsed.groupName,
+            groupDescription: parsed.groupDescription,
             publicIds: parsed.publicIds,
             usersCount: parsed.users.length,
           });
-          return { publicIds: parsed.publicIds, users: parsed.users };
+          return {
+            groupName: parsed.groupName || '',
+            groupDescription: parsed.groupDescription || '',
+            publicIds: parsed.publicIds || [],
+            users: parsed.users || [],
+          };
         }
       }
     } catch (err) {
-      console.error('❌ Failed to load saved participants:', err);
+      console.error('❌ Failed to load saved draft:', err);
     }
-    return { publicIds: [], users: [] };
+    return { groupName: '', groupDescription: '', publicIds: [], users: [] };
   };
 
-  const initialParticipants = getInitialParticipants();
-  const [participantPublicIds, setParticipantPublicIds] = useState<string[]>(initialParticipants.publicIds);
-  const [participantUsers, setParticipantUsers] = useState<User[]>(initialParticipants.users); // 参加者のユーザー情報を保持
+  const initialDraftState = getInitialDraftState();
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newGroupName, setNewGroupName] = useState(initialDraftState.groupName);
+  const [newGroupDescription, setNewGroupDescription] = useState(initialDraftState.groupDescription);
+  const [participantPublicIds, setParticipantPublicIds] = useState<string[]>(initialDraftState.publicIds);
+  const [participantUsers, setParticipantUsers] = useState<User[]>(initialDraftState.users); // 参加者のユーザー情報を保持
   const [isRestored, setIsRestored] = useState(false); // 復元済みフラグ
   const [searchPublicId, setSearchPublicId] = useState('');
   const [searchedUser, setSearchedUser] = useState<User | null>(null);
@@ -111,27 +128,39 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
     setIsRestored(true);
   }, []);
 
-  // 参加者を一時保存（復元後のみ実行）
+  // グループ作成フォームの状態を一時保存（復元後のみ実行）
   useEffect(() => {
     if (!isRestored) return; // 復元前は保存しない
     
     try {
-      if (participantPublicIds.length > 0 || participantUsers.length > 0) {
+      // グループ名、説明、参加者のいずれかが入力されていれば保存
+      if (
+        newGroupName.trim() ||
+        newGroupDescription.trim() ||
+        participantPublicIds.length > 0 ||
+        participantUsers.length > 0
+      ) {
         const dataToSave = {
+          groupName: newGroupName,
+          groupDescription: newGroupDescription,
           publicIds: participantPublicIds,
           users: participantUsers,
         };
-        localStorage.setItem('groupChatDraftParticipants', JSON.stringify(dataToSave));
-        console.log('💾 Saved participants to localStorage:', {
+        localStorage.setItem('groupChatDraft', JSON.stringify(dataToSave));
+        console.log('💾 Saved group chat draft to localStorage:', {
+          groupName: newGroupName,
+          groupDescription: newGroupDescription,
           publicIds: participantPublicIds,
           usersCount: participantUsers.length,
         });
+      } else {
+        // 全て空の場合は保存データもクリア（グループ作成成功時にもクリアされる）
+        localStorage.removeItem('groupChatDraft');
       }
-      // 参加者が空の場合は保存データもクリアしない（グループ作成成功時にのみ削除）
     } catch (err) {
-      console.error('❌ Failed to save participants:', err);
+      console.error('❌ Failed to save draft:', err);
     }
-  }, [participantPublicIds, participantUsers, isRestored]);
+  }, [newGroupName, newGroupDescription, participantPublicIds, participantUsers, isRestored]);
 
   // 初期データ取得
   useEffect(() => {
@@ -288,9 +317,9 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
         setSearchedUser(null);
         // 一時保存データをクリア
         try {
-          localStorage.removeItem('groupChatDraftParticipants');
+          localStorage.removeItem('groupChatDraft');
         } catch (err) {
-          console.error('Failed to clear saved participants:', err);
+          console.error('Failed to clear saved draft:', err);
         }
         // 作成したグループチャットを選択
         const updated = await fetch('/api/group-chats').then(r => r.json());
