@@ -134,18 +134,24 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
   useEffect(() => {
     if (messages.length > 0) {
       // DOM更新を待ってからスクロール位置をチェック
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
+        const container = messagesContainerRef.current;
+        if (!container) return;
+        
         const isNearBottom = checkScrollPosition();
         
         // 自動スクロールが必要で、かつ一番下にいる場合のみスクロール
-        // または、ユーザーが手動でスクロールしていない場合（チャット画面を開いた時など）
+        // ユーザーが手動でスクロールしていない場合（チャット画面を開いた時など）
         if (shouldAutoScroll && isNearBottom && !isUserScrollingRef.current) {
           scrollToBottom();
         } else if (!isNearBottom) {
-          // 一番下にいない場合は自動スクロールを無効化
+          // 一番下にいない場合は自動スクロールを無効化（過去のメッセージを見ている時）
           setShouldAutoScroll(false);
+          isUserScrollingRef.current = true;
         }
       }, 150);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [messages, shouldAutoScroll, checkScrollPosition]);
 
