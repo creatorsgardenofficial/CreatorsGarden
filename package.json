@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:schema": "node scripts/run-schema.js",
+    "db:migrate": "node scripts/run-migration.js scripts/migrate-group-chats.sql",
     "create-admin": "node scripts/create-admin-user.js"
   },
   "dependencies": {
