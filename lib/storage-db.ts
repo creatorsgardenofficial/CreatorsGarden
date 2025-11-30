@@ -841,6 +841,223 @@ export async function deleteMessage(id: string): Promise<boolean> {
   }
 }
 
-// 他の関数も同様に実装する必要がありますが、まずはユーザー関連、パスワードリセットトークン、投稿、メッセージを完成させます
-// 残りの関数（comments, feedback, conversations等）は後で追加します
+// ==================== 会話管理 ====================
+
+export async function getConversations(): Promise<Conversation[]> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        c.id,
+        c.user1_id as "user1Id",
+        c.user2_id as "user2Id",
+        c.created_at as "createdAt",
+        c.updated_at as "updatedAt",
+        (
+          SELECT id
+          FROM messages
+          WHERE conversation_id = c.id
+          ORDER BY created_at DESC
+          LIMIT 1
+        ) as "lastMessageId",
+        (
+          SELECT created_at
+          FROM messages
+          WHERE conversation_id = c.id
+          ORDER BY created_at DESC
+          LIMIT 1
+        ) as "lastMessageAt"
+      FROM conversations c
+      ORDER BY c.updated_at DESC
+    `);
+    
+    return result.rows.map(row => ({
+      id: row.id,
+      participantIds: [row.user1Id, row.user2Id].sort(),
+      lastMessageId: row.lastMessageId || undefined,
+      lastMessageAt: row.lastMessageAt || undefined,
+      createdAt: row.createdAt,
+    })) as Conversation[];
+  } catch (error) {
+    console.error('Failed to get conversations from database:', error);
+    throw error;
+  }
+}
+
+export async function getConversationByParticipants(userId1: string, userId2: string): Promise<Conversation | null> {
+  try {
+    // 順序を問わず検索するため、両方の順序で試す
+    const result = await pool.query(`
+      SELECT
+        c.id,
+        c.user1_id as "user1Id",
+        c.user2_id as "user2Id",
+        c.created_at as "createdAt",
+        c.updated_at as "updatedAt",
+        (
+          SELECT id
+          FROM messages
+          WHERE conversation_id = c.id
+          ORDER BY created_at DESC
+          LIMIT 1
+        ) as "lastMessageId",
+        (
+          SELECT created_at
+          FROM messages
+          WHERE conversation_id = c.id
+          ORDER BY created_at DESC
+          LIMIT 1
+        ) as "lastMessageAt"
+      FROM conversations c
+      WHERE (c.user1_id = $1 AND c.user2_id = $2)
+         OR (c.user1_id = $2 AND c.user2_id = $1)
+      LIMIT 1
+    `, [userId1, userId2]);
+    
+    if (result.rows.length === 0) return null;
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      participantIds: [row.user1Id, row.user2Id].sort(),
+      lastMessageId: row.lastMessageId || undefined,
+      lastMessageAt: row.lastMessageAt || undefined,
+      createdAt: row.createdAt,
+    } as Conversation;
+  } catch (error) {
+    console.error('Failed to get conversation by participants from database:', error);
+    throw error;
+  }
+}
+
+export async function getConversationsByUserId(userId: string): Promise<Conversation[]> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        c.id,
+        c.user1_id as "user1Id",
+        c.user2_id as "user2Id",
+        c.created_at as "createdAt",
+        c.updated_at as "updatedAt",
+        (
+          SELECT id
+          FROM messages
+          WHERE conversation_id = c.id
+          ORDER BY created_at DESC
+          LIMIT 1
+        ) as "lastMessageId",
+        (
+          SELECT created_at
+          FROM messages
+          WHERE conversation_id = c.id
+          ORDER BY created_at DESC
+          LIMIT 1
+        ) as "lastMessageAt"
+      FROM conversations c
+      WHERE c.user1_id = $1 OR c.user2_id = $1
+      ORDER BY COALESCE((
+        SELECT created_at
+        FROM messages
+        WHERE conversation_id = c.id
+        ORDER BY created_at DESC
+        LIMIT 1
+      ), c.updated_at) DESC
+    `, [userId]);
+    
+    return result.rows.map(row => ({
+      id: row.id,
+      participantIds: [row.user1Id, row.user2Id].sort(),
+      lastMessageId: row.lastMessageId || undefined,
+      lastMessageAt: row.lastMessageAt || undefined,
+      createdAt: row.createdAt,
+    })) as Conversation[];
+  } catch (error) {
+    console.error('Failed to get conversations by user id from database:', error);
+    throw error;
+  }
+}
+
+export async function createConversation(participantIds: [string, string]): Promise<Conversation> {
+  try {
+    const id = Date.now().toString();
+    const now = new Date().toISOString();
+    const sortedIds = participantIds.sort();
+    
+    await pool.query(`
+      INSERT INTO conversations (id, user1_id, user2_id, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (user1_id, user2_id) DO NOTHING
+    `, [id, sortedIds[0], sortedIds[1], now, now]);
+    
+    // 既存の会話を取得（ON CONFLICTで挿入されなかった場合）
+    const existing = await getConversationByParticipants(sortedIds[0], sortedIds[1]);
+    if (existing) {
+      return existing;
+    }
+    
+    return {
+      id,
+      participantIds: sortedIds,
+      createdAt: now,
+    };
+  } catch (error) {
+    console.error('Failed to create conversation in database:', error);
+    throw error;
+  }
+}
+
+export async function updateConversation(conversationId: string, updates: Partial<Conversation>): Promise<Conversation | null> {
+  try {
+    // 会話の更新（主にupdated_atを更新）
+    const updatedAt = new Date().toISOString();
+    await pool.query(`
+      UPDATE conversations
+      SET updated_at = $1
+      WHERE id = $2
+    `, [updatedAt, conversationId]);
+    
+    // 更新後の会話を取得
+    const result = await pool.query(`
+      SELECT
+        c.id,
+        c.user1_id as "user1Id",
+        c.user2_id as "user2Id",
+        c.created_at as "createdAt",
+        c.updated_at as "updatedAt",
+        (
+          SELECT id
+          FROM messages
+          WHERE conversation_id = c.id
+          ORDER BY created_at DESC
+          LIMIT 1
+        ) as "lastMessageId",
+        (
+          SELECT created_at
+          FROM messages
+          WHERE conversation_id = c.id
+          ORDER BY created_at DESC
+          LIMIT 1
+        ) as "lastMessageAt"
+      FROM conversations c
+      WHERE c.id = $1
+      LIMIT 1
+    `, [conversationId]);
+    
+    if (result.rows.length === 0) return null;
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      participantIds: [row.user1Id, row.user2Id].sort(),
+      lastMessageId: row.lastMessageId || undefined,
+      lastMessageAt: row.lastMessageAt || undefined,
+      createdAt: row.createdAt,
+    } as Conversation;
+  } catch (error) {
+    console.error('Failed to update conversation in database:', error);
+    throw error;
+  }
+}
+
+// 他の関数も同様に実装する必要がありますが、まずはユーザー関連、パスワードリセットトークン、投稿、メッセージ、会話を完成させます
+// 残りの関数（comments, feedback等）は後で追加します
 
