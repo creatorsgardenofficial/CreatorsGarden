@@ -38,7 +38,10 @@ export async function GET(request: NextRequest) {
       
       for (const gc of groupChats) {
         const messages = await getGroupMessagesByGroupChatId(gc.id);
-        const unreadMessages = messages.filter(m => !m.readBy.includes(userId!));
+        // 送信者自身が送信したメッセージは未読数から除外
+        const unreadMessages = messages.filter(m => 
+          m.senderId !== userId && !m.readBy.includes(userId!)
+        );
         totalUnreadCount += unreadMessages.length;
       }
       
@@ -82,7 +85,10 @@ export async function GET(request: NextRequest) {
       groupChats.map(async (gc) => {
         const messages = await getGroupMessagesByGroupChatId(gc.id);
         const lastMessage = messages[messages.length - 1];
-        const unreadCount = messages.filter(m => !m.readBy.includes(userId!)).length;
+        // 送信者自身が送信したメッセージは未読数から除外
+        const unreadCount = messages.filter(m => 
+          m.senderId !== userId && !m.readBy.includes(userId!)
+        ).length;
         
         // 参加者情報を取得
         const participants = await Promise.all(
