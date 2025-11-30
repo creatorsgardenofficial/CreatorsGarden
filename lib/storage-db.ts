@@ -1058,6 +1058,223 @@ export async function updateConversation(conversationId: string, updates: Partia
   }
 }
 
-// 他の関数も同様に実装する必要がありますが、まずはユーザー関連、パスワードリセットトークン、投稿、メッセージ、会話を完成させます
+// ==================== お知らせ管理 ====================
+
+export async function getAnnouncements(): Promise<Announcement[]> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        title,
+        content,
+        type,
+        is_visible as "isVisible",
+        published_at as "publishedAt",
+        expires_at as "expiresAt",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM announcements
+      ORDER BY created_at DESC
+    `);
+    
+    return result.rows.map(row => ({
+      id: row.id,
+      title: row.title,
+      content: row.content,
+      type: row.type,
+      isVisible: row.isVisible !== undefined ? row.isVisible : true,
+      publishedAt: row.publishedAt || undefined,
+      expiresAt: row.expiresAt || undefined,
+      createdBy: '', // スキーマにcreated_byカラムがないため、空文字列
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    })) as Announcement[];
+  } catch (error) {
+    console.error('Failed to get announcements from database:', error);
+    throw error;
+  }
+}
+
+export async function getVisibleAnnouncements(): Promise<Announcement[]> {
+  try {
+    const now = new Date().toISOString();
+    const result = await pool.query(`
+      SELECT
+        id,
+        title,
+        content,
+        type,
+        is_visible as "isVisible",
+        published_at as "publishedAt",
+        expires_at as "expiresAt",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM announcements
+      WHERE is_visible = true
+        AND (published_at IS NULL OR published_at <= $1)
+        AND (expires_at IS NULL OR expires_at >= $1)
+      ORDER BY COALESCE(published_at, created_at) DESC
+    `, [now]);
+    
+    return result.rows.map(row => ({
+      id: row.id,
+      title: row.title,
+      content: row.content,
+      type: row.type,
+      isVisible: row.isVisible !== undefined ? row.isVisible : true,
+      publishedAt: row.publishedAt || undefined,
+      expiresAt: row.expiresAt || undefined,
+      createdBy: '', // スキーマにcreated_byカラムがないため、空文字列
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    })) as Announcement[];
+  } catch (error) {
+    console.error('Failed to get visible announcements from database:', error);
+    throw error;
+  }
+}
+
+export async function getAnnouncementById(id: string): Promise<Announcement | null> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        title,
+        content,
+        type,
+        is_visible as "isVisible",
+        published_at as "publishedAt",
+        expires_at as "expiresAt",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM announcements
+      WHERE id = $1
+      LIMIT 1
+    `, [id]);
+    
+    if (result.rows.length === 0) return null;
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      title: row.title,
+      content: row.content,
+      type: row.type,
+      isVisible: row.isVisible !== undefined ? row.isVisible : true,
+      publishedAt: row.publishedAt || undefined,
+      expiresAt: row.expiresAt || undefined,
+      createdBy: '', // スキーマにcreated_byカラムがないため、空文字列
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    } as Announcement;
+  } catch (error) {
+    console.error('Failed to get announcement by id from database:', error);
+    throw error;
+  }
+}
+
+export async function createAnnouncement(announcement: Omit<Announcement, 'id' | 'createdAt' | 'updatedAt'>): Promise<Announcement> {
+  try {
+    const id = Date.now().toString();
+    const now = new Date().toISOString();
+    
+    await pool.query(`
+      INSERT INTO announcements (
+        id, title, content, type, is_visible, published_at, expires_at, created_at, updated_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9
+      )
+    `, [
+      id,
+      announcement.title,
+      announcement.content,
+      announcement.type || 'info',
+      announcement.isVisible !== undefined ? announcement.isVisible : true,
+      announcement.publishedAt || null,
+      announcement.expiresAt || null,
+      now,
+      now,
+    ]);
+    
+    return {
+      ...announcement,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    } as Announcement;
+  } catch (error) {
+    console.error('Failed to create announcement in database:', error);
+    throw error;
+  }
+}
+
+export async function updateAnnouncement(id: string, updates: Partial<Announcement>): Promise<Announcement | null> {
+  try {
+    const updateFields: string[] = [];
+    const updateValues: any[] = [];
+    let paramIndex = 1;
+    
+    if (updates.title !== undefined) {
+      updateFields.push(`title = $${paramIndex++}`);
+      updateValues.push(updates.title);
+    }
+    if (updates.content !== undefined) {
+      updateFields.push(`content = $${paramIndex++}`);
+      updateValues.push(updates.content);
+    }
+    if (updates.type !== undefined) {
+      updateFields.push(`type = $${paramIndex++}`);
+      updateValues.push(updates.type);
+    }
+    if (updates.isVisible !== undefined) {
+      updateFields.push(`is_visible = $${paramIndex++}`);
+      updateValues.push(updates.isVisible);
+    }
+    if (updates.publishedAt !== undefined) {
+      updateFields.push(`published_at = $${paramIndex++}`);
+      updateValues.push(updates.publishedAt || null);
+    }
+    if (updates.expiresAt !== undefined) {
+      updateFields.push(`expires_at = $${paramIndex++}`);
+      updateValues.push(updates.expiresAt || null);
+    }
+    
+    updateFields.push(`updated_at = $${paramIndex++}`);
+    updateValues.push(new Date().toISOString());
+    updateValues.push(id);
+    
+    if (updateFields.length === 1) {
+      // updated_at のみの場合は何も更新しない
+      return getAnnouncementById(id);
+    }
+    
+    await pool.query(`
+      UPDATE announcements
+      SET ${updateFields.join(', ')}
+      WHERE id = $${paramIndex}
+    `, updateValues);
+    
+    return getAnnouncementById(id);
+  } catch (error) {
+    console.error('Failed to update announcement in database:', error);
+    throw error;
+  }
+}
+
+export async function deleteAnnouncement(id: string): Promise<boolean> {
+  try {
+    const result = await pool.query(`
+      DELETE FROM announcements
+      WHERE id = $1
+    `, [id]);
+    
+    return result.rowCount !== null && result.rowCount > 0;
+  } catch (error) {
+    console.error('Failed to delete announcement in database:', error);
+    throw error;
+  }
+}
+
+// 他の関数も同様に実装する必要がありますが、まずはユーザー関連、パスワードリセットトークン、投稿、メッセージ、会話、お知らせを完成させます
 // 残りの関数（comments, feedback等）は後で追加します
 
