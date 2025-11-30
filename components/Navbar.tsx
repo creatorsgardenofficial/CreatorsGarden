@@ -81,56 +81,11 @@ export default function Navbar() {
   };
 
   // 未読メッセージ数を取得（DMチャット + グループチャット）
+  // 通知機能を無効化: 常に0を返す
   const fetchUnreadCount = useCallback(async () => {
-    if (!user) return;
-    try {
-      // DMチャットの会話一覧を取得
-      const dmRes = await fetch('/api/messages');
-      const dmData = await dmRes.json();
-      const dmViewedData = localStorage.getItem('dmChatViewed');
-      const dmViewed = dmViewedData ? JSON.parse(dmViewedData) : {};
-      
-      let dmUnreadCount = 0;
-      if (dmRes.ok && dmData.conversations) {
-        // ローカルの実装に合わせて、APIから返されるunreadCountをそのまま使用
-        // APIから返されるunreadCountは既にreadフラグに基づいて計算されているため、そのまま使用
-        for (const conv of dmData.conversations) {
-          // 自分が送信したメッセージは通知対象外（senderIdが存在する場合のみチェック）
-          if (conv.lastMessage && conv.lastMessage.senderId && conv.lastMessage.senderId === user.id) {
-            continue;
-          }
-          dmUnreadCount += conv.unreadCount || 0;
-        }
-      }
-      
-      // グループチャットの一覧を取得
-      const groupRes = await fetch('/api/group-chats');
-      const groupData = await groupRes.json();
-      
-      let groupUnreadCount = 0;
-      if (groupRes.ok && groupData.groupChats) {
-        // ローカルの実装に合わせて、APIから返されるunreadCountをそのまま使用
-        // APIから返されるunreadCountは既にreadByフィールドに基づいて計算されているため、そのまま使用
-        for (const gc of groupData.groupChats) {
-          // 自分が送信したメッセージは通知対象外（senderIdが存在する場合のみチェック）
-          if (gc.lastMessage && gc.lastMessage.senderId && gc.lastMessage.senderId === user.id) {
-            continue;
-          }
-          // unreadCountが0より大きい場合のみカウント（既読のメッセージは除外済み）
-          if (gc.unreadCount > 0) {
-            console.log(`[Navbar] Group ${gc.id} has unreadCount: ${gc.unreadCount}`);
-            groupUnreadCount += gc.unreadCount;
-          }
-        }
-      }
-      
-      console.log(`[Navbar] Total unread count: DM=${dmUnreadCount}, Group=${groupUnreadCount}, Total=${dmUnreadCount + groupUnreadCount}`);
-      
-      setUnreadCount(dmUnreadCount + groupUnreadCount);
-    } catch (err) {
-      // エラーは静かに無視
-    }
-  }, [user]);
+    // 通知機能を無効化: 常に0を設定
+    setUnreadCount(0);
+  }, []);
 
   // ご意見箱の通知数を取得
   const fetchFeedbackNotificationCount = async () => {
@@ -456,7 +411,8 @@ export default function Navbar() {
                   <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
-                  {unreadCount > 0 && (
+                  {/* 通知機能を無効化: 通知バッジを非表示 */}
+                  {false && unreadCount > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
@@ -599,7 +555,8 @@ export default function Navbar() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                       </svg>
                       メッセージ
-                      {unreadCount > 0 && (
+                      {/* 通知機能を無効化: 通知バッジを非表示 */}
+                      {false && unreadCount > 0 && (
                         <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-0.5">
                           {unreadCount > 9 ? '9+' : unreadCount}
                         </span>

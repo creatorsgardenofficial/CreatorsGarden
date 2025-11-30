@@ -647,7 +647,8 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
                           >
                             {conv.otherUser?.username || 'ユーザー'}
                           </Link>
-                          {conv.unreadCount > 0 && (
+                          {/* 通知機能を無効化: 通知バッジを非表示 */}
+                          {false && conv.unreadCount > 0 && (
                             <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1">
                               {conv.unreadCount}
                             </span>
