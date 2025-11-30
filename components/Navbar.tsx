@@ -136,23 +136,21 @@ export default function Navbar() {
               continue;
             }
             const messageTime = new Date(gc.lastMessage.createdAt).getTime();
-            // 確認済みタイムスタンプ以降のメッセージがある場合のみ未読としてカウント
-            if (lastViewedTime > 0 && messageTime <= lastViewedTime) {
-              // 確認済みタイムスタンプ以前のメッセージは既読として扱う（未読数は0）
-              continue;
-            }
-            // 確認済みタイムスタンプがない場合、または確認済みタイムスタンプ以降のメッセージがある場合
-            if (lastViewedTime === 0) {
+            
+            // 確認済みタイムスタンプが設定されている場合
+            if (lastViewedTime > 0) {
+              // 確認済みタイムスタンプ以降のメッセージがある場合のみ未読としてカウント
+              if (messageTime > lastViewedTime) {
+                // 確認済みタイムスタンプ以降のメッセージがある場合のみカウント
+                // APIから返されるunreadCountは確認済みタイムスタンプを考慮していないため、
+                // 確認済みタイムスタンプ以降のメッセージがある場合のみカウント
+                groupUnreadCount += gc.unreadCount;
+              }
+              // 確認済みタイムスタンプ以前のメッセージのみの場合は未読数0（既に確認済み）
+            } else {
               // 確認済みタイムスタンプがない場合は、APIから返される未読数をそのまま使用
               groupUnreadCount += gc.unreadCount;
-            } else if (messageTime > lastViewedTime) {
-              // 確認済みタイムスタンプ以降のメッセージがある場合のみ未読としてカウント
-              // APIから返されるunreadCountは確認済みタイムスタンプを考慮していないため、
-              // 確認済みタイムスタンプ以降のメッセージがある場合のみカウント
-              // 実際の未読数は、確認済みタイムスタンプ以降のメッセージのみ
-              groupUnreadCount += gc.unreadCount;
             }
-            // 確認済みタイムスタンプ以前のメッセージのみの場合は未読数0（既に確認済み）
           } else if (lastViewedTime === 0 && gc.unreadCount > 0) {
             // 確認済みタイムスタンプがなく、未読メッセージがある場合
             groupUnreadCount += gc.unreadCount;
