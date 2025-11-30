@@ -396,6 +396,7 @@ export async function getPosts(): Promise<Post[]> {
         p.priority_display as "priorityDisplay",
         p.featured_display as "featuredDisplay",
         p.likes,
+        p.urls,
         p.created_at as "createdAt",
         p.updated_at as "updatedAt",
         p.is_deleted as "isDeleted"
@@ -418,10 +419,9 @@ export async function getPosts(): Promise<Post[]> {
       priorityDisplay: row.priorityDisplay || false,
       featuredDisplay: row.featuredDisplay || false,
       likes: row.likes || [],
+      urls: row.urls || undefined,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
-      // url と urls はスキーマにないため、一旦 undefined
-      // 必要に応じてスキーマを拡張する
     })) as Post[];
   } catch (error) {
     console.error('Failed to get posts from database:', error);
@@ -445,6 +445,7 @@ export async function getPostById(id: string): Promise<Post | null> {
         p.priority_display as "priorityDisplay",
         p.featured_display as "featuredDisplay",
         p.likes,
+        p.urls,
         p.created_at as "createdAt",
         p.updated_at as "updatedAt",
         p.is_deleted as "isDeleted"
@@ -470,6 +471,7 @@ export async function getPostById(id: string): Promise<Post | null> {
       priorityDisplay: row.priorityDisplay || false,
       featuredDisplay: row.featuredDisplay || false,
       likes: row.likes || [],
+      urls: row.urls || undefined,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     } as Post;
@@ -494,9 +496,9 @@ export async function createPost(post: Omit<Post, 'id' | 'createdAt' | 'updatedA
     await pool.query(`
       INSERT INTO posts (
         id, user_id, type, title, content, tags, status,
-        priority_display, featured_display, likes, created_at, updated_at
+        priority_display, featured_display, likes, urls, created_at, updated_at
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
       )
     `, [
       id,
@@ -509,6 +511,7 @@ export async function createPost(post: Omit<Post, 'id' | 'createdAt' | 'updatedA
       priorityDisplay,
       featuredDisplay,
       [],
+      post.urls || null,
       now,
       now,
     ]);
@@ -545,6 +548,7 @@ export async function updatePost(id: string, updates: Partial<Post>): Promise<Po
     const content = updates.content !== undefined ? updates.content : existingPost.content;
     const tags = updates.tags !== undefined ? updates.tags : existingPost.tags;
     const status = updates.status !== undefined ? updates.status : existingPost.status;
+    const urls = updates.urls !== undefined ? updates.urls : existingPost.urls;
     const updatedAt = new Date().toISOString();
     
     await pool.query(`
@@ -554,15 +558,17 @@ export async function updatePost(id: string, updates: Partial<Post>): Promise<Po
         content = $2,
         tags = $3,
         status = $4,
-        priority_display = $5,
-        featured_display = $6,
-        updated_at = $7
-      WHERE id = $8
+        urls = $5,
+        priority_display = $6,
+        featured_display = $7,
+        updated_at = $8
+      WHERE id = $9
     `, [
       title,
       content,
       tags || [],
       status,
+      urls || null,
       priorityDisplay,
       featuredDisplay,
       updatedAt,

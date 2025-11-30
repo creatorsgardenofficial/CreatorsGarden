@@ -93,27 +93,39 @@ export default function Navbar() {
       let dmUnreadCount = 0;
       if (dmRes.ok && dmData.conversations) {
         for (const conv of dmData.conversations) {
-          // 未読数が0の場合はスキップ
-          if (conv.unreadCount === 0) {
-            continue;
-          }
-          
           const lastViewedTime = dmViewed[conv.id] ? new Date(dmViewed[conv.id]).getTime() : 0;
           
-          // 確認済みタイムスタンプがない場合、または確認済みタイムスタンプ以降のメッセージがある場合
-          if (conv.lastMessage) {
+          // 確認済みタイムスタンプが設定されている場合、その時点以降のメッセージのみを未読としてカウント
+          if (lastViewedTime > 0 && conv.lastMessage) {
             // 自分が送信したメッセージは通知対象外（senderIdが存在する場合のみチェック）
             if (conv.lastMessage.senderId && conv.lastMessage.senderId === user.id) {
               continue;
             }
             const messageTime = new Date(conv.lastMessage.createdAt).getTime();
-            if (lastViewedTime === 0 || messageTime > lastViewedTime) {
-              // 確認済みタイムスタンプ以降の未読メッセージ数をカウント
+            // 確認済みタイムスタンプ以降のメッセージがある場合のみカウント
+            if (messageTime > lastViewedTime) {
+              // 確認済みタイムスタンプ以降のメッセージがある場合のみカウント
+              // ただし、APIから返されるunreadCountは確認済みタイムスタンプを考慮していないため、
+              // 確認済みタイムスタンプ以降のメッセージがある場合のみカウント
+              // しかし、正確な未読数を計算するには、各メッセージの時刻を確認する必要があるため、
+              // ここでは未読数が0より大きい場合のみカウント（確認済みタイムスタンプ以降のメッセージがある可能性がある）
+              if (conv.unreadCount > 0) {
+                dmUnreadCount += conv.unreadCount;
+              }
+            }
+            // 確認済みタイムスタンプ以前のメッセージのみの場合は未読数0（既に確認済み）
+          } else if (lastViewedTime === 0) {
+            // 確認済みタイムスタンプがない場合
+            if (conv.lastMessage) {
+              // 自分が送信したメッセージは通知対象外（senderIdが存在する場合のみチェック）
+              if (conv.lastMessage.senderId && conv.lastMessage.senderId === user.id) {
+                continue;
+              }
+            }
+            // 確認済みタイムスタンプがない場合は、APIから返される未読数をそのまま使用
+            if (conv.unreadCount > 0) {
               dmUnreadCount += conv.unreadCount;
             }
-          } else if (lastViewedTime === 0) {
-            // 確認済みタイムスタンプがなく、未読メッセージがある場合
-            dmUnreadCount += conv.unreadCount;
           }
         }
       }
@@ -129,36 +141,37 @@ export default function Navbar() {
         for (const gc of groupData.groupChats) {
           const lastViewedTime = groupViewed[gc.id] ? new Date(groupViewed[gc.id]).getTime() : 0;
           
-          // 未読数が0の場合はスキップ
-          if (gc.unreadCount === 0) {
-            continue;
-          }
-          
-          // 確認済みタイムスタンプがある場合、その時点以降のメッセージのみを未読としてカウント
-          if (gc.lastMessage) {
+          // 確認済みタイムスタンプが設定されている場合、その時点以降のメッセージのみを未読としてカウント
+          if (lastViewedTime > 0 && gc.lastMessage) {
             // 自分が送信したメッセージは通知対象外（senderIdが存在する場合のみチェック）
             if (gc.lastMessage.senderId && gc.lastMessage.senderId === user.id) {
               continue;
             }
             const messageTime = new Date(gc.lastMessage.createdAt).getTime();
-            
-            // 確認済みタイムスタンプが設定されている場合
-            if (lastViewedTime > 0) {
-              // 確認済みタイムスタンプ以降のメッセージがある場合のみ未読としてカウント
-              if (messageTime > lastViewedTime) {
-                // 確認済みタイムスタンプ以降のメッセージがある場合のみカウント
-                // APIから返されるunreadCountは確認済みタイムスタンプを考慮していないため、
-                // 確認済みタイムスタンプ以降のメッセージがある場合のみカウント
+            // 確認済みタイムスタンプ以降のメッセージがある場合のみカウント
+            if (messageTime > lastViewedTime) {
+              // 確認済みタイムスタンプ以降のメッセージがある場合のみカウント
+              // ただし、APIから返されるunreadCountは確認済みタイムスタンプを考慮していないため、
+              // 確認済みタイムスタンプ以降のメッセージがある場合のみカウント
+              // しかし、正確な未読数を計算するには、各メッセージの時刻を確認する必要があるため、
+              // ここでは未読数が0より大きい場合のみカウント（確認済みタイムスタンプ以降のメッセージがある可能性がある）
+              if (gc.unreadCount > 0) {
                 groupUnreadCount += gc.unreadCount;
               }
-              // 確認済みタイムスタンプ以前のメッセージのみの場合は未読数0（既に確認済み）
-            } else {
-              // 確認済みタイムスタンプがない場合は、APIから返される未読数をそのまま使用
+            }
+            // 確認済みタイムスタンプ以前のメッセージのみの場合は未読数0（既に確認済み）
+          } else if (lastViewedTime === 0) {
+            // 確認済みタイムスタンプがない場合
+            if (gc.lastMessage) {
+              // 自分が送信したメッセージは通知対象外（senderIdが存在する場合のみチェック）
+              if (gc.lastMessage.senderId && gc.lastMessage.senderId === user.id) {
+                continue;
+              }
+            }
+            // 確認済みタイムスタンプがない場合は、APIから返される未読数をそのまま使用
+            if (gc.unreadCount > 0) {
               groupUnreadCount += gc.unreadCount;
             }
-          } else if (lastViewedTime === 0 && gc.unreadCount > 0) {
-            // 確認済みタイムスタンプがなく、未読メッセージがある場合
-            groupUnreadCount += gc.unreadCount;
           }
           // 確認済みタイムスタンプがあり、lastMessageがない場合は未読数0（既に確認済み）
         }
