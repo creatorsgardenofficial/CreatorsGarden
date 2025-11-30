@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
         }
       } else if (process.env.VERCEL) {
         // Vercel環境だがVERCEL_URLがない場合（通常はないが念のため）
-        baseUrl = 'https://creatorsgarden.vercel.app';
+        baseUrl = 'https://creators-garden-app.vercel.app';
         if (isVercelProduction) {
           console.log('  Using fallback Vercel URL:', baseUrl);
         }
