@@ -100,6 +100,8 @@ export async function GET(request: NextRequest) {
           // ローカルの実装に合わせて、すべての未読メッセージを既読にする
           const readPromises = messagesToMarkAsRead.map(m => markGroupMessageAsRead(m.id, userId!));
           await Promise.all(readPromises);
+          // 既読処理が完了するまで少し待つ（データベースへの反映を待つ）
+          await new Promise(resolve => setTimeout(resolve, 300));
         }
       }
       

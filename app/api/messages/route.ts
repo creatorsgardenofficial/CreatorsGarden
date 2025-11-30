@@ -41,7 +41,11 @@ export async function GET(request: NextRequest) {
       const messages = await getMessagesByConversationId(conversationId);
       
       // メッセージを取得したら既読にする（チャット画面を開いた時に既読データを登録）
+      // ローカルの実装に合わせて、すべての未読メッセージを既読にする
       await markMessagesAsRead(conversationId, userId!);
+      
+      // 既読処理が完了するまで少し待つ（データベースへの反映を待つ）
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       // 既読処理後にメッセージを再取得して最新のreadフラグを反映
       const updatedMessages = await getMessagesByConversationId(conversationId);

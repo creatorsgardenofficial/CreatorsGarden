@@ -204,6 +204,7 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
     
     // ローカルの実装に合わせて、既読処理が完了したら一覧を更新
     // 既読処理はAPI側で実行されるため、少し待ってから一覧を更新
+    // API側で300ms待機 + フロントエンドで500ms待機 = 合計800ms待機
     await new Promise(resolve => setTimeout(resolve, 500));
     await fetchConversations();
     
