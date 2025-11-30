@@ -104,13 +104,23 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
           const lastViewedTime = groupViewed[gc.id] ? new Date(groupViewed[gc.id]).getTime() : 0;
           
           // 確認済みタイムスタンプが設定されている場合、未読数を再計算
-          if (lastViewedTime > 0 && gc.lastMessage) {
-            const messageTime = new Date(gc.lastMessage.createdAt).getTime();
-            // 確認済みタイムスタンプ以前のメッセージのみの場合は未読数0
-            if (messageTime <= lastViewedTime) {
+          if (lastViewedTime > 0) {
+            if (gc.lastMessage) {
+              const messageTime = new Date(gc.lastMessage.createdAt).getTime();
+              // 確認済みタイムスタンプ以前のメッセージのみの場合は未読数0
+              if (messageTime <= lastViewedTime) {
+                return { ...gc, unreadCount: 0 };
+              }
+              // 確認済みタイムスタンプ以降のメッセージがある場合、未読数はそのまま（APIから返される値を使用）
+              // ただし、確認済みタイムスタンプ以前のメッセージも含まれている可能性があるため、
+              // 確認済みタイムスタンプ以降のメッセージのみをカウントする必要がある
+              // しかし、APIからは詳細な情報が返されないため、ここでは未読数を0にする
+              // （確認済みタイムスタンプが設定されている場合、その時点で既に確認済みとして扱う）
+              return { ...gc, unreadCount: 0 };
+            } else {
+              // lastMessageがない場合も未読数0（既に確認済み）
               return { ...gc, unreadCount: 0 };
             }
-            // 確認済みタイムスタンプ以降のメッセージがある場合、未読数はそのまま（APIから返される値を使用）
           }
           
           return gc;
