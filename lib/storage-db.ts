@@ -378,6 +378,315 @@ export async function deleteExpiredPasswordResetTokens(): Promise<void> {
   }
 }
 
-// 他の関数も同様に実装する必要がありますが、まずはユーザー関連とパスワードリセットトークンを完成させます
-// 残りの関数（posts, comments, feedback等）は後で追加します
+// ==================== 投稿管理 ====================
+
+export async function getPosts(): Promise<Post[]> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        p.id,
+        p.user_id as "userId",
+        u.username,
+        u.creator_type as "creatorType",
+        p.type,
+        p.title,
+        p.content,
+        p.tags,
+        p.status,
+        p.priority_display as "priorityDisplay",
+        p.featured_display as "featuredDisplay",
+        p.likes,
+        p.created_at as "createdAt",
+        p.updated_at as "updatedAt",
+        p.is_deleted as "isDeleted"
+      FROM posts p
+      JOIN users u ON p.user_id = u.id
+      WHERE p.is_deleted = false
+      ORDER BY p.created_at DESC
+    `);
+    
+    return result.rows.map(row => ({
+      id: row.id,
+      userId: row.userId,
+      username: row.username,
+      creatorType: row.creatorType,
+      type: row.type,
+      title: row.title,
+      content: row.content,
+      tags: row.tags || [],
+      status: row.status,
+      priorityDisplay: row.priorityDisplay || false,
+      featuredDisplay: row.featuredDisplay || false,
+      likes: row.likes || [],
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      // url と urls はスキーマにないため、一旦 undefined
+      // 必要に応じてスキーマを拡張する
+    })) as Post[];
+  } catch (error) {
+    console.error('Failed to get posts from database:', error);
+    throw error;
+  }
+}
+
+export async function getPostById(id: string): Promise<Post | null> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        p.id,
+        p.user_id as "userId",
+        u.username,
+        u.creator_type as "creatorType",
+        p.type,
+        p.title,
+        p.content,
+        p.tags,
+        p.status,
+        p.priority_display as "priorityDisplay",
+        p.featured_display as "featuredDisplay",
+        p.likes,
+        p.created_at as "createdAt",
+        p.updated_at as "updatedAt",
+        p.is_deleted as "isDeleted"
+      FROM posts p
+      JOIN users u ON p.user_id = u.id
+      WHERE p.id = $1 AND p.is_deleted = false
+      LIMIT 1
+    `, [id]);
+    
+    if (result.rows.length === 0) return null;
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      userId: row.userId,
+      username: row.username,
+      creatorType: row.creatorType,
+      type: row.type,
+      title: row.title,
+      content: row.content,
+      tags: row.tags || [],
+      status: row.status,
+      priorityDisplay: row.priorityDisplay || false,
+      featuredDisplay: row.featuredDisplay || false,
+      likes: row.likes || [],
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    } as Post;
+  } catch (error) {
+    console.error('Failed to get post by id from database:', error);
+    throw error;
+  }
+}
+
+export async function createPost(post: Omit<Post, 'id' | 'createdAt' | 'updatedAt' | 'likes'>): Promise<Post> {
+  try {
+    const id = Date.now().toString();
+    const now = new Date().toISOString();
+    
+    // 投稿者のプラン情報を取得して優先表示フラグを設定
+    const user = await getUserById(post.userId);
+    const planType = user?.subscription?.planType || 'free';
+    const isActive = user?.subscription?.status === 'active';
+    const priorityDisplay = (planType === 'grow' || planType === 'bloom') && isActive;
+    const featuredDisplay = (planType === 'grow' || planType === 'bloom') && isActive;
+    
+    await pool.query(`
+      INSERT INTO posts (
+        id, user_id, type, title, content, tags, status,
+        priority_display, featured_display, likes, created_at, updated_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+      )
+    `, [
+      id,
+      post.userId,
+      post.type,
+      post.title,
+      post.content,
+      post.tags || [],
+      post.status || 'open',
+      priorityDisplay,
+      featuredDisplay,
+      [],
+      now,
+      now,
+    ]);
+    
+    return {
+      ...post,
+      id,
+      likes: [],
+      priorityDisplay,
+      featuredDisplay,
+      createdAt: now,
+      updatedAt: now,
+    } as Post;
+  } catch (error) {
+    console.error('Failed to create post in database:', error);
+    throw error;
+  }
+}
+
+export async function updatePost(id: string, updates: Partial<Post>): Promise<Post | null> {
+  try {
+    // 既存の投稿を取得
+    const existingPost = await getPostById(id);
+    if (!existingPost) return null;
+    
+    // 投稿者のプラン情報を取得して優先表示フラグを更新
+    const user = await getUserById(existingPost.userId);
+    const planType = user?.subscription?.planType || 'free';
+    const isActive = user?.subscription?.status === 'active';
+    const priorityDisplay = (planType === 'grow' || planType === 'bloom') && isActive;
+    const featuredDisplay = (planType === 'grow' || planType === 'bloom') && isActive;
+    
+    const title = updates.title !== undefined ? updates.title : existingPost.title;
+    const content = updates.content !== undefined ? updates.content : existingPost.content;
+    const tags = updates.tags !== undefined ? updates.tags : existingPost.tags;
+    const status = updates.status !== undefined ? updates.status : existingPost.status;
+    const updatedAt = new Date().toISOString();
+    
+    await pool.query(`
+      UPDATE posts
+      SET
+        title = $1,
+        content = $2,
+        tags = $3,
+        status = $4,
+        priority_display = $5,
+        featured_display = $6,
+        updated_at = $7
+      WHERE id = $8
+    `, [
+      title,
+      content,
+      tags || [],
+      status,
+      priorityDisplay,
+      featuredDisplay,
+      updatedAt,
+      id,
+    ]);
+    
+    return getPostById(id);
+  } catch (error) {
+    console.error('Failed to update post in database:', error);
+    throw error;
+  }
+}
+
+export async function togglePostLike(postId: string, userIdOrSessionId: string): Promise<Post | null> {
+  try {
+    const post = await getPostById(postId);
+    if (!post) return null;
+    
+    const likes = post.likes || [];
+    const likeIndex = likes.indexOf(userIdOrSessionId);
+    
+    let newLikes: string[];
+    if (likeIndex === -1) {
+      // いいねを追加
+      newLikes = [...likes, userIdOrSessionId];
+    } else {
+      // いいねを削除
+      newLikes = likes.filter((_, index) => index !== likeIndex);
+    }
+    
+    await pool.query(`
+      UPDATE posts
+      SET likes = $1, updated_at = $2
+      WHERE id = $3
+    `, [newLikes, new Date().toISOString(), postId]);
+    
+    return getPostById(postId);
+  } catch (error) {
+    console.error('Failed to toggle post like in database:', error);
+    throw error;
+  }
+}
+
+export async function deletePost(id: string): Promise<boolean> {
+  try {
+    const result = await pool.query(`
+      UPDATE posts
+      SET is_deleted = true, deleted_at = $1
+      WHERE id = $2
+    `, [new Date().toISOString(), id]);
+    
+    return result.rowCount !== null && result.rowCount > 0;
+  } catch (error) {
+    console.error('Failed to delete post in database:', error);
+    throw error;
+  }
+}
+
+export async function adminDeletePost(id: string): Promise<boolean> {
+  try {
+    // 投稿の内容を削除メッセージに置き換え（is_deletedはfalseのまま）
+    const result = await pool.query(`
+      UPDATE posts
+      SET
+        title = '[削除されました]',
+        content = '管理者が不適切とみなしたため、削除いたしました。',
+        tags = '{}',
+        updated_at = $1
+      WHERE id = $2
+    `, [new Date().toISOString(), id]);
+    
+    return result.rowCount !== null && result.rowCount > 0;
+  } catch (error) {
+    console.error('Failed to admin delete post in database:', error);
+    throw error;
+  }
+}
+
+export async function updatePostsByUserId(userId: string, updates: Partial<Post>): Promise<number> {
+  try {
+    const updatedAt = new Date().toISOString();
+    const updateFields: string[] = [];
+    const updateValues: any[] = [];
+    let paramIndex = 1;
+    
+    if (updates.title !== undefined) {
+      updateFields.push(`title = $${paramIndex++}`);
+      updateValues.push(updates.title);
+    }
+    if (updates.content !== undefined) {
+      updateFields.push(`content = $${paramIndex++}`);
+      updateValues.push(updates.content);
+    }
+    if (updates.tags !== undefined) {
+      updateFields.push(`tags = $${paramIndex++}`);
+      updateValues.push(updates.tags);
+    }
+    if (updates.status !== undefined) {
+      updateFields.push(`status = $${paramIndex++}`);
+      updateValues.push(updates.status);
+    }
+    
+    updateFields.push(`updated_at = $${paramIndex++}`);
+    updateValues.push(updatedAt);
+    updateValues.push(userId);
+    
+    if (updateFields.length === 1) {
+      // updated_at のみの場合は何も更新しない
+      return 0;
+    }
+    
+    const result = await pool.query(`
+      UPDATE posts
+      SET ${updateFields.join(', ')}
+      WHERE user_id = $${paramIndex}
+    `, updateValues);
+    
+    return result.rowCount || 0;
+  } catch (error) {
+    console.error('Failed to update posts by user id in database:', error);
+    throw error;
+  }
+}
+
+// 他の関数も同様に実装する必要がありますが、まずはユーザー関連、パスワードリセットトークン、投稿を完成させます
+// 残りの関数（comments, feedback等）は後で追加します
 
