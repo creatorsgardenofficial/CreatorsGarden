@@ -303,10 +303,10 @@ export default function Navbar() {
     if (!user) return;
     
     const handleChatViewed = () => {
-      // 既読処理が完了するまで少し待ってから通知数を更新
+      // 既読処理とグループチャット一覧の更新が完了するまで少し待ってから通知数を更新
       setTimeout(() => {
         fetchUnreadCount();
-      }, 600);
+      }, 1200);
     };
 
     window.addEventListener('chatViewed', handleChatViewed);

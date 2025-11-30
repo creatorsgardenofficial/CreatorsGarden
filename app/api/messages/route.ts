@@ -40,9 +40,13 @@ export async function GET(request: NextRequest) {
     if (conversationId) {
       const messages = await getMessagesByConversationId(conversationId);
       
-      // メッセージを取得したら既読にする
+      // メッセージを取得したら既読にする（チャット画面を開いた時に既読データを登録）
       await markMessagesAsRead(conversationId, userId!);
-      return NextResponse.json({ messages }, { status: 200 });
+      
+      // 既読処理後にメッセージを再取得して最新のreadフラグを反映
+      const updatedMessages = await getMessagesByConversationId(conversationId);
+      
+      return NextResponse.json({ messages: updatedMessages }, { status: 200 });
     }
 
     // 会話一覧取得

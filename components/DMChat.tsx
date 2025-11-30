@@ -201,8 +201,8 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
     // メッセージを取得（既読にする処理も含まれる）
     await fetchMessages(conversation.id);
     
-    // 既読処理が完了するまで少し待つ
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // 既読処理が完了するまで少し待つ（API側で既読処理が完了するのを待つ）
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     // 会話一覧を更新して未読数を反映（既読処理後の最新データを取得）
     await fetchConversations();
