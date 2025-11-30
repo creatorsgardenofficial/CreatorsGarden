@@ -82,18 +82,6 @@ const getConnectionString = (): string | null => {
 const connectionString = getConnectionString();
 const isVercelEnvironment = process.env.VERCEL === '1' || process.env.VERCEL_ENV !== undefined;
 
-// 接続文字列からホスト名を抽出するヘルパー関数
-const extractHostname = (connectionString: string): string | null => {
-  try {
-    const url = new URL(connectionString);
-    return url.hostname;
-  } catch {
-    // URL形式でない場合は、@記号の後を探す
-    const match = connectionString.match(/@([^:/]+)/);
-    return match ? match[1] : null;
-  }
-};
-
 // デバッグ: 環境変数の状態をログ出力（本番環境のみ）
 if (isVercelEnvironment) {
   console.log('🔍 Database environment variables check:');
