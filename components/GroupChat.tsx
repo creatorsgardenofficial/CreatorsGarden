@@ -171,22 +171,21 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
   useEffect(() => {
     if (selectedGroupChat) {
       // チャット画面を開いている間、既読処理を確実に実行する
-      // 初回は即座に実行
-      fetchMessages(selectedGroupChat.id).then(() => {
-        // 既読処理が完了したら一覧を更新
-        setTimeout(() => {
-          fetchGroupChats();
-        }, 500);
-      });
+      // 初回は即座に実行（ページを切り替えた時にも実行される）
+      const markAsReadAndUpdate = async () => {
+        await fetchMessages(selectedGroupChat.id);
+        // 既読処理が完了したら一覧を更新（待機時間を延長）
+        await new Promise(resolve => setTimeout(resolve, 800));
+        await fetchGroupChats();
+        // 通知をリセット
+        window.dispatchEvent(new CustomEvent('chatViewed'));
+      };
+      
+      markAsReadAndUpdate();
       
       // 選択中のグループチャットのメッセージを定期的に更新
       const interval = setInterval(() => {
-        fetchMessages(selectedGroupChat.id).then(() => {
-          // 既読処理が完了したら一覧を更新
-          setTimeout(() => {
-            fetchGroupChats();
-          }, 500);
-        });
+        markAsReadAndUpdate();
       }, 2000); // 2秒ごと
 
       return () => {
@@ -206,7 +205,7 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
     await fetchMessages(groupChat.id);
     
     // 既読処理が完了するまで少し待つ（API側で既読処理が完了するのを待つ）
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 800));
     
     // グループチャット一覧を更新して未読数を反映（既読処理後の最新データを取得）
     // チャット画面を開いている間は未読数を0にする

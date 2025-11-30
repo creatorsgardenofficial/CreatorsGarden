@@ -279,6 +279,7 @@ export default function Navbar() {
   // 未読メッセージ数とご意見箱の通知数を定期的に更新
   useEffect(() => {
     if (user) {
+      // ページを切り替えた時にも通知数を更新
       fetchUnreadCount();
       // 管理者画面にいる場合は通知を取得しない（常に0にする）
       if (isAdmin && pathname === '/admin') {
@@ -302,7 +303,7 @@ export default function Navbar() {
     } else {
       setFeedbackNotificationCount(0);
     }
-  }, [user, isAdmin, pathname]);
+  }, [user, isAdmin, pathname, fetchUnreadCount]);
 
     // チャットを閲覧したら通知をリセット
   useEffect(() => {
