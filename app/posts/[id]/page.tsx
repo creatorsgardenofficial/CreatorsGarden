@@ -36,6 +36,7 @@ export default function PostDetailPage() {
     nextBumpAt: string | null;
     hoursRemaining: number;
     minutesRemaining: number;
+    secondsRemaining: number;
   } | null>(null);
   const [bumping, setBumping] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -48,6 +49,45 @@ export default function PostDetailPage() {
     fetchBumpStatus();
     fetchAdminStatus();
   }, [params.id]);
+
+  // クールタイムのリアルタイム更新
+  useEffect(() => {
+    if (!bumpStatus?.nextBumpAt || bumpStatus.canBump) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const nextBumpTime = new Date(bumpStatus.nextBumpAt!).getTime();
+      const now = Date.now();
+      const timeRemaining = nextBumpTime - now;
+
+      if (timeRemaining <= 0) {
+        // クールタイム終了
+        setBumpStatus({
+          canBump: true,
+          nextBumpAt: null,
+          hoursRemaining: 0,
+          minutesRemaining: 0,
+          secondsRemaining: 0,
+        });
+        clearInterval(interval);
+      } else {
+        // 残り時間を計算
+        const hours = Math.floor(timeRemaining / (60 * 60 * 1000));
+        const minutes = Math.floor((timeRemaining % (60 * 60 * 1000)) / (60 * 1000));
+        const seconds = Math.floor((timeRemaining % (60 * 1000)) / 1000);
+
+        setBumpStatus({
+          ...bumpStatus,
+          hoursRemaining: hours,
+          minutesRemaining: minutes,
+          secondsRemaining: seconds,
+        });
+      }
+    }, 1000); // 1秒ごとに更新
+
+    return () => clearInterval(interval);
+  }, [bumpStatus?.nextBumpAt, bumpStatus?.canBump]);
 
   const fetchLikeStatus = async () => {
     try {
@@ -67,11 +107,27 @@ export default function PostDetailPage() {
       const res = await fetch(`/api/posts/${params.id}/bump`);
       const data = await res.json();
       if (res.ok) {
+        const nextBumpAt = data.nextBumpAt || null;
+        let hoursRemaining = data.hoursRemaining || 0;
+        let minutesRemaining = data.minutesRemaining || 0;
+        let secondsRemaining = 0;
+
+        // クールタイム中の場合、秒数も計算
+        if (nextBumpAt && !data.canBump) {
+          const nextBumpTime = new Date(nextBumpAt).getTime();
+          const now = Date.now();
+          const timeRemaining = nextBumpTime - now;
+          hoursRemaining = Math.floor(timeRemaining / (60 * 60 * 1000));
+          minutesRemaining = Math.floor((timeRemaining % (60 * 60 * 1000)) / (60 * 1000));
+          secondsRemaining = Math.floor((timeRemaining % (60 * 1000)) / 1000);
+        }
+
         setBumpStatus({
           canBump: data.canBump || false,
-          nextBumpAt: data.nextBumpAt || null,
-          hoursRemaining: data.hoursRemaining || 0,
-          minutesRemaining: data.minutesRemaining || 0,
+          nextBumpAt,
+          hoursRemaining,
+          minutesRemaining,
+          secondsRemaining,
         });
       }
     } catch (error) {
