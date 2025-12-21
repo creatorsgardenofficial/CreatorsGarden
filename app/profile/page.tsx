@@ -185,7 +185,12 @@ export default function ProfilePage() {
     for (const post of posts) {
       try {
         const res = await fetch(`/api/posts/${post.id}/bump`);
-        const data = await res.json();
+        const data: {
+          canBump?: boolean;
+          nextBumpAt?: string | null;
+          hoursRemaining?: number;
+          minutesRemaining?: number;
+        } = await res.json();
         if (res.ok) {
           const nextBumpAt = data.nextBumpAt || null;
           let hoursRemaining = data.hoursRemaining || 0;
