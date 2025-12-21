@@ -59,10 +59,12 @@ const getConnectionString = (): string | null => {
   // Prisma Accelerateの制限に達しているため、接続を拒否する
   console.error('❌ All connection strings point to Prisma Accelerate endpoints');
   console.error('❌ Prisma Accelerate account limit reached (planLimitReached)');
-  console.error('❌ Please configure Vercel Postgres connection string');
-  console.error('❌ Go to: Vercel Dashboard → Storage → Your Database → Settings');
-  console.error('❌ Copy the "Direct Connection" string and set it as POSTGRES_URL_NON_POOLING');
-  console.error('❌ The connection string should look like: postgres://user:pass@aws-0-*.pooler.supabase.com:5432/db');
+    console.error('❌ Please configure database connection string');
+    console.error('❌ For Vercel Postgres: Go to Vercel Dashboard → Storage → Your Database → Settings');
+    console.error('❌ For Neon DB: Go to Neon Dashboard → Connection Details → Copy connection string');
+    console.error('❌ Set it as POSTGRES_URL_NON_POOLING');
+    console.error('❌ Vercel Postgres format: postgres://user:pass@aws-0-*.pooler.supabase.com:5432/db');
+    console.error('❌ Neon DB format: postgres://user:pass@ep-xxx-xxx.region.aws.neon.tech/dbname');
   return null; // 接続を拒否
 };
 
@@ -174,12 +176,13 @@ const getPool = (): Pool => {
     const hostname = extractHostname(connectionString);
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname?.startsWith('192.168.') || hostname?.startsWith('10.') || hostname?.startsWith('172.');
     const isVercelPostgres = hostname?.includes('pooler.supabase.com') || hostname?.includes('vercel-storage.com');
+    const isNeonDB = hostname?.includes('neon.tech') || hostname?.includes('neon.tech');
     
-    // ローカル環境ではSSLを無効化、Vercel PostgresではSSLを有効化
+    // ローカル環境ではSSLを無効化、Vercel PostgresやNeon DBではSSLを有効化
     const sslConfig = isLocalhost 
       ? false // ローカル環境ではSSLを無効化
       : {
-          rejectUnauthorized: false, // Vercel PostgresではSSLが必要
+          rejectUnauthorized: false, // Vercel PostgresやNeon DBではSSLが必要
         };
     
     poolInstance = new Pool({
