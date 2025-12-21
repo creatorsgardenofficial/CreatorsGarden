@@ -62,8 +62,18 @@ async function runSchema() {
     console.log('🚀 データベーススキーマを実行しています...\n');
     
     // データベース接続を1つだけ作成して再利用
+    // CGDB_プレフィックス付きの環境変数にも対応
+    const connectionString = 
+      process.env.CGDB_POSTGRES_URL_NON_POOLING ||
+      process.env.CGDB_DATABASE_URL_UNPOOLED ||
+      process.env.POSTGRES_URL_NON_POOLING ||
+      process.env.CGDB_POSTGRES_URL ||
+      process.env.CGDB_DATABASE_URL ||
+      process.env.POSTGRES_URL;
+    
     const client = new Client({
-      connectionString: process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING
+      connectionString: connectionString,
+      ssl: connectionString?.includes('neon.tech') ? { rejectUnauthorized: false } : false
     });
     await client.connect();
     
@@ -142,23 +152,44 @@ async function runSchema() {
   }
 }
 
-// 環境変数の確認
-if (!process.env.POSTGRES_URL && !process.env.POSTGRES_URL_NON_POOLING) {
+// 環境変数の確認（CGDB_プレフィックス付きにも対応）
+const connectionString = 
+  process.env.CGDB_POSTGRES_URL_NON_POOLING ||
+  process.env.CGDB_DATABASE_URL_UNPOOLED ||
+  process.env.POSTGRES_URL_NON_POOLING ||
+  process.env.CGDB_POSTGRES_URL ||
+  process.env.CGDB_DATABASE_URL ||
+  process.env.POSTGRES_URL;
+
+if (!connectionString) {
   console.error('❌ エラー: 環境変数が設定されていません');
   console.error('\n以下のいずれかの環境変数が必要です:');
-  console.error('  - POSTGRES_URL');
+  console.error('  - CGDB_POSTGRES_URL_NON_POOLING (推奨: Neon DB)');
+  console.error('  - CGDB_DATABASE_URL_UNPOOLED (Neon DB)');
   console.error('  - POSTGRES_URL_NON_POOLING');
+  console.error('  - CGDB_POSTGRES_URL');
+  console.error('  - CGDB_DATABASE_URL');
+  console.error('  - POSTGRES_URL');
   console.error('\n💡 解決方法:');
   console.error('   1. Vercelダッシュボードで環境変数を確認');
   console.error('   2. .env.local ファイルに環境変数を追加');
   console.error('   3. または、環境変数を直接設定:');
-  console.error('      $env:POSTGRES_URL="postgres://..."  # PowerShell');
-  console.error('      export POSTGRES_URL="postgres://..."  # Bash');
+  console.error('      $env:CGDB_POSTGRES_URL_NON_POOLING="postgres://..."  # PowerShell');
+  console.error('      export CGDB_POSTGRES_URL_NON_POOLING="postgres://..."  # Bash');
   process.exit(1);
 }
 
+// 使用している環境変数名を特定
+const envVarName = 
+  process.env.CGDB_POSTGRES_URL_NON_POOLING ? 'CGDB_POSTGRES_URL_NON_POOLING' :
+  process.env.CGDB_DATABASE_URL_UNPOOLED ? 'CGDB_DATABASE_URL_UNPOOLED' :
+  process.env.POSTGRES_URL_NON_POOLING ? 'POSTGRES_URL_NON_POOLING' :
+  process.env.CGDB_POSTGRES_URL ? 'CGDB_POSTGRES_URL' :
+  process.env.CGDB_DATABASE_URL ? 'CGDB_DATABASE_URL' :
+  'POSTGRES_URL';
+
 console.log('🔗 データベースに接続しています...');
-console.log(`   環境変数: ${process.env.POSTGRES_URL ? 'POSTGRES_URL' : 'POSTGRES_URL_NON_POOLING'}\n`);
+console.log(`   環境変数: ${envVarName}\n`);
 
 runSchema();
 
