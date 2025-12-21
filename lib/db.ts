@@ -155,7 +155,7 @@ const getPool = (): Pool => {
       // ビルド時はダミーのPoolを作成（実際には使用されない）
       poolInstance = new Pool({
         connectionString: 'postgres://dummy:dummy@dummy:5432/dummy',
-        ssl: { rejectUnauthorized: false },
+        ssl: false,
       });
       return poolInstance;
     } else {
@@ -170,11 +170,21 @@ const getPool = (): Pool => {
   }
 
   try {
+    // 接続文字列からホスト名を取得してSSL設定を決定
+    const hostname = extractHostname(connectionString);
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname?.startsWith('192.168.') || hostname?.startsWith('10.') || hostname?.startsWith('172.');
+    const isVercelPostgres = hostname?.includes('pooler.supabase.com') || hostname?.includes('vercel-storage.com');
+    
+    // ローカル環境ではSSLを無効化、Vercel PostgresではSSLを有効化
+    const sslConfig = isLocalhost 
+      ? false // ローカル環境ではSSLを無効化
+      : {
+          rejectUnauthorized: false, // Vercel PostgresではSSLが必要
+        };
+    
     poolInstance = new Pool({
       connectionString: connectionString,
-      ssl: {
-        rejectUnauthorized: false, // Vercel PostgresではSSLが必要
-      },
+      ssl: sslConfig,
       // 接続タイムアウト設定
       connectionTimeoutMillis: 10000, // 10秒
       idleTimeoutMillis: 30000, // 30秒
@@ -213,7 +223,12 @@ const getPool = (): Pool => {
 };
 
 // pool をエクスポート（getterとして実装）
-export const pool = new Proxy({} as Pool, {
+// Turbopackのビルド時に静的に解析できるように、getPool関数もエクスポート
+export { getPool };
+
+// pool をエクスポート（Proxyを使用して遅延初期化）
+// Turbopackが静的に解析できるように、型アノテーションを明示的に追加
+const poolProxy = new Proxy({} as Pool, {
   get(_target, prop) {
     const pool = getPool();
     const value = (pool as any)[prop];
@@ -223,6 +238,9 @@ export const pool = new Proxy({} as Pool, {
     return value;
   },
 });
+
+// 型を明示的にエクスポート（Turbopackが静的に解析できるように）
+export const pool: Pool = poolProxy as Pool;
 
 // データベース接続の確認
 export async function testConnection(): Promise<boolean> {

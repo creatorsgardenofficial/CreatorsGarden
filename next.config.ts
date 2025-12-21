@@ -2,6 +2,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  // Turbopackの設定（空のオブジェクトでTurbopackを有効化しつつ、webpack設定との競合を回避）
+  turbopack: {},
+  // Webpackを使用（Turbopackが有効な場合は無視されるが、--webpackフラグで使用可能）
+  webpack: (config, { isServer }) => {
+    // Windowsでのsymlink問題を回避
+    if (process.platform === 'win32') {
+      config.resolve.symlinks = false;
+    }
+    return config;
+  },
   async headers() {
     return [
       {
