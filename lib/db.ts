@@ -31,17 +31,22 @@ const isPrismaAccelerateEndpoint = (connectionString: string): boolean => {
 };
 
 // 環境変数から接続文字列を取得
-// 優先順位: POSTGRES_URL_NON_POOLING (直接接続、最優先) -> STORAGE_URL (カスタムプレフィックス) -> STORAGE_PRISMA_URL -> POSTGRES_URL -> POSTGRES_PRISMA_URL
+// 優先順位: POSTGRES_URL_NON_POOLING (直接接続、最優先) -> CGDB_POSTGRES_URL_NON_POOLING -> STORAGE_URL (カスタムプレフィックス) -> STORAGE_PRISMA_URL -> POSTGRES_URL -> POSTGRES_PRISMA_URL -> CGDB_* (Neon DB用)
 // 注意: Prisma Accelerateエンドポイントは完全にスキップする（planLimitReachedエラーを避けるため）
 const getConnectionString = (): string | null => {
   // 優先順位に従って接続文字列を探す（Prisma Accelerateエンドポイントは完全に除外）
   // POSTGRES_URL_NON_POOLINGを最優先（直接接続用で、Prisma Accelerateではない可能性が高い）
   const candidates = [
     { name: 'POSTGRES_URL_NON_POOLING', value: process.env.POSTGRES_URL_NON_POOLING },
+    { name: 'CGDB_POSTGRES_URL_NON_POOLING', value: process.env.CGDB_POSTGRES_URL_NON_POOLING },
+    { name: 'CGDB_DATABASE_URL_UNPOOLED', value: process.env.CGDB_DATABASE_URL_UNPOOLED },
     { name: 'STORAGE_URL', value: process.env.STORAGE_URL },
     { name: 'STORAGE_PRISMA_URL', value: process.env.STORAGE_PRISMA_URL },
     { name: 'POSTGRES_URL', value: process.env.POSTGRES_URL },
+    { name: 'CGDB_POSTGRES_URL', value: process.env.CGDB_POSTGRES_URL },
+    { name: 'CGDB_DATABASE_URL', value: process.env.CGDB_DATABASE_URL },
     { name: 'POSTGRES_PRISMA_URL', value: process.env.POSTGRES_PRISMA_URL },
+    { name: 'CGDB_POSTGRES_PRISMA_URL', value: process.env.CGDB_POSTGRES_PRISMA_URL },
   ];
   
   // Prisma Accelerateエンドポイントでない最初の有効な接続文字列を使用
@@ -109,6 +114,10 @@ if (isVercelEnvironment) {
   console.log('  STORAGE_PRISMA_URL:', !!process.env.STORAGE_PRISMA_URL);
   console.log('  STORAGE_URL:', !!process.env.STORAGE_URL);
   console.log('  POSTGRES_URL_NON_POOLING:', !!process.env.POSTGRES_URL_NON_POOLING);
+  console.log('  CGDB_POSTGRES_URL_NON_POOLING:', !!process.env.CGDB_POSTGRES_URL_NON_POOLING);
+  console.log('  CGDB_DATABASE_URL_UNPOOLED:', !!process.env.CGDB_DATABASE_URL_UNPOOLED);
+  console.log('  CGDB_POSTGRES_URL:', !!process.env.CGDB_POSTGRES_URL);
+  console.log('  CGDB_DATABASE_URL:', !!process.env.CGDB_DATABASE_URL);
   console.log('  Using connection string:', connectionString ? 'Found' : 'Not found');
   
   if (connectionString) {
@@ -281,12 +290,16 @@ export async function testConnection(): Promise<boolean> {
 // データベースが利用可能かどうかをチェック
 export function isDatabaseAvailable(): boolean {
   // Vercel Postgresの環境変数が設定されているかチェック
-  // カスタムプレフィックス（STORAGEなど）が設定されている場合も対応
+  // カスタムプレフィックス（STORAGE、CGDBなど）が設定されている場合も対応
   return !!(
     process.env.POSTGRES_URL ||
     process.env.POSTGRES_PRISMA_URL ||
     process.env.PRISMA_DATABASE_URL ||
     process.env.POSTGRES_URL_NON_POOLING ||
+    process.env.CGDB_POSTGRES_URL_NON_POOLING ||
+    process.env.CGDB_DATABASE_URL_UNPOOLED ||
+    process.env.CGDB_POSTGRES_URL ||
+    process.env.CGDB_DATABASE_URL ||
     process.env.STORAGE_URL ||
     process.env.STORAGE_PRISMA_URL ||
     process.env.STORAGE_URL_NON_POOLING
