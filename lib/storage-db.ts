@@ -1692,38 +1692,23 @@ export async function removeParticipantFromGroupChat(groupChatId: string, userId
 
 export async function getGroupMessages(): Promise<GroupMessage[]> {
   try {
-    // カラムの存在を確認
-    const hasSenderUsername = await columnExists('group_messages', 'sender_username');
-    const hasReadBy = await columnExists('group_messages', 'read_by');
-    const hasUpdatedAt = await columnExists('group_messages', 'updated_at');
-    
-    // sender_usernameカラムが存在しない場合はJOINで取得
-    const senderUsernameSelect = hasSenderUsername 
-      ? 'gm.sender_username as "senderUsername",'
-      : 'u.username as "senderUsername",';
-    const readBySelect = hasReadBy ? 'gm.read_by as "readBy",' : 'ARRAY[]::TEXT[] as "readBy",';
-    const updatedAtSelect = hasUpdatedAt ? 'gm.updated_at as "updatedAt"' : 'NULL as "updatedAt"';
-    const joinClause = hasSenderUsername ? '' : 'LEFT JOIN users u ON gm.user_id = u.id';
-    
     const result = await pool.query(`
       SELECT
         gm.id,
         gm.group_chat_id as "groupChatId",
         gm.user_id as "senderId",
-        ${senderUsernameSelect}
+        gm.sender_username as "senderUsername",
         gm.content,
-        ${readBySelect}
+        gm.read_by as "readBy",
         gm.created_at as "createdAt",
-        ${updatedAtSelect}
+        gm.updated_at as "updatedAt"
       FROM group_messages gm
-      ${joinClause}
       ORDER BY gm.created_at ASC
     `);
 
     return result.rows.map(row => ({
       ...row,
-      // readByがnullの場合は空配列、undefinedの場合はundefinedのまま（カラムが存在しない可能性）
-      readBy: row.readBy === null ? [] : (row.readBy !== undefined ? row.readBy : undefined),
+      readBy: row.readBy || [],
       updatedAt: row.updatedAt || undefined,
     })) as GroupMessage[];
   } catch (error) {
@@ -1734,39 +1719,24 @@ export async function getGroupMessages(): Promise<GroupMessage[]> {
 
 export async function getGroupMessagesByGroupChatId(groupChatId: string): Promise<GroupMessage[]> {
   try {
-    // カラムの存在を確認
-    const hasSenderUsername = await columnExists('group_messages', 'sender_username');
-    const hasReadBy = await columnExists('group_messages', 'read_by');
-    const hasUpdatedAt = await columnExists('group_messages', 'updated_at');
-    
-    // sender_usernameカラムが存在しない場合はJOINで取得
-    const senderUsernameSelect = hasSenderUsername 
-      ? 'gm.sender_username as "senderUsername",'
-      : 'u.username as "senderUsername",';
-    const readBySelect = hasReadBy ? 'gm.read_by as "readBy",' : 'ARRAY[]::TEXT[] as "readBy",';
-    const updatedAtSelect = hasUpdatedAt ? 'gm.updated_at as "updatedAt"' : 'NULL as "updatedAt"';
-    const joinClause = hasSenderUsername ? '' : 'LEFT JOIN users u ON gm.user_id = u.id';
-    
     const result = await pool.query(`
       SELECT
         gm.id,
         gm.group_chat_id as "groupChatId",
         gm.user_id as "senderId",
-        ${senderUsernameSelect}
+        gm.sender_username as "senderUsername",
         gm.content,
-        ${readBySelect}
+        gm.read_by as "readBy",
         gm.created_at as "createdAt",
-        ${updatedAtSelect}
+        gm.updated_at as "updatedAt"
       FROM group_messages gm
-      ${joinClause}
       WHERE gm.group_chat_id = $1
       ORDER BY gm.created_at ASC
     `, [groupChatId]);
 
     return result.rows.map(row => ({
       ...row,
-      // readByがnullの場合は空配列、undefinedの場合はundefinedのまま（カラムが存在しない可能性）
-      readBy: row.readBy === null ? [] : (row.readBy !== undefined ? row.readBy : undefined),
+      readBy: row.readBy || [],
       updatedAt: row.updatedAt || undefined,
     })) as GroupMessage[];
   } catch (error) {
@@ -1781,32 +1751,19 @@ export async function createGroupMessage(message: Omit<GroupMessage, 'id' | 'cre
     const now = new Date().toISOString();
     const readBy = [message.senderId]; // 送信者は自動的に既読
     
-    // カラムの存在を確認
-    const hasSenderUsername = await columnExists('group_messages', 'sender_username');
-    const hasReadBy = await columnExists('group_messages', 'read_by');
-    
-    let columns = 'id, group_chat_id, user_id, content';
-    let values: any[] = [id, message.groupChatId, message.senderId, message.content];
-    let paramIndex = 5;
-    
-    if (hasSenderUsername) {
-      columns += ', sender_username';
-      values.push(message.senderUsername);
-      paramIndex++;
-    }
-    if (hasReadBy) {
-      columns += ', read_by';
-      values.push(readBy);
-      paramIndex++;
-    }
-    
-    columns += ', created_at';
-    values.push(now);
-    
     await pool.query(`
-      INSERT INTO group_messages (${columns})
-      VALUES (${values.map((_, i) => `$${i + 1}`).join(', ')})
-    `, values);
+      INSERT INTO group_messages (
+        id, group_chat_id, user_id, sender_username, content, read_by, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `, [
+      id,
+      message.groupChatId,
+      message.senderId,
+      message.senderUsername,
+      message.content,
+      readBy,
+      now,
+    ]);
 
     return {
       ...message,
@@ -1822,25 +1779,13 @@ export async function createGroupMessage(message: Omit<GroupMessage, 'id' | 'cre
 
 export async function markGroupMessageAsRead(messageId: string, userId: string): Promise<void> {
   try {
-    const hasReadBy = await columnExists('group_messages', 'read_by');
-    if (!hasReadBy) {
-      console.log(`[markGroupMessageAsRead] read_by column does not exist, skipping message ${messageId}`);
-      return; // read_byカラムが存在しない場合は何もしない
-    }
-    
     const message = await getGroupMessageById(messageId);
     if (!message) {
       console.log(`[markGroupMessageAsRead] Message ${messageId} not found`);
       return;
     }
     
-    // readByがundefinedの場合は、カラムが存在しない可能性があるため、スキップ
-    if (message.readBy === undefined) {
-      console.log(`[markGroupMessageAsRead] readBy is undefined for message ${messageId}, skipping`);
-      return;
-    }
-    
-    if (message.readBy.includes(userId)) {
+    if (message.readBy && message.readBy.includes(userId)) {
       console.log(`[markGroupMessageAsRead] Message ${messageId} already read by user ${userId}`);
       return; // 既に既読
     }
@@ -1860,31 +1805,17 @@ export async function markGroupMessageAsRead(messageId: string, userId: string):
 
 export async function getGroupMessageById(id: string): Promise<GroupMessage | null> {
   try {
-    // カラムの存在を確認
-    const hasSenderUsername = await columnExists('group_messages', 'sender_username');
-    const hasReadBy = await columnExists('group_messages', 'read_by');
-    const hasUpdatedAt = await columnExists('group_messages', 'updated_at');
-    
-    // sender_usernameカラムが存在しない場合はJOINで取得
-    const senderUsernameSelect = hasSenderUsername 
-      ? 'gm.sender_username as "senderUsername",'
-      : 'u.username as "senderUsername",';
-    const readBySelect = hasReadBy ? 'gm.read_by as "readBy",' : 'ARRAY[]::TEXT[] as "readBy",';
-    const updatedAtSelect = hasUpdatedAt ? 'gm.updated_at as "updatedAt"' : 'NULL as "updatedAt"';
-    const joinClause = hasSenderUsername ? '' : 'LEFT JOIN users u ON gm.user_id = u.id';
-    
     const result = await pool.query(`
       SELECT
         gm.id,
         gm.group_chat_id as "groupChatId",
         gm.user_id as "senderId",
-        ${senderUsernameSelect}
+        gm.sender_username as "senderUsername",
         gm.content,
-        ${readBySelect}
+        gm.read_by as "readBy",
         gm.created_at as "createdAt",
-        ${updatedAtSelect}
+        gm.updated_at as "updatedAt"
       FROM group_messages gm
-      ${joinClause}
       WHERE gm.id = $1
     `, [id]);
 
@@ -1895,8 +1826,7 @@ export async function getGroupMessageById(id: string): Promise<GroupMessage | nu
     const row = result.rows[0];
     return {
       ...row,
-      // readByがnullの場合は空配列、undefinedの場合はundefinedのまま（カラムが存在しない可能性）
-      readBy: row.readBy === null ? [] : (row.readBy !== undefined ? row.readBy : undefined),
+      readBy: row.readBy || [],
       updatedAt: row.updatedAt || undefined,
     } as GroupMessage;
   } catch (error) {
@@ -1907,10 +1837,6 @@ export async function getGroupMessageById(id: string): Promise<GroupMessage | nu
 
 export async function updateGroupMessage(id: string, updates: Partial<GroupMessage>): Promise<GroupMessage | null> {
   try {
-    // カラムの存在を確認
-    const hasReadBy = await columnExists('group_messages', 'read_by');
-    const hasUpdatedAt = await columnExists('group_messages', 'updated_at');
-    
     const updateFields: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
@@ -1919,7 +1845,7 @@ export async function updateGroupMessage(id: string, updates: Partial<GroupMessa
       updateFields.push(`content = $${paramIndex++}`);
       values.push(updates.content);
     }
-    if (updates.readBy !== undefined && hasReadBy) {
+    if (updates.readBy !== undefined) {
       updateFields.push(`read_by = $${paramIndex++}`);
       values.push(updates.readBy);
     }
@@ -1928,10 +1854,9 @@ export async function updateGroupMessage(id: string, updates: Partial<GroupMessa
       return await getGroupMessageById(id);
     }
 
-    if (hasUpdatedAt) {
-      updateFields.push(`updated_at = $${paramIndex++}`);
-      values.push(new Date().toISOString());
-    }
+    // updated_atは常に更新
+    updateFields.push(`updated_at = $${paramIndex++}`);
+    values.push(new Date().toISOString());
     values.push(id);
 
     await pool.query(`
