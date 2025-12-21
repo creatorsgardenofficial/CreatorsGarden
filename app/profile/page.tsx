@@ -23,13 +23,15 @@ export default function ProfilePage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [bumpStatuses, setBumpStatuses] = useState<Record<string, {
+  type BumpStatus = {
     canBump: boolean;
     nextBumpAt: string | null;
     hoursRemaining: number;
     minutesRemaining: number;
-    secondsRemaining: number;
-  }>>({});
+    secondsRemaining: number; // クライアント側で計算
+  };
+  
+  const [bumpStatuses, setBumpStatuses] = useState<Record<string, BumpStatus>>({});
   
   // 文字数制限
   const MAX_BIO_LENGTH = 500;
@@ -177,12 +179,7 @@ export default function ProfilePage() {
   const fetchAllBumpStatuses = async () => {
     if (!user) return;
     
-    const statuses: Record<string, {
-      canBump: boolean;
-      nextBumpAt: string | null;
-      hoursRemaining: number;
-      minutesRemaining: number;
-    }> = {};
+    const statuses: Record<string, BumpStatus> = {};
 
     // 各投稿の挙げ状態を取得
     for (const post of posts) {
@@ -205,13 +202,14 @@ export default function ProfilePage() {
             secondsRemaining = Math.floor((timeRemaining % (60 * 1000)) / 1000);
           }
 
-          statuses[post.id] = {
+          const bumpStatus: BumpStatus = {
             canBump: data.canBump || false,
             nextBumpAt,
             hoursRemaining,
             minutesRemaining,
-            secondsRemaining,
+            secondsRemaining, // クライアント側で計算した値
           };
+          statuses[post.id] = bumpStatus;
         }
       } catch (err) {
         console.error(`Failed to fetch bump status for post ${post.id}:`, err);
