@@ -6,6 +6,8 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import A8Ad from '@/components/A8Ad';
 import CustomSelect from '@/components/CustomSelect';
+import AutoSizeTitle from '@/components/AutoSizeTitle';
+import AutoSizeText from '@/components/AutoSizeText';
 import { Post, PostType, CreatorType, PostStatus, Announcement } from '@/types';
 import { creatorTypeLabels } from '@/lib/creatorTypes';
 
@@ -242,11 +244,10 @@ export default function PostsPage() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    return `${year}/${month}/${day}`;
   };
 
   const handleLike = async (e: React.MouseEvent, postId: string) => {
@@ -745,11 +746,11 @@ export default function PostsPage() {
                {currentPosts
                  .filter(p => p.featuredDisplay)
                  .map((post) => (
-                   <div key={post.id} className="min-w-0" style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}>
+                   <div key={post.id} className="min-w-0 h-full" style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}>
                    <Link
                      href={`/posts/${post.id}`}
-                     className="post-card-content block bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow border-2 border-yellow-300 dark:border-yellow-700 min-w-0"
-                     style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden', wordBreak: 'break-all', overflowWrap: 'break-word', width: '100%', boxSizing: 'border-box' }}
+                     className="post-card-content block bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow border-2 border-yellow-300 dark:border-yellow-700 min-w-0 h-full flex flex-col"
+                     style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden', wordBreak: 'break-all', overflowWrap: 'break-word', width: '100%', boxSizing: 'border-box', minHeight: '400px' }}
                    >
                      <div className="mb-3 sm:mb-4 min-w-0" style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}>
                        <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -767,9 +768,14 @@ export default function PostsPage() {
                            {post.status === 'open' ? 'メンバー募集中' : 'メンバー決定'}
                          </span>
                        </div>
-                       <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-2 break-all overflow-wrap-anywhere min-w-0" style={{ wordBreak: 'break-all', overflowWrap: 'break-word', wordWrap: 'break-word', minWidth: 0, maxWidth: '100%', width: '100%' }}>
+                       <AutoSizeTitle
+                         className="font-bold text-gray-900 dark:text-white mb-2"
+                         maxLines={3}
+                         minFontSize={0.75}
+                         maxFontSize={1.5}
+                       >
                          {post.title}
-                       </h3>
+                       </AutoSizeTitle>
                      </div>
                      
                      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-3 sm:mb-4 line-clamp-3 break-all overflow-wrap-anywhere min-w-0" style={{ wordBreak: 'break-all', overflowWrap: 'break-word', wordWrap: 'break-word', minWidth: 0, maxWidth: '100%', width: '100%' }}>
@@ -823,9 +829,9 @@ export default function PostsPage() {
                        </div>
                      )}
 
-                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mt-auto">
                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                         <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                         <span className="text-gray-500 dark:text-gray-400" style={{ fontSize: 'clamp(0.625rem, 1.5vw, 0.875rem)' }}>
                            投稿者:{' '}
                            <span
                              onClick={(e) => {
@@ -833,6 +839,14 @@ export default function PostsPage() {
                                router.push(`/users/${post.userId}`);
                              }}
                              className="text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                             style={{ 
+                               fontSize: 'clamp(0.625rem, 1.5vw, 0.875rem)',
+                               maxWidth: '200px',
+                               overflow: 'hidden',
+                               textOverflow: 'ellipsis',
+                               whiteSpace: 'nowrap',
+                               display: 'inline-block'
+                             }}
                            >
                              {post.username}
                            </span>
@@ -891,7 +905,14 @@ export default function PostsPage() {
                            )}
                          </div>
                        </div>
-                       <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{formatDate(post.createdAt)}</span>
+                       <AutoSizeText
+                         className="text-gray-500 dark:text-gray-400"
+                         minFontSize={0.35}
+                         maxFontSize={0.875}
+                         maxWidth="250px"
+                       >
+                         {formatDate(post.createdAt)}
+                       </AutoSizeText>
                      </div>
                    </Link>
                    </div>
@@ -904,15 +925,15 @@ export default function PostsPage() {
            {currentPosts
              .filter(p => !p.featuredDisplay) // 注目のアイデアは別枠で表示済み
              .map((post) => (
-           <div key={post.id} className="min-w-0" style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}>
+           <div key={post.id} className="min-w-0 h-full" style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}>
            <Link
              href={`/posts/${post.id}`}
-             className={`post-card-content block rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow min-w-0 ${
+             className={`post-card-content block rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow min-w-0 h-full flex flex-col ${
                post.priorityDisplay 
                  ? 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-300 dark:border-blue-700' 
                  : 'bg-white dark:bg-gray-800'
              }`}
-             style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden', wordBreak: 'break-all', overflowWrap: 'break-word', width: '100%', boxSizing: 'border-box' }}
+             style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden', wordBreak: 'break-all', overflowWrap: 'break-word', width: '100%', boxSizing: 'border-box', minHeight: '400px' }}
            >
                   <div className="mb-3 sm:mb-4 min-w-0" style={{ minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}>
                     <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -927,9 +948,14 @@ export default function PostsPage() {
                         {post.status === 'open' ? 'メンバー募集中' : 'メンバー決定'}
                       </span>
                     </div>
-                    <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-2 break-all overflow-wrap-anywhere min-w-0" style={{ wordBreak: 'break-all', overflowWrap: 'break-word', wordWrap: 'break-word', minWidth: 0, maxWidth: '100%', width: '100%' }}>
+                    <AutoSizeTitle
+                      className="font-bold text-gray-900 dark:text-white mb-2"
+                      maxLines={3}
+                      minFontSize={0.75}
+                      maxFontSize={1.5}
+                    >
                       {post.title}
-                    </h3>
+                    </AutoSizeTitle>
                   </div>
                   
                   <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-3 sm:mb-4 line-clamp-3 break-all overflow-wrap-anywhere min-w-0" style={{ wordBreak: 'break-all', overflowWrap: 'break-word', wordWrap: 'break-word', minWidth: 0, maxWidth: '100%', width: '100%', whiteSpace: 'normal' }}>
@@ -993,9 +1019,9 @@ export default function PostsPage() {
                     </div>
                   )}
 
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mt-auto">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                      <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                      <span className="text-gray-500 dark:text-gray-400" style={{ fontSize: 'clamp(0.625rem, 1.5vw, 0.875rem)' }}>
                         投稿者:{' '}
                         <span
                           onClick={(e) => {
@@ -1003,12 +1029,26 @@ export default function PostsPage() {
                             router.push(`/users/${post.userId}`);
                           }}
                           className="text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                          style={{ 
+                            fontSize: 'clamp(0.625rem, 1.5vw, 0.875rem)',
+                            maxWidth: '200px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            display: 'inline-block'
+                          }}
                         >
                           {post.username}
                         </span>
                         {' '}
-                        <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs sm:text-sm">
-                          {creatorTypeLabels[post.creatorType]}
+                        <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">
+                          <AutoSizeText
+                            minFontSize={0.5}
+                            maxFontSize={0.875}
+                            maxWidth="150px"
+                          >
+                            {creatorTypeLabels[post.creatorType]}
+                          </AutoSizeText>
                         </span>
                       </span>
                       <div className="flex items-center gap-2">
@@ -1065,7 +1105,14 @@ export default function PostsPage() {
                         )}
                       </div>
                     </div>
-                    <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{formatDate(post.createdAt)}</span>
+                    <AutoSizeText
+                      className="text-gray-500 dark:text-gray-400"
+                      minFontSize={0.35}
+                      maxFontSize={0.875}
+                      maxWidth="250px"
+                    >
+                      {formatDate(post.createdAt)}
+                    </AutoSizeText>
                   </div>
                 </Link>
                 </div>
