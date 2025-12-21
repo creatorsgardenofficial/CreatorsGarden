@@ -471,19 +471,21 @@ export default function PostsPage() {
             </Link>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8" style={{ overflow: 'visible' }}>
             <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
               フィルター
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div className="relative" style={{ zIndex: 1 }}>
+                <label htmlFor="post-type-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   投稿タイプ
                 </label>
                 <select
+                  id="post-type-filter"
+                  name="post-type-filter"
                   value={filters.type}
                   onChange={(e) => setFilters({ ...filters, type: e.target.value as PostType | '' })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white appearance-none bg-white dark:bg-gray-700"
                 >
                   <option value="">すべて</option>
                   <option value="collab">コラボ募集</option>
@@ -491,14 +493,16 @@ export default function PostsPage() {
                   <option value="seeking">パートナー探し</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div className="relative" style={{ zIndex: 1 }}>
+                <label htmlFor="creator-type-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   クリエイタータイプ
                 </label>
                 <select
+                  id="creator-type-filter"
+                  name="creator-type-filter"
                   value={filters.creatorType}
                   onChange={(e) => setFilters({ ...filters, creatorType: e.target.value as CreatorType | '' })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white appearance-none bg-white dark:bg-gray-700"
                 >
                   <option value="">すべて</option>
                   <option value="writer">小説家</option>
@@ -515,14 +519,16 @@ export default function PostsPage() {
                   <option value="other">その他</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div className="relative" style={{ zIndex: 1 }}>
+                <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   ステータス
                 </label>
                 <select
+                  id="status-filter"
+                  name="status-filter"
                   value={filters.status}
                   onChange={(e) => setFilters({ ...filters, status: e.target.value as PostStatus | '' })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white appearance-none bg-white dark:bg-gray-700"
                 >
                   <option value="">すべて</option>
                   <option value="open">メンバー募集中</option>
