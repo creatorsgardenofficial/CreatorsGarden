@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:schema": "node scripts/run-schema.js",
+    "db:compare-schema": "node scripts/compare-schema.js",
     "db:parse-connection": "node scripts/parse-connection-string.js",
     "db:migrate": "node scripts/run-migration.js scripts/migrate-group-chats.sql",
     "db:migrate:posts-urls": "node scripts/run-migration.js scripts/migrate-posts-urls.sql",

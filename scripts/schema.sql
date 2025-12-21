@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS posts (
   priority_display BOOLEAN DEFAULT false,
   featured_display BOOLEAN DEFAULT false,
   likes TEXT[] DEFAULT '{}',
+  urls JSONB,
   is_deleted BOOLEAN DEFAULT false,
   deleted_at TIMESTAMP WITH TIME ZONE,
   deleted_by TEXT,
@@ -88,19 +89,7 @@ CREATE TABLE IF NOT EXISTS conversations (
   UNIQUE(user1_id, user2_id)
 );
 
--- グループメッセージテーブル
-CREATE TABLE IF NOT EXISTS group_messages (
-  id TEXT PRIMARY KEY,
-  group_chat_id TEXT NOT NULL REFERENCES group_chats(id) ON DELETE CASCADE,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  sender_username TEXT NOT NULL,
-  content TEXT NOT NULL,
-  read_by TEXT[] DEFAULT '{}',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE
-);
-
--- グループチャットテーブル
+-- グループチャットテーブル（group_messagesより先に作成する必要がある）
 CREATE TABLE IF NOT EXISTS group_chats (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -111,6 +100,18 @@ CREATE TABLE IF NOT EXISTS group_chats (
   last_message_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- グループメッセージテーブル
+CREATE TABLE IF NOT EXISTS group_messages (
+  id TEXT PRIMARY KEY,
+  group_chat_id TEXT NOT NULL REFERENCES group_chats(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  sender_username TEXT NOT NULL,
+  content TEXT NOT NULL,
+  read_by TEXT[] DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE
 );
 
 -- ブックマークテーブル
