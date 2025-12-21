@@ -142,8 +142,14 @@ export default function PostDetailPage() {
 
     if (!bumpStatus?.canBump) {
       if (bumpStatus?.nextBumpAt) {
-        const nextTime = new Date(bumpStatus.nextBumpAt);
-        alert(`24時間に1回までしか挙げられません。次は${nextTime.toLocaleString('ja-JP', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}から可能です。`);
+        const hours = bumpStatus.hoursRemaining || 0;
+        const minutes = bumpStatus.minutesRemaining || 0;
+        const seconds = bumpStatus.secondsRemaining || 0;
+        let timeStr = '';
+        if (hours > 0) timeStr += `${hours}時間`;
+        if (minutes > 0) timeStr += `${minutes}分`;
+        if (seconds > 0) timeStr += `${seconds}秒`;
+        alert(`この投稿は24時間に1回までしか挙げられません。次回可能まで: ${timeStr || '0秒'}`);
       }
       return;
     }
@@ -158,8 +164,14 @@ export default function PostDetailPage() {
 
       if (!res.ok) {
         if (res.status === 429 && data.nextBumpAt) {
-          const nextTime = new Date(data.nextBumpAt);
-          alert(`24時間に1回までしか挙げられません。次は${nextTime.toLocaleString('ja-JP', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}から可能です。`);
+          const hours = data.hoursRemaining || 0;
+          const minutes = data.minutesRemaining || 0;
+          const seconds = data.secondsRemaining || 0;
+          let timeStr = '';
+          if (hours > 0) timeStr += `${hours}時間`;
+          if (minutes > 0) timeStr += `${minutes}分`;
+          if (seconds > 0) timeStr += `${seconds}秒`;
+          alert(`この投稿は24時間に1回までしか挙げられません。次回可能まで: ${timeStr || '0秒'}`);
         } else {
           alert(data.error || '投稿の挙げに失敗しました');
         }
@@ -735,13 +747,15 @@ export default function PostDetailPage() {
                   </span>
                 </button>
                 {!bumpStatus?.canBump && bumpStatus?.nextBumpAt && (
-                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    次は
-                    {bumpStatus.hoursRemaining > 0 && `${bumpStatus.hoursRemaining}時間`}
-                    {bumpStatus.minutesRemaining > 0 && `${bumpStatus.minutesRemaining}分`}
-                    {bumpStatus.secondsRemaining > 0 && `${bumpStatus.secondsRemaining}秒`}
-                    後から可能です
-                  </p>
+                  <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    <p className="mb-1">この投稿は24時間に1回までしか挙げられません</p>
+                    <p className="font-medium">
+                      次回可能まで: 
+                      {bumpStatus.hoursRemaining > 0 && ` ${bumpStatus.hoursRemaining}時間`}
+                      {bumpStatus.minutesRemaining > 0 && ` ${bumpStatus.minutesRemaining}分`}
+                      {bumpStatus.secondsRemaining > 0 && ` ${bumpStatus.secondsRemaining}秒`}
+                    </p>
+                  </div>
                 )}
               </div>
             )}

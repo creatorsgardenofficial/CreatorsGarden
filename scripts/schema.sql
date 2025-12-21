@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS posts (
   featured_display BOOLEAN DEFAULT false,
   likes TEXT[] DEFAULT '{}',
   urls JSONB,
+  bumped_at TIMESTAMP WITH TIME ZONE,
   is_deleted BOOLEAN DEFAULT false,
   deleted_at TIMESTAMP WITH TIME ZONE,
   deleted_by TEXT,

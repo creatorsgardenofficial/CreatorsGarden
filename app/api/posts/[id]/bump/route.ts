@@ -47,9 +47,9 @@ export async function POST(
       );
     }
 
-    // 24時間クールタイムチェック
-    if (user.lastBumpAt) {
-      const lastBumpTime = new Date(user.lastBumpAt).getTime();
+    // 投稿単位の24時間クールタイムチェック（この投稿を最後に挙げた時刻をチェック）
+    if (post.bumpedAt) {
+      const lastBumpTime = new Date(post.bumpedAt).getTime();
       const now = Date.now();
       const cooldownMs = 24 * 60 * 60 * 1000; // 24時間（ミリ秒）
       const timeRemaining = cooldownMs - (now - lastBumpTime);
@@ -58,14 +58,16 @@ export async function POST(
         // クールタイム中
         const hoursRemaining = Math.floor(timeRemaining / (60 * 60 * 1000));
         const minutesRemaining = Math.floor((timeRemaining % (60 * 60 * 1000)) / (60 * 1000));
+        const secondsRemaining = Math.floor((timeRemaining % (60 * 1000)) / 1000);
         const nextBumpTime = new Date(lastBumpTime + cooldownMs);
         
         return NextResponse.json(
           { 
-            error: '24時間に1回までしか挙げられません',
+            error: 'この投稿は24時間に1回までしか挙げられません',
             nextBumpAt: nextBumpTime.toISOString(),
             hoursRemaining,
             minutesRemaining,
+            secondsRemaining,
           },
           { status: 429 } // Too Many Requests
         );
@@ -85,11 +87,6 @@ export async function POST(
         { status: 500 }
       );
     }
-
-    // ユーザーのlastBumpAtを更新
-    await updateUser(userId, {
-      lastBumpAt: now,
-    });
 
     console.log('Bump: 投稿を挙げました', {
       postId: id,
@@ -157,14 +154,15 @@ export async function GET(
       );
     }
 
-    // クールタイム情報を計算
+    // 投稿単位のクールタイム情報を計算（この投稿を最後に挙げた時刻をチェック）
     let canBump = true;
     let nextBumpAt: string | null = null;
     let hoursRemaining = 0;
     let minutesRemaining = 0;
+    let secondsRemaining = 0;
 
-    if (user.lastBumpAt) {
-      const lastBumpTime = new Date(user.lastBumpAt).getTime();
+    if (post.bumpedAt) {
+      const lastBumpTime = new Date(post.bumpedAt).getTime();
       const now = Date.now();
       const cooldownMs = 24 * 60 * 60 * 1000; // 24時間（ミリ秒）
       const timeRemaining = cooldownMs - (now - lastBumpTime);
@@ -175,6 +173,7 @@ export async function GET(
         nextBumpAt = nextBumpTime.toISOString();
         hoursRemaining = Math.floor(timeRemaining / (60 * 60 * 1000));
         minutesRemaining = Math.floor((timeRemaining % (60 * 60 * 1000)) / (60 * 1000));
+        secondsRemaining = Math.floor((timeRemaining % (60 * 1000)) / 1000);
       }
     }
 
@@ -183,7 +182,7 @@ export async function GET(
       nextBumpAt,
       hoursRemaining,
       minutesRemaining,
-      lastBumpAt: user.lastBumpAt,
+      secondsRemaining,
       postBumpedAt: post.bumpedAt,
     }, { status: 200 });
 

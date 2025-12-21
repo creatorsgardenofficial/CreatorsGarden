@@ -391,7 +391,9 @@ export async function getPosts(): Promise<Post[]> {
   try {
     // カラムの存在を確認
     const hasUrls = await columnExists('posts', 'urls');
+    const hasBumpedAt = await columnExists('posts', 'bumped_at');
     const urlsSelect = hasUrls ? 'p.urls,' : 'NULL::JSONB as urls,';
+    const bumpedAtSelect = hasBumpedAt ? 'p.bumped_at as "bumpedAt",' : 'NULL::TIMESTAMP WITH TIME ZONE as "bumpedAt",';
     
     const result = await pool.query(`
       SELECT
@@ -408,6 +410,7 @@ export async function getPosts(): Promise<Post[]> {
         p.featured_display as "featuredDisplay",
         p.likes,
         ${urlsSelect}
+        ${bumpedAtSelect}
         p.created_at as "createdAt",
         p.updated_at as "updatedAt",
         p.is_deleted as "isDeleted"
@@ -431,6 +434,7 @@ export async function getPosts(): Promise<Post[]> {
       featuredDisplay: row.featuredDisplay || false,
       likes: row.likes || [],
       urls: row.urls || undefined,
+      bumpedAt: row.bumpedAt || undefined,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     })) as Post[];
@@ -444,7 +448,9 @@ export async function getPostById(id: string): Promise<Post | null> {
   try {
     // カラムの存在を確認
     const hasUrls = await columnExists('posts', 'urls');
+    const hasBumpedAt = await columnExists('posts', 'bumped_at');
     const urlsSelect = hasUrls ? 'p.urls,' : 'NULL::JSONB as urls,';
+    const bumpedAtSelect = hasBumpedAt ? 'p.bumped_at as "bumpedAt",' : 'NULL::TIMESTAMP WITH TIME ZONE as "bumpedAt",';
     
     const result = await pool.query(`
       SELECT
@@ -461,6 +467,7 @@ export async function getPostById(id: string): Promise<Post | null> {
         p.featured_display as "featuredDisplay",
         p.likes,
         ${urlsSelect}
+        ${bumpedAtSelect}
         p.created_at as "createdAt",
         p.updated_at as "updatedAt",
         p.is_deleted as "isDeleted"
@@ -487,6 +494,7 @@ export async function getPostById(id: string): Promise<Post | null> {
       featuredDisplay: row.featuredDisplay || false,
       likes: row.likes || [],
       urls: row.urls || undefined,
+      bumpedAt: row.bumpedAt || undefined,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     } as Post;
@@ -591,12 +599,40 @@ export async function updatePost(id: string, updates: Partial<Post>): Promise<Po
     const tags = updates.tags !== undefined ? updates.tags : existingPost.tags;
     const status = updates.status !== undefined ? updates.status : existingPost.status;
     const urls = updates.urls !== undefined ? updates.urls : existingPost.urls;
+    const bumpedAt = updates.bumpedAt !== undefined ? updates.bumpedAt : existingPost.bumpedAt;
     const updatedAt = new Date().toISOString();
     
     // カラムの存在を確認
     const hasUrls = await columnExists('posts', 'urls');
+    const hasBumpedAt = await columnExists('posts', 'bumped_at');
     
-    if (hasUrls) {
+    if (hasUrls && hasBumpedAt) {
+      await pool.query(`
+        UPDATE posts
+        SET
+          title = $1,
+          content = $2,
+          tags = $3,
+          status = $4,
+          urls = $5,
+          bumped_at = $6,
+          priority_display = $7,
+          featured_display = $8,
+          updated_at = $9
+        WHERE id = $10
+      `, [
+        title,
+        content,
+        tags || [],
+        status,
+        urls ? JSON.stringify(urls) : null,
+        bumpedAt || null,
+        priorityDisplay,
+        featuredDisplay,
+        updatedAt,
+        id,
+      ]);
+    } else if (hasUrls) {
       await pool.query(`
         UPDATE posts
         SET
@@ -615,6 +651,30 @@ export async function updatePost(id: string, updates: Partial<Post>): Promise<Po
         tags || [],
         status,
         urls ? JSON.stringify(urls) : null,
+        priorityDisplay,
+        featuredDisplay,
+        updatedAt,
+        id,
+      ]);
+    } else if (hasBumpedAt) {
+      await pool.query(`
+        UPDATE posts
+        SET
+          title = $1,
+          content = $2,
+          tags = $3,
+          status = $4,
+          bumped_at = $5,
+          priority_display = $6,
+          featured_display = $7,
+          updated_at = $8
+        WHERE id = $9
+      `, [
+        title,
+        content,
+        tags || [],
+        status,
+        bumpedAt || null,
         priorityDisplay,
         featuredDisplay,
         updatedAt,
