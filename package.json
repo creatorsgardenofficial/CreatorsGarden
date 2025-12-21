@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:schema": "node scripts/run-schema.js",
+    "db:parse-connection": "node scripts/parse-connection-string.js",
     "db:migrate": "node scripts/run-migration.js scripts/migrate-group-chats.sql",
     "db:migrate:posts-urls": "node scripts/run-migration.js scripts/migrate-posts-urls.sql",
     "create-admin": "node scripts/create-admin-user.js"
@@ -16,7 +17,7 @@
     "@types/pg": "^8.15.6",
     "@vercel/postgres": "^0.10.0",
     "bcryptjs": "^2.4.3",
-    "next": "16.0.1",
+    "next": "16.1.0",
     "nodemailer": "^6.9.8",
     "pg": "^8.16.3",
     "react": "19.2.0",
@@ -31,7 +32,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.0.1",
+    "eslint-config-next": "16.1.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
