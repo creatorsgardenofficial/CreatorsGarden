@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import A8Ad from '@/components/A8Ad';
+import CustomSelect from '@/components/CustomSelect';
 import { Post, PostType, CreatorType, PostStatus, Announcement } from '@/types';
 import { creatorTypeLabels } from '@/lib/creatorTypes';
 
@@ -471,69 +472,69 @@ export default function PostsPage() {
             </Link>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8" style={{ overflow: 'visible' }}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8" style={{ overflow: 'visible', position: 'relative' }}>
             <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
               フィルター
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              <div className="relative" style={{ zIndex: 1 }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4" style={{ position: 'relative', overflow: 'visible' }}>
+              <div>
                 <label htmlFor="post-type-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   投稿タイプ
                 </label>
-                <select
+                <CustomSelect
                   id="post-type-filter"
-                  name="post-type-filter"
                   value={filters.type}
-                  onChange={(e) => setFilters({ ...filters, type: e.target.value as PostType | '' })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white appearance-none bg-white dark:bg-gray-700"
-                >
-                  <option value="">すべて</option>
-                  <option value="collab">コラボ募集</option>
-                  <option value="idea">アイデア共有</option>
-                  <option value="seeking">パートナー探し</option>
-                </select>
+                  onChange={(value) => setFilters({ ...filters, type: value as PostType | '' })}
+                  options={[
+                    { value: '', label: 'すべて' },
+                    { value: 'collab', label: 'コラボ募集' },
+                    { value: 'idea', label: 'アイデア共有' },
+                    { value: 'seeking', label: 'パートナー探し' },
+                  ]}
+                  placeholder="すべて"
+                />
               </div>
-              <div className="relative" style={{ zIndex: 1 }}>
+              <div>
                 <label htmlFor="creator-type-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   クリエイタータイプ
                 </label>
-                <select
+                <CustomSelect
                   id="creator-type-filter"
-                  name="creator-type-filter"
                   value={filters.creatorType}
-                  onChange={(e) => setFilters({ ...filters, creatorType: e.target.value as CreatorType | '' })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white appearance-none bg-white dark:bg-gray-700"
-                >
-                  <option value="">すべて</option>
-                  <option value="writer">小説家</option>
-                  <option value="illustrator">イラストレーター</option>
-                  <option value="mangaArtist">漫画家 / マンガ制作</option>
-                  <option value="composer">作曲家 / ボカロP</option>
-                  <option value="singer">歌手 / 歌い手</option>
-                  <option value="voiceActor">声優 / ナレーター</option>
-                  <option value="gameCreator">ゲームクリエイター</option>
-                  <option value="videoCreator">動画編集者 / アニメーター</option>
-                  <option value="artist3d">3Dモデラー</option>
-                  <option value="live2dModeler">Live2D モデラー</option>
-                  <option value="developer">Webエンジニア / プログラマー</option>
-                  <option value="other">その他</option>
-                </select>
+                  onChange={(value) => setFilters({ ...filters, creatorType: value as CreatorType | '' })}
+                  options={[
+                    { value: '', label: 'すべて' },
+                    { value: 'writer', label: '小説家' },
+                    { value: 'illustrator', label: 'イラストレーター' },
+                    { value: 'mangaArtist', label: '漫画家 / マンガ制作' },
+                    { value: 'composer', label: '作曲家 / ボカロP' },
+                    { value: 'singer', label: '歌手 / 歌い手' },
+                    { value: 'voiceActor', label: '声優 / ナレーター' },
+                    { value: 'gameCreator', label: 'ゲームクリエイター' },
+                    { value: 'videoCreator', label: '動画編集者 / アニメーター' },
+                    { value: 'artist3d', label: '3Dモデラー' },
+                    { value: 'live2dModeler', label: 'Live2D モデラー' },
+                    { value: 'developer', label: 'Webエンジニア / プログラマー' },
+                    { value: 'other', label: 'その他' },
+                  ]}
+                  placeholder="すべて"
+                />
               </div>
-              <div className="relative" style={{ zIndex: 1 }}>
+              <div>
                 <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   ステータス
                 </label>
-                <select
+                <CustomSelect
                   id="status-filter"
-                  name="status-filter"
                   value={filters.status}
-                  onChange={(e) => setFilters({ ...filters, status: e.target.value as PostStatus | '' })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white appearance-none bg-white dark:bg-gray-700"
-                >
-                  <option value="">すべて</option>
-                  <option value="open">メンバー募集中</option>
-                  <option value="closed">メンバー決定</option>
-                </select>
+                  onChange={(value) => setFilters({ ...filters, status: value as PostStatus | '' })}
+                  options={[
+                    { value: '', label: 'すべて' },
+                    { value: 'open', label: 'メンバー募集中' },
+                    { value: 'closed', label: 'メンバー決定' },
+                  ]}
+                  placeholder="すべて"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

@@ -29,6 +29,11 @@ export default function CustomSelect({
 
   const selectedOption = options.find(opt => opt.value === value);
 
+  // optionsが空の場合は何も表示しない
+  if (!options || options.length === 0) {
+    return null;
+  }
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (selectRef.current && !selectRef.current.contains(event.target as Node)) {
@@ -46,35 +51,56 @@ export default function CustomSelect({
   }, [isOpen]);
 
   return (
-    <div ref={selectRef} className={`relative ${className}`} id={id} style={{ zIndex: isOpen ? 50 : 1 }}>
+    <div 
+      ref={selectRef} 
+      className={`relative ${className}`} 
+      id={id} 
+      style={{ 
+        zIndex: isOpen ? 9999 : 1,
+        position: 'relative',
+        overflow: 'visible'
+      }}
+    >
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
         className="w-full px-4 py-2 text-left border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white flex items-center justify-between bg-white dark:bg-gray-700"
-        style={{ minHeight: '42px' }}
+        style={{ minHeight: '42px', cursor: 'pointer' }}
       >
         <span className={selectedOption ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <svg
-          className={`w-5 h-5 transition-transform flex-shrink-0 ${isOpen ? 'transform rotate-180' : ''}`}
+          className={`w-5 h-5 transition-transform flex-shrink-0 ml-2 ${isOpen ? 'transform rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
+          style={{ pointerEvents: 'none' }}
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
       {isOpen && (
         <div 
-          className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto"
-          style={{ zIndex: 9999 }}
+          className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-xl max-h-60 overflow-auto"
+          style={{ 
+            zIndex: 10000,
+            position: 'absolute',
+            marginTop: '4px'
+          }}
+          onClick={(e) => e.stopPropagation()}
         >
           {options.map((option) => (
             <button
               key={option.value}
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 onChange(option.value);
                 setIsOpen(false);
               }}
@@ -83,6 +109,7 @@ export default function CustomSelect({
                   ? 'bg-indigo-100 dark:bg-indigo-900/50 font-medium'
                   : 'text-gray-900 dark:text-white'
               }`}
+              style={{ cursor: 'pointer' }}
             >
               {option.label}
             </button>
