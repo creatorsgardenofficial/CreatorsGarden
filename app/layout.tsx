@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Creator Collab - アイデア共有＋コラボマッチング",
+  title: "Creators Garden - アイデア共有＋コラボマッチング",
   description: "創作者・アマチュアクリエイター向けのアイデア共有とコラボレーションプラットフォーム",
 };
 
