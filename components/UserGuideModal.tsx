@@ -180,7 +180,7 @@ export default function UserGuideModal({ onClose }: UserGuideModalProps) {
               </h3>
               <div className="grid md:grid-cols-3 gap-4">
                 <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border-2 border-green-200 dark:border-green-800">
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">🟩 Free Plan（無料）</h4>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">🟩 Seed Plan（無料）</h4>
                   <p className="text-gray-700 dark:text-gray-300 text-sm">
                     基本的な機能を無料で利用できます。投稿の作成、閲覧、メッセージの送受信などが可能です。
                   </p>
@@ -188,7 +188,7 @@ export default function UserGuideModal({ onClose }: UserGuideModalProps) {
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800 opacity-75">
                   <h4 className="font-semibold text-gray-900 dark:text-white mb-2">🟦 Grow Plan（成長プラン）</h4>
                   <p className="text-gray-700 dark:text-gray-300 text-sm mb-2">
-                    Free Planの機能に加えて、より多くの投稿や高度な機能を利用できます。
+                    Seed Planの機能に加えて、より多くの投稿や高度な機能を利用できます。
                   </p>
                   <p className="text-blue-600 dark:text-blue-400 text-sm font-semibold">
                     ⏳ 準備中

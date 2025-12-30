@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       const limits = getPlanLimits(planType);
       return NextResponse.json(
         { 
-          error: `ブックマークの上限に達しています。現在のプラン: ${planType === 'free' ? 'Free Plan' : planType === 'grow' ? 'Grow Plan' : 'Bloom Plan'}。プランをアップグレードするには、プランページをご覧ください。`,
+          error: `ブックマークの上限に達しています。現在のプラン: ${planType === 'free' ? 'Seed Plan' : planType === 'grow' ? 'Grow Plan' : 'Bloom Plan'}。プランをアップグレードするには、プランページをご覧ください。`,
           planLimit: true,
           maxBookmarks: limits.maxBookmarks,
         },

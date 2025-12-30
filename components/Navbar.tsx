@@ -360,18 +360,29 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50 relative">
+      <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50 relative" style={{ pointerEvents: 'auto' }}>
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center h-16 pl-2 sm:pl-4 md:pl-6 lg:pl-8 pr-2 sm:pr-4 md:pr-6 lg:pr-8">
             <Link 
               href="/" 
-              onClick={() => {
+              onClick={(e) => {
+                // アクティブな要素のフォーカスを解除
+                if (document.activeElement instanceof HTMLElement) {
+                  document.activeElement.blur();
+                }
                 // チャットパネルが開いている場合は閉じる
                 if (showChatPanel) {
                   setShowChatPanel(false);
                 }
               }}
+              onMouseDown={(e) => {
+                // マウスダウン時にフォーカスを解除
+                if (document.activeElement instanceof HTMLElement) {
+                  document.activeElement.blur();
+                }
+              }}
               className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-green-600 dark:from-purple-400 dark:to-green-400 bg-clip-text text-transparent hover:from-purple-700 hover:to-green-700 dark:hover:from-purple-300 dark:hover:to-green-300 transition-all flex-shrink-0"
+              style={{ pointerEvents: 'auto', zIndex: 100 }}
             >
               <span className="text-xl sm:text-2xl md:text-3xl mr-1 sm:mr-2">🌱</span>
               Creators Garden
@@ -387,14 +398,36 @@ export default function Navbar() {
             </button>
             <Link
               href="/posts"
+              onClick={(e) => {
+                if (document.activeElement instanceof HTMLElement) {
+                  document.activeElement.blur();
+                }
+              }}
+              onMouseDown={(e) => {
+                if (document.activeElement instanceof HTMLElement) {
+                  document.activeElement.blur();
+                }
+              }}
               className="text-xs sm:text-sm md:text-base text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors whitespace-nowrap flex-shrink-0 py-2"
+              style={{ pointerEvents: 'auto', zIndex: 100 }}
             >
               投稿一覧
             </Link>
             {!isAdmin && (
               <Link
                 href="/feedback"
+                onClick={(e) => {
+                  if (document.activeElement instanceof HTMLElement) {
+                    document.activeElement.blur();
+                  }
+                }}
+                onMouseDown={(e) => {
+                  if (document.activeElement instanceof HTMLElement) {
+                    document.activeElement.blur();
+                  }
+                }}
                 className="relative text-xs sm:text-sm md:text-base text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors whitespace-nowrap flex-shrink-0 py-2"
+                style={{ pointerEvents: 'auto', zIndex: 100 }}
               >
                 ご意見箱
                 {feedbackNotificationCount > 0 && (
@@ -412,7 +445,18 @@ export default function Navbar() {
                 {isAdmin && (
                   <Link
                     href="/admin"
+                    onClick={(e) => {
+                      if (document.activeElement instanceof HTMLElement) {
+                        document.activeElement.blur();
+                      }
+                    }}
+                    onMouseDown={(e) => {
+                      if (document.activeElement instanceof HTMLElement) {
+                        document.activeElement.blur();
+                      }
+                    }}
                     className="relative text-xs sm:text-sm md:text-base text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors whitespace-nowrap flex-shrink-0 py-2"
+                    style={{ pointerEvents: 'auto', zIndex: 100 }}
                   >
                     管理者
                     {feedbackNotificationCount > 0 && (
@@ -438,14 +482,36 @@ export default function Navbar() {
                 </button>
                 <Link
                   href="/posts/new"
+                  onClick={(e) => {
+                    if (document.activeElement instanceof HTMLElement) {
+                      document.activeElement.blur();
+                    }
+                  }}
+                  onMouseDown={(e) => {
+                    if (document.activeElement instanceof HTMLElement) {
+                      document.activeElement.blur();
+                    }
+                  }}
                   className="px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg hover:from-purple-700 hover:to-purple-600 transition-all shadow-md hover:shadow-lg text-xs sm:text-sm md:text-base whitespace-nowrap flex-shrink-0"
+                  style={{ pointerEvents: 'auto', zIndex: 100 }}
                 >
                   投稿する
                 </Link>
                 <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
                   <Link
                     href="/profile"
+                    onClick={(e) => {
+                      if (document.activeElement instanceof HTMLElement) {
+                        document.activeElement.blur();
+                      }
+                    }}
+                    onMouseDown={(e) => {
+                      if (document.activeElement instanceof HTMLElement) {
+                        document.activeElement.blur();
+                      }
+                    }}
                     className="text-xs sm:text-sm md:text-base font-medium text-gray-900 dark:text-gray-100 hover:text-purple-600 dark:hover:text-purple-400 transition-colors whitespace-nowrap py-2"
+                    style={{ pointerEvents: 'auto', zIndex: 100 }}
                   >
                     マイページ
                   </Link>
@@ -461,13 +527,35 @@ export default function Navbar() {
               <>
                 <Link
                   href="/login"
+                  onClick={(e) => {
+                    if (document.activeElement instanceof HTMLElement) {
+                      document.activeElement.blur();
+                    }
+                  }}
+                  onMouseDown={(e) => {
+                    if (document.activeElement instanceof HTMLElement) {
+                      document.activeElement.blur();
+                    }
+                  }}
                   className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                  style={{ pointerEvents: 'auto', zIndex: 100 }}
                 >
                   ログイン
                 </Link>
                 <Link
                   href="/register"
+                  onClick={(e) => {
+                    if (document.activeElement instanceof HTMLElement) {
+                      document.activeElement.blur();
+                    }
+                  }}
+                  onMouseDown={(e) => {
+                    if (document.activeElement instanceof HTMLElement) {
+                      document.activeElement.blur();
+                    }
+                  }}
                   className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg hover:from-purple-700 hover:to-purple-600 transition-all shadow-md hover:shadow-lg"
+                  style={{ pointerEvents: 'auto', zIndex: 100 }}
                 >
                   新規登録
                 </Link>
@@ -527,16 +615,38 @@ export default function Navbar() {
                 </button>
                 <Link
                   href="/posts"
-                  onClick={() => setShowSidebar(false)}
+                  onClick={(e) => {
+                    if (document.activeElement instanceof HTMLElement) {
+                      document.activeElement.blur();
+                    }
+                    setShowSidebar(false);
+                  }}
+                  onMouseDown={(e) => {
+                    if (document.activeElement instanceof HTMLElement) {
+                      document.activeElement.blur();
+                    }
+                  }}
                   className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-800 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg transition-colors"
+                  style={{ pointerEvents: 'auto', zIndex: 100 }}
                 >
                   投稿一覧
                 </Link>
                 {!isAdmin && (
                   <Link
                     href="/feedback"
-                    onClick={() => setShowSidebar(false)}
+                    onClick={(e) => {
+                      if (document.activeElement instanceof HTMLElement) {
+                        document.activeElement.blur();
+                      }
+                      setShowSidebar(false);
+                    }}
+                    onMouseDown={(e) => {
+                      if (document.activeElement instanceof HTMLElement) {
+                        document.activeElement.blur();
+                      }
+                    }}
                     className="relative block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-800 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg transition-colors"
+                    style={{ pointerEvents: 'auto', zIndex: 100 }}
                   >
                     ご意見箱
                     {feedbackNotificationCount > 0 && (
@@ -551,8 +661,19 @@ export default function Navbar() {
                     {isAdmin && (
                       <Link
                         href="/admin"
-                        onClick={() => setShowSidebar(false)}
+                        onClick={(e) => {
+                          if (document.activeElement instanceof HTMLElement) {
+                            document.activeElement.blur();
+                          }
+                          setShowSidebar(false);
+                        }}
+                        onMouseDown={(e) => {
+                          if (document.activeElement instanceof HTMLElement) {
+                            document.activeElement.blur();
+                          }
+                        }}
                         className="relative block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-800 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg transition-colors"
+                        style={{ pointerEvents: 'auto', zIndex: 100 }}
                       >
                         管理者
                         {feedbackNotificationCount > 0 && (
@@ -581,15 +702,37 @@ export default function Navbar() {
                     </button>
                     <Link
                       href="/posts/new"
-                      onClick={() => setShowSidebar(false)}
+                      onClick={(e) => {
+                        if (document.activeElement instanceof HTMLElement) {
+                          document.activeElement.blur();
+                        }
+                        setShowSidebar(false);
+                      }}
+                      onMouseDown={(e) => {
+                        if (document.activeElement instanceof HTMLElement) {
+                          document.activeElement.blur();
+                        }
+                      }}
                       className="block px-3 py-2 text-sm bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg hover:from-purple-700 hover:to-purple-600 transition-all shadow-md text-center font-semibold"
+                      style={{ pointerEvents: 'auto', zIndex: 100 }}
                     >
                       投稿する
                     </Link>
                     <Link
                       href="/profile"
-                      onClick={() => setShowSidebar(false)}
+                      onClick={(e) => {
+                        if (document.activeElement instanceof HTMLElement) {
+                          document.activeElement.blur();
+                        }
+                        setShowSidebar(false);
+                      }}
+                      onMouseDown={(e) => {
+                        if (document.activeElement instanceof HTMLElement) {
+                          document.activeElement.blur();
+                        }
+                      }}
                       className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-800 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg transition-colors"
+                      style={{ pointerEvents: 'auto', zIndex: 100 }}
                     >
                       マイページ
                     </Link>
@@ -608,15 +751,37 @@ export default function Navbar() {
                   <>
                     <Link
                       href="/login"
-                      onClick={() => setShowSidebar(false)}
+                      onClick={(e) => {
+                        if (document.activeElement instanceof HTMLElement) {
+                          document.activeElement.blur();
+                        }
+                        setShowSidebar(false);
+                      }}
+                      onMouseDown={(e) => {
+                        if (document.activeElement instanceof HTMLElement) {
+                          document.activeElement.blur();
+                        }
+                      }}
                       className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-800 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg transition-colors"
+                      style={{ pointerEvents: 'auto', zIndex: 100 }}
                     >
                       ログイン
                     </Link>
                     <Link
                       href="/register"
-                      onClick={() => setShowSidebar(false)}
+                      onClick={(e) => {
+                        if (document.activeElement instanceof HTMLElement) {
+                          document.activeElement.blur();
+                        }
+                        setShowSidebar(false);
+                      }}
+                      onMouseDown={(e) => {
+                        if (document.activeElement instanceof HTMLElement) {
+                          document.activeElement.blur();
+                        }
+                      }}
                       className="block px-3 py-2 text-sm bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg hover:from-purple-700 hover:to-purple-600 transition-all shadow-md text-center font-semibold"
+                      style={{ pointerEvents: 'auto', zIndex: 100 }}
                     >
                       新規登録
                     </Link>

@@ -248,7 +248,7 @@ export async function POST(request: NextRequest) {
       if (tags.length > limits.maxTags) {
         return NextResponse.json(
           { 
-            error: `タグは${limits.maxTags}個までです。現在のプラン: ${planType === 'free' ? 'Free Plan' : planType === 'grow' ? 'Grow Plan' : 'Bloom Plan'}`,
+            error: `タグは${limits.maxTags}個までです。現在のプラン: ${planType === 'free' ? 'Seed Plan' : planType === 'grow' ? 'Grow Plan' : 'Bloom Plan'}`,
             planLimit: true,
             maxTags: limits.maxTags,
           },

@@ -113,5 +113,5 @@ console.log('🎉 更新完了！');
 console.log('\n次に以下を確認してください:');
 console.log('1. ブラウザでページをリロード');
 console.log('2. プランページで「プラン情報を更新」ボタンをクリック');
-console.log('3. プランが Free Plan に切り替わっていることを確認');
+console.log('3. プランが Seed Plan に切り替わっていることを確認');
 

@@ -114,7 +114,7 @@ export default function NewPostPage() {
       const planType = user.subscription?.planType || 'free';
       const limits = getPlanLimits(planType);
       if (tags.length > limits.maxTags) {
-        setError(`タグは${limits.maxTags}個までです。現在のプラン: ${planType === 'free' ? 'Free Plan' : planType === 'grow' ? 'Grow Plan' : 'Bloom Plan'}。プランをアップグレードするには、プランページをご覧ください。`);
+        setError(`タグは${limits.maxTags}個までです。現在のプラン: ${planType === 'free' ? 'Seed Plan' : planType === 'grow' ? 'Grow Plan' : 'Bloom Plan'}。プランをアップグレードするには、プランページをご覧ください。`);
         return;
       }
     }

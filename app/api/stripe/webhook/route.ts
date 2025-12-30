@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
               
               if (isInvalidStatus || periodEnded) {
                 // サブスクリプションが無効な状態、または期間終了済みの場合、Freeプランに戻す
-                console.log('Webhook: サブスクリプションが無効な状態または期間終了 - Free Planに戻す', {
+                console.log('Webhook: サブスクリプションが無効な状態または期間終了 - Seed Planに戻す', {
                   status: subscription.status,
                   subscriptionId: subscription.id,
                   cancelAtPeriodEnd: subscription.cancel_at_period_end,
@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
                   await savePosts(posts);
                 }
                 
-                console.log('Webhook: Free Planへの切り替え完了');
+                console.log('Webhook: Seed Planへの切り替え完了');
               } else {
                 // サブスクリプションが有効な場合、Stripeの価格IDからplanTypeを取得
                 const priceId = subscription.items.data[0]?.price?.id;
@@ -355,7 +355,7 @@ export async function POST(request: NextRequest) {
               });
               
               // サブスクリプションが削除された場合、無料プランに戻す
-              console.log('Webhook: サブスクリプション削除 - Free Planに戻す');
+              console.log('Webhook: サブスクリプション削除 - Seed Planに戻す');
               await updateUser(userId, {
                 subscription: {
                   stripeCustomerId: customerId,

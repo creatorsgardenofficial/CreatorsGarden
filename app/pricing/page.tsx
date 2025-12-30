@@ -309,7 +309,7 @@ function PricingContent() {
             <div className="mb-8 text-center">
               <div className="inline-block px-6 py-3 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 rounded-lg">
                 <span className="font-semibold">現在のプラン: </span>
-                {currentPlan === 'free' && '🟩 Free Plan（無料）'}
+                {currentPlan === 'free' && '🟩 Seed Plan（無料）'}
                 {currentPlan === 'grow' && '🟦 Grow Plan（成長プラン）'}
                 {currentPlan === 'bloom' && '🟪 Bloom Plan（開花プラン）'}
                 {isActive && currentPlan !== 'free' && (
@@ -364,12 +364,12 @@ function PricingContent() {
 
           {/* プラン一覧 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Free Plan */}
+            {/* Seed Plan */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border-2 border-green-200 dark:border-green-800">
               <div className="text-center mb-6">
                 <div className="text-4xl mb-2">🟩</div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  Free Plan（無料）
+                  Seed Plan（無料）
                 </h2>
                 <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
                   ¥0 <span className="text-lg text-gray-600 dark:text-gray-400">/ 月</span>

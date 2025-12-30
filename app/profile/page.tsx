@@ -499,7 +499,7 @@ export default function ProfilePage() {
                         ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
                         : 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300'
                     }`}>
-                      {user.subscription.planType === 'free' && '🟩 Free Plan'}
+                      {user.subscription.planType === 'free' && '🟩 Seed Plan'}
                       {user.subscription.planType === 'grow' && '🟦 Grow Plan'}
                       {user.subscription.planType === 'bloom' && '🟪 Bloom Plan'}
                       {user.subscription.status === 'active' && user.subscription.planType !== 'free' && ' ✓'}
@@ -819,7 +819,7 @@ export default function ProfilePage() {
                         ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
                         : 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300'
                     }`}>
-                      {user.subscription.planType === 'free' && '🟩 Free Plan（無料）'}
+                      {user.subscription.planType === 'free' && '🟩 Seed Plan（無料）'}
                       {user.subscription.planType === 'grow' && '🟦 Grow Plan（成長プラン）'}
                       {user.subscription.planType === 'bloom' && '🟪 Bloom Plan（開花プラン）'}
                     </span>

@@ -37,6 +37,9 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
   const usersListRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
   const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [searchPublicId, setSearchPublicId] = useState('');
+  const [searchedUser, setSearchedUser] = useState<User | null>(null);
+  const [searching, setSearching] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
@@ -291,6 +294,30 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
     // 通知をリセットするためにイベントを発火
     window.dispatchEvent(new CustomEvent('chatViewed'));
   }, [fetchMessages, fetchConversations]);
+
+  // ユーザー検索（表示用IDで検索）
+  const handleSearchUserByPublicId = useCallback(async () => {
+    if (!searchPublicId.trim()) {
+      setSearchedUser(null);
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const res = await fetch(`/api/users/search?publicId=${encodeURIComponent(searchPublicId.trim())}`);
+      const data = await res.json();
+      if (res.ok && data.user) {
+        setSearchedUser(data.user);
+      } else {
+        setSearchedUser(null);
+        alert(data.error || 'ユーザーが見つかりません');
+      }
+    } catch (err) {
+      alert('ユーザー検索に失敗しました');
+    } finally {
+      setSearching(false);
+    }
+  }, [searchPublicId]);
 
   // 新規会話開始
   const handleStartConversation = useCallback(async (userId: string, skipAutoMessage = false) => {
@@ -628,13 +655,78 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
               <div className="flex flex-col" style={{ height: '100%', maxHeight: '100%', overflow: 'hidden' }}>
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">ユーザー一覧</h3>
-                  <input
-                    type="text"
-                    value={userSearchQuery}
-                    onChange={(e) => setUserSearchQuery(e.target.value)}
-                    placeholder="ユーザー名で検索..."
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm"
-                  />
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      表示用IDで検索
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={searchPublicId}
+                        onChange={(e) => setSearchPublicId(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSearchUserByPublicId();
+                          }
+                        }}
+                        placeholder="表示用IDを入力"
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm"
+                      />
+                      <button
+                        onClick={handleSearchUserByPublicId}
+                        disabled={searching}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 text-sm"
+                      >
+                        {searching ? '検索中...' : '検索'}
+                      </button>
+                    </div>
+                    {searchedUser && (
+                      <div className="mt-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Link
+                              href={`/users/${searchedUser.id}`}
+                              onClick={onClose}
+                              className="block font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                            >
+                              {searchedUser.username}
+                            </Link>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {creatorTypeLabels[searchedUser.creatorType] || searchedUser.creatorType}
+                            </div>
+                            {searchedUser.publicId && (
+                              <div className="text-xs text-gray-400 dark:text-gray-500">
+                                ID: {searchedUser.publicId}
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => {
+                              handleStartConversation(searchedUser.id);
+                              setSearchPublicId('');
+                              setSearchedUser(null);
+                            }}
+                            className="px-3 py-1 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                          >
+                            DMを送る
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      ユーザー名で検索
+                    </label>
+                    <input
+                      type="text"
+                      value={userSearchQuery}
+                      onChange={(e) => setUserSearchQuery(e.target.value)}
+                      placeholder="ユーザー名で検索..."
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm"
+                    />
+                  </div>
                 </div>
                 <div 
                   ref={usersListRef}

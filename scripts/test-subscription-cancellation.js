@@ -149,9 +149,9 @@ rl.question('上記のコマンドを自動実行しますか？ (y/n): ', (answ
       
       console.log('🎉 テスト完了！');
       console.log('\n次に以下を確認してください:');
-      console.log('1. サーバーログで「Webhook: Free Planへの切り替え完了」が表示されること');
+      console.log('1. サーバーログで「Webhook: Seed Planへの切り替え完了」が表示されること');
       console.log('2. data/users.json で planType が "free" になっていること');
-      console.log('3. アプリケーションでプランが Free Plan に切り替わっていること');
+      console.log('3. アプリケーションでプランが Seed Plan に切り替わっていること');
       
     } catch (error) {
       console.error('\n❌ エラーが発生しました:');
