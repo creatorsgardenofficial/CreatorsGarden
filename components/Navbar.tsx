@@ -81,11 +81,30 @@ export default function Navbar() {
   };
 
   // 未読メッセージ数を取得（DMチャット + グループチャット）
-  // 通知機能を無効化: 常に0を返す
   const fetchUnreadCount = useCallback(async () => {
-    // 通知機能を無効化: 常に0を設定
-    setUnreadCount(0);
-  }, []);
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+    
+    try {
+      // DMチャットの未読数を取得
+      const dmRes = await fetch('/api/messages?unreadCount=true');
+      const dmData = await dmRes.json();
+      const dmUnreadCount = dmRes.ok ? (dmData.unreadCount || 0) : 0;
+      
+      // グループチャットの未読数を取得
+      const groupRes = await fetch('/api/group-chats?unreadCount=true');
+      const groupData = await groupRes.json();
+      const groupUnreadCount = groupRes.ok ? (groupData.unreadCount || 0) : 0;
+      
+      // 合計を設定
+      setUnreadCount(dmUnreadCount + groupUnreadCount);
+    } catch (err) {
+      // エラーは静かに無視
+      setUnreadCount(0);
+    }
+  }, [user]);
 
   // ご意見箱の通知数を取得
   const fetchFeedbackNotificationCount = async () => {
@@ -411,8 +430,7 @@ export default function Navbar() {
                   <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
-                  {/* 通知機能を無効化: 通知バッジを非表示 */}
-                  {false && unreadCount > 0 && (
+                  {unreadCount > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
@@ -555,8 +573,7 @@ export default function Navbar() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                       </svg>
                       メッセージ
-                      {/* 通知機能を無効化: 通知バッジを非表示 */}
-                      {false && unreadCount > 0 && (
+                      {unreadCount > 0 && (
                         <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-0.5">
                           {unreadCount > 9 ? '9+' : unreadCount}
                         </span>

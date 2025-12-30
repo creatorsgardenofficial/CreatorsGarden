@@ -798,8 +798,7 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                           <div className="font-medium text-gray-900 dark:text-white">
                             {gc.name}
                           </div>
-                          {/* 通知機能を無効化: 通知バッジを非表示 */}
-                          {false && gc.unreadCount > 0 && (
+                          {gc.unreadCount > 0 && (
                             <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1">
                               {gc.unreadCount > 9 ? '9+' : gc.unreadCount}
                             </span>
