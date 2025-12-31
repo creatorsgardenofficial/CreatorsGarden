@@ -30,9 +30,6 @@ export default function AdminPage() {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [passwordForm, setPasswordForm] = useState({ userId: '', password: '' });
   const [passwordError, setPasswordError] = useState('');
-  const [replyingToId, setReplyingToId] = useState<string | null>(null);
-  const [replyContent, setReplyContent] = useState('');
-  const [submittingReply, setSubmittingReply] = useState(false);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
   const [announcementForm, setAnnouncementForm] = useState({
@@ -259,64 +256,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleReply = async (feedbackId: string) => {
-    // 返信を送信する関数
-    if (!replyContent.trim()) {
-      alert('返信内容を入力してください');
-      return;
-    }
-
-    setSubmittingReply(true);
-    try {
-      const res = await fetch(`/api/feedback/${feedbackId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: replyContent }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error || '返信の送信に失敗しました');
-        setSubmittingReply(false);
-        return;
-      }
-
-      // フィードバック一覧を更新
-      await fetchFeedbacks();
-      setReplyingToId(null);
-      setReplyContent('');
-    } catch (err) {
-      alert('返信の送信に失敗しました');
-    } finally {
-      setSubmittingReply(false);
-    }
-  };
-
-  const handleDeleteReply = async (feedbackId: string) => {
-    if (!confirm('返信を削除しますか？')) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/admin/feedback/${feedbackId}/reply`, {
-        method: 'DELETE',
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error || '返信の削除に失敗しました');
-        return;
-      }
-
-      // フィードバック一覧を更新
-      await fetchFeedbacks();
-      alert('返信を削除しました');
-    } catch (err) {
-      alert('返信の削除に失敗しました');
-    }
-  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -836,110 +775,6 @@ export default function AdminPage() {
                         </p>
                       </div>
 
-                      {/* メッセージのやり取り表示 */}
-                      {(feedback.messages && feedback.messages.length > 0) || feedback.reply ? (
-                        <div className="mb-4 space-y-3">
-                          <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                            メッセージのやり取り
-                          </h4>
-                          <div className="space-y-3 max-h-96 overflow-y-auto">
-                            {/* メッセージ配列を優先表示（messagesがある場合はそれを使用） */}
-                            {feedback.messages && feedback.messages.length > 0 ? (
-                              // 重複を除去して表示
-                              Array.from(
-                                new Map(
-                                  feedback.messages.map(msg => [msg.id, msg])
-                                ).values()
-                              ).map((msg, index) => (
-                                <div
-                                  key={`${msg.id}-${index}`}
-                                  className={`rounded-lg p-4 ${
-                                    msg.senderType === 'admin'
-                                      ? 'bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800'
-                                      : 'bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600'
-                                  }`}
-                                >
-                                  <div className="flex items-center justify-between mb-2">
-                                    <span className={`text-xs font-semibold ${
-                                      msg.senderType === 'admin'
-                                        ? 'text-indigo-600 dark:text-indigo-400'
-                                        : 'text-gray-600 dark:text-gray-400'
-                                    }`}>
-                                      {msg.senderType === 'admin' ? '管理者' : 'ユーザー'}
-                                    </span>
-                                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                                      {formatDate(msg.createdAt)}
-                                    </span>
-                                  </div>
-                                  <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
-                                    {msg.content}
-                                  </p>
-                                </div>
-                              ))
-                            ) : (
-                              /* 後方互換性：messagesがない場合のみreplyフィールドを表示 */
-                              feedback.reply && (
-                                <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-4">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                                      管理者
-                                    </span>
-                                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                                      {feedback.repliedAt && formatDate(feedback.repliedAt)}
-                                    </span>
-                                  </div>
-                                  <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
-                                    {feedback.reply}
-                                  </p>
-                                </div>
-                              )
-                            )}
-                          </div>
-                        </div>
-                      ) : null}
-
-                      {/* 返信フォーム */}
-                      {replyingToId === feedback.id ? (
-                        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                          <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                            メッセージを送信
-                          </h4>
-                          <textarea
-                            value={replyContent}
-                            onChange={(e) => setReplyContent(e.target.value)}
-                            rows={4}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white mb-2"
-                            placeholder="メッセージ内容を入力..."
-                            disabled={submittingReply}
-                          />
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleReply(feedback.id)}
-                              disabled={submittingReply || !replyContent.trim()}
-                              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {submittingReply ? '送信中...' : '送信'}
-                            </button>
-                            <button
-                              onClick={() => {
-                                setReplyingToId(null);
-                                setReplyContent('');
-                              }}
-                              disabled={submittingReply}
-                              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-                            >
-                              キャンセル
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setReplyingToId(feedback.id)}
-                          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                        >
-                          返信する
-                        </button>
-                      )}
                     </div>
                   ))}
                 </div>
