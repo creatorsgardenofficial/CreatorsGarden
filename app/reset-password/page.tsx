@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [token, setToken] = useState('');
@@ -193,5 +193,29 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <>
+          <Navbar />
+          <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12">
+            <div className="max-w-md mx-auto px-4">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+                <div className="text-center">
+                  <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-600 dark:text-gray-400">読み込み中...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
