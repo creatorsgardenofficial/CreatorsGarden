@@ -136,12 +136,9 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* Creators Gardenでできること */}
           <div className="mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-8 text-center">
               Creators Gardenでできること
             </h2>
-            <p className="text-base text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8 text-center leading-relaxed">
-              Creators Gardenは、以下のような目的を持つクリエイターに利用されています。
-            </p>
             <ul className="max-w-3xl mx-auto space-y-4 text-gray-700 dark:text-gray-300">
               <li className="flex items-start">
                 <span className="text-purple-500 dark:text-purple-400 mr-3 mt-0.5 font-bold">・</span>
