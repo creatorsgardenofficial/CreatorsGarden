@@ -9,7 +9,7 @@ const SECURITY_LOG_FILE = path.join(DATA_DIR, 'security-log.json');
 export interface SecurityLogEntry {
   id: string;
   timestamp: string;
-  type: 'login_attempt' | 'login_success' | 'login_failure' | 'rate_limit_exceeded' | 'csrf_failure' | 'admin_action' | 'account_suspended' | 'account_activated' | 'account_deactivated' | 'account_reactivated' | 'password_change' | 'unauthorized_access' | 'account_locked';
+  type: 'login_attempt' | 'login_success' | 'login_failure' | 'rate_limit_exceeded' | 'csrf_failure' | 'admin_action' | 'account_suspended' | 'account_activated' | 'account_deactivated' | 'account_reactivated' | 'reactivate_failure' | 'password_change' | 'unauthorized_access' | 'account_locked';
   userId?: string;
   email?: string;
   ip?: string;
@@ -139,6 +139,8 @@ function getDefaultSeverity(type: SecurityLogEntry['type']): SecurityLogEntry['s
     case 'account_deactivated':
       return 'medium';
     case 'account_reactivated':
+      return 'medium';
+    case 'reactivate_failure':
       return 'medium';
     case 'password_change':
       return 'medium';
