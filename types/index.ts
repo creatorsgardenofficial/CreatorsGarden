@@ -30,6 +30,7 @@ export interface User {
   failedLoginAttempts?: number; // 連続ログイン失敗回数
   accountLockedUntil?: string; // アカウントロック解除時刻（ISO形式）
   deactivatedAt?: string; // 退会日時（ISO形式）
+  deactivationReason?: string; // 退会理由
   createdAt: string;
 }
 
