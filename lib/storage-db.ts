@@ -25,6 +25,8 @@ export async function getUsers(): Promise<User[]> {
         created_at as "createdAt",
         failed_login_attempts as "failedLoginAttempts",
         account_locked_until as "accountLockedUntil",
+        deactivated_at as "deactivatedAt",
+        deactivation_reason as "deactivationReason",
         subscription
       FROM users
       ORDER BY created_at DESC`
@@ -65,6 +67,8 @@ export async function getUserById(id: string): Promise<User | null> {
         created_at as "createdAt",
         failed_login_attempts as "failedLoginAttempts",
         account_locked_until as "accountLockedUntil",
+        deactivated_at as "deactivatedAt",
+        deactivation_reason as "deactivationReason",
         subscription
       FROM users
       WHERE id = $1
@@ -103,6 +107,8 @@ export async function getUserByEmail(email: string): Promise<User | null> {
         created_at as "createdAt",
         failed_login_attempts as "failedLoginAttempts",
         account_locked_until as "accountLockedUntil",
+        deactivated_at as "deactivatedAt",
+        deactivation_reason as "deactivationReason",
         subscription
       FROM users
       WHERE email = $1
@@ -141,6 +147,8 @@ export async function getUserByPublicId(publicId: string): Promise<User | null> 
         created_at as "createdAt",
         failed_login_attempts as "failedLoginAttempts",
         account_locked_until as "accountLockedUntil",
+        deactivated_at as "deactivatedAt",
+        deactivation_reason as "deactivationReason",
         subscription
       FROM users
       WHERE public_id = $1
@@ -249,6 +257,7 @@ export async function updateUser(id: string, updates: Partial<User>): Promise<Us
     const isActive = updates.isActive !== undefined ? updates.isActive : existingUser.isActive;
     const failedLoginAttempts = updates.failedLoginAttempts !== undefined ? updates.failedLoginAttempts : existingUser.failedLoginAttempts;
     const accountLockedUntil = updates.accountLockedUntil !== undefined ? updates.accountLockedUntil : existingUser.accountLockedUntil;
+    const deactivatedAt = updates.deactivatedAt !== undefined ? updates.deactivatedAt : existingUser.deactivatedAt;
     // subscriptionをマージ
     const subscription = updates.subscription 
       ? { ...existingUser.subscription, ...updates.subscription }
@@ -265,8 +274,9 @@ export async function updateUser(id: string, updates: Partial<User>): Promise<Us
          is_active = $7,
          failed_login_attempts = $8,
          account_locked_until = $9,
-         subscription = $10
-       WHERE id = $11`,
+         deactivated_at = $10,
+         subscription = $11
+       WHERE id = $12`,
       [
         username,
         email,
@@ -277,6 +287,7 @@ export async function updateUser(id: string, updates: Partial<User>): Promise<Us
         isActive !== undefined ? isActive : true,
         failedLoginAttempts || 0,
         accountLockedUntil || null,
+        deactivatedAt || null,
         JSON.stringify(subscription),
         id,
       ]
@@ -285,6 +296,39 @@ export async function updateUser(id: string, updates: Partial<User>): Promise<Us
     return getUserById(id);
   } catch (error) {
     console.error('Failed to update user in database:', error);
+    throw error;
+  }
+}
+
+// 退会処理
+export async function deactivateUser(userId: string, reason?: string): Promise<User | null> {
+  try {
+    const deactivatedAt = new Date().toISOString();
+    await pool.query(
+      `UPDATE users
+       SET deactivated_at = $1, deactivation_reason = $2, is_active = false
+       WHERE id = $3`,
+      [deactivatedAt, reason || null, userId]
+    );
+    return getUserById(userId);
+  } catch (error) {
+    console.error('Failed to deactivate user in database:', error);
+    throw error;
+  }
+}
+
+// アカウント復旧処理
+export async function reactivateUser(userId: string): Promise<User | null> {
+  try {
+    await pool.query(
+      `UPDATE users
+       SET deactivated_at = NULL, deactivation_reason = NULL, is_active = true
+       WHERE id = $1`,
+      [userId]
+    );
+    return getUserById(userId);
+  } catch (error) {
+    console.error('Failed to reactivate user in database:', error);
     throw error;
   }
 }
@@ -1942,6 +1986,116 @@ export async function deleteGroupMessage(id: string): Promise<boolean> {
     return result.rowCount !== null && result.rowCount > 0;
   } catch (error) {
     console.error('Failed to delete group message in database:', error);
+    throw error;
+  }
+}
+
+// ==================== システム設定（メンテナンスモード） ====================
+
+export interface SystemSettings {
+  id: string;
+  isMaintenance: boolean;
+  maintenanceMessage: string | null;
+  updatedAt: string;
+}
+
+export async function getSystemSettings(): Promise<SystemSettings | null> {
+  try {
+    // テーブルが存在しない場合は作成を試みる
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS system_settings (
+        id TEXT PRIMARY KEY DEFAULT 'maintenance',
+        is_maintenance BOOLEAN DEFAULT false,
+        maintenance_message TEXT,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
+    const result = await pool.query(`
+      SELECT
+        id,
+        is_maintenance as "isMaintenance",
+        maintenance_message as "maintenanceMessage",
+        updated_at as "updatedAt"
+      FROM system_settings
+      WHERE id = 'maintenance'
+      LIMIT 1
+    `);
+
+    if (result.rows.length === 0) {
+      // 初期データを挿入
+      await pool.query(`
+        INSERT INTO system_settings (id, is_maintenance, maintenance_message, updated_at)
+        VALUES ('maintenance', false, '現在メンテナンス中です。ご迷惑をおかけいたします。', NOW())
+        ON CONFLICT (id) DO NOTHING
+      `);
+      
+      // デフォルト値を返す
+      return {
+        id: 'maintenance',
+        isMaintenance: false,
+        maintenanceMessage: '現在メンテナンス中です。ご迷惑をおかけいたします。',
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    return result.rows[0] as SystemSettings;
+  } catch (error) {
+    console.error('Failed to get system settings from database:', error);
+    // エラー時はメンテナンスモードOFFを返す
+    return {
+      id: 'maintenance',
+      isMaintenance: false,
+      maintenanceMessage: '現在メンテナンス中です。ご迷惑をおかけいたします。',
+      updatedAt: new Date().toISOString(),
+    };
+  }
+}
+
+export async function updateSystemSettings(settings: Partial<SystemSettings>): Promise<SystemSettings> {
+  try {
+    // テーブルが存在しない場合は作成を試みる
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS system_settings (
+        id TEXT PRIMARY KEY DEFAULT 'maintenance',
+        is_maintenance BOOLEAN DEFAULT false,
+        maintenance_message TEXT,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
+    // 現在の設定を取得（存在しない場合はデフォルト値を使用）
+    const currentSettings = await getSystemSettings();
+    const isMaintenance = settings.isMaintenance !== undefined 
+      ? settings.isMaintenance 
+      : (currentSettings?.isMaintenance ?? false);
+    const maintenanceMessage = settings.maintenanceMessage !== undefined
+      ? settings.maintenanceMessage
+      : (currentSettings?.maintenanceMessage ?? '現在メンテナンス中です。ご迷惑をおかけいたします。');
+    const updatedAt = new Date().toISOString();
+
+    // UPSERT処理
+    await pool.query(`
+      INSERT INTO system_settings (id, is_maintenance, maintenance_message, updated_at)
+      VALUES ('maintenance', $1, $2, $3)
+      ON CONFLICT (id) DO UPDATE
+      SET is_maintenance = $1,
+          maintenance_message = $2,
+          updated_at = $3
+    `, [
+      isMaintenance,
+      maintenanceMessage || null,
+      updatedAt,
+    ]);
+
+    return await getSystemSettings() || {
+      id: 'maintenance',
+      isMaintenance: false,
+      maintenanceMessage: '現在メンテナンス中です。ご迷惑をおかけいたします。',
+      updatedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error('Failed to update system settings in database:', error);
     throw error;
   }
 }

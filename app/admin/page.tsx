@@ -14,7 +14,7 @@ const subjectLabels: Record<string, string> = {
 };
 
 
-type TabType = 'feedback' | 'users' | 'security' | 'announcements';
+type TabType = 'feedback' | 'users' | 'security' | 'announcements' | 'maintenance';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -44,6 +44,17 @@ export default function AdminPage() {
     expiresAt: '',
   });
   const [submittingAnnouncement, setSubmittingAnnouncement] = useState(false);
+  const [maintenanceSettings, setMaintenanceSettings] = useState({
+    isMaintenance: false,
+    maintenanceMessage: '現在メンテナンス中です。ご迷惑をおかけいたします。',
+  });
+  const [updatingMaintenance, setUpdatingMaintenance] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [adminLoginEmail, setAdminLoginEmail] = useState('');
+  const [adminLoginPassword, setAdminLoginPassword] = useState('');
+  const [adminLoginError, setAdminLoginError] = useState('');
+  const [adminLoginLoading, setAdminLoginLoading] = useState(false);
 
   const fetchSecurityLogs = async () => {
     setLoadingSecurityLogs(true);
@@ -62,6 +73,32 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    // 管理者認証チェック（初回のみ）
+    const checkAdminAuth = async () => {
+      try {
+        const res = await fetch('/api/admin/check');
+        const data = await res.json();
+        if (res.ok && data.isAdmin) {
+          setIsLoggedIn(true);
+          setCheckingAuth(false);
+        } else {
+          setIsLoggedIn(false);
+          setCheckingAuth(false);
+        }
+      } catch (err) {
+        setIsLoggedIn(false);
+        setCheckingAuth(false);
+      }
+    };
+    
+    checkAdminAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // ログイン済みの場合のみ、タブに応じたデータ取得を実行
+    if (!isLoggedIn || checkingAuth) return;
+
     if (activeTab === 'feedback') {
       fetchFeedbacks();
     } else if (activeTab === 'users') {
@@ -70,8 +107,48 @@ export default function AdminPage() {
       fetchSecurityLogs();
     } else if (activeTab === 'announcements') {
       fetchAnnouncements();
+    } else if (activeTab === 'maintenance') {
+      fetchMaintenanceSettings();
     }
-  }, [activeTab]);
+  }, [activeTab, isLoggedIn]);
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminLoginError('');
+    setAdminLoginLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: adminLoginEmail, password: adminLoginPassword }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setAdminLoginError(data.error || 'ログインに失敗しました');
+        setAdminLoginLoading(false);
+        return;
+      }
+
+      // ログイン成功後、管理者チェック
+      const adminCheckRes = await fetch('/api/admin/check');
+      const adminData = await adminCheckRes.json();
+      
+      if (adminCheckRes.ok && adminData.isAdmin) {
+        setIsLoggedIn(true);
+        // ページをリロードして管理者ページを表示
+        window.location.reload();
+      } else {
+        setAdminLoginError('管理者権限がありません');
+        setAdminLoginLoading(false);
+      }
+    } catch (err) {
+      setAdminLoginError('ログインに失敗しました');
+      setAdminLoginLoading(false);
+    }
+  };
 
   const fetchFeedbacks = async () => {
     setLoading(true);
@@ -305,6 +382,59 @@ export default function AdminPage() {
     }
   };
 
+  // メンテナンス設定管理
+  const fetchMaintenanceSettings = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/maintenance');
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'メンテナンス設定の取得に失敗しました');
+        setLoading(false);
+        return;
+      }
+
+      if (data.settings) {
+        setMaintenanceSettings({
+          isMaintenance: data.settings.isMaintenance || false,
+          maintenanceMessage: data.settings.maintenanceMessage || '現在メンテナンス中です。ご迷惑をおかけいたします。',
+        });
+      }
+    } catch (err) {
+      setError('メンテナンス設定の取得に失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateMaintenance = async () => {
+    setUpdatingMaintenance(true);
+    try {
+      const res = await fetch('/api/admin/maintenance', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(maintenanceSettings),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || 'メンテナンス設定の更新に失敗しました');
+        setUpdatingMaintenance(false);
+        return;
+      }
+
+      alert('メンテナンス設定を更新しました');
+      await fetchMaintenanceSettings();
+    } catch (err) {
+      alert('メンテナンス設定の更新に失敗しました');
+    } finally {
+      setUpdatingMaintenance(false);
+    }
+  };
+
   // お知らせ管理
   const fetchAnnouncements = async () => {
     setLoading(true);
@@ -478,6 +608,88 @@ export default function AdminPage() {
     });
   };
 
+  // 認証チェック中
+  if (checkingAuth) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div className="flex justify-center items-center h-64">
+              <div className="w-8 h-8 border-2 border-gray-300 border-t-indigo-600 rounded-full animate-spin"></div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // 未ログインの場合、管理者専用ログインフォームを表示
+  if (!isLoggedIn) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12">
+          <div className="max-w-md mx-auto px-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center">
+                管理者ログイン
+              </h1>
+
+              <p className="mb-6 text-sm text-gray-600 dark:text-gray-400 text-center">
+                管理者のみログインできます
+              </p>
+
+              {adminLoginError && (
+                <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
+                  {adminLoginError}
+                </div>
+              )}
+
+              <form onSubmit={handleAdminLogin} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    メールアドレス
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={adminLoginEmail}
+                    onChange={(e) => setAdminLoginEmail(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    placeholder="管理者のメールアドレス"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    パスワード
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={adminLoginPassword}
+                    onChange={(e) => setAdminLoginPassword(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    placeholder="パスワード"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={adminLoginLoading}
+                  className="w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {adminLoginLoading ? 'ログイン中...' : 'ログイン'}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   if (loading && activeTab === 'feedback' && feedbacks.length === 0) {
     return (
       <>
@@ -560,6 +772,16 @@ export default function AdminPage() {
               }`}
             >
               お知らせ管理
+            </button>
+            <button
+              onClick={() => setActiveTab('maintenance')}
+              className={`px-6 py-3 font-semibold transition-colors ${
+                activeTab === 'maintenance'
+                  ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              メンテナンス表示
             </button>
           </div>
 
@@ -766,7 +988,7 @@ export default function AdminPage() {
                       </thead>
                       <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         {users.map((user) => (
-                          <tr key={user.id} className={user.isActive === false ? 'opacity-50' : ''}>
+                          <tr key={user.id} className={user.isActive === false || user.deactivatedAt ? 'opacity-50' : ''}>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                               {user.username}
                             </td>
@@ -778,13 +1000,19 @@ export default function AdminPage() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex flex-col gap-1">
-                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                  user.isActive !== false
-                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                                    : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
-                                }`}>
-                                  {user.isActive !== false ? '有効' : '停止中'}
-                                </span>
+                                {user.deactivatedAt ? (
+                                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-300">
+                                    退会済み
+                                  </span>
+                                ) : (
+                                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                    user.isActive !== false
+                                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                                      : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+                                  }`}>
+                                    {user.isActive !== false ? '有効' : '停止中'}
+                                  </span>
+                                )}
                                 {user.accountLockedUntil && new Date(user.accountLockedUntil) > new Date() && (
                                   <span className="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300">
                                     ロック中
@@ -797,36 +1025,14 @@ export default function AdminPage() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                               <div className="flex flex-col gap-2">
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => {
-                                      setEditingUserId(user.id);
-                                      setPasswordForm({ userId: user.id, password: '' });
-                                      setPasswordError('');
-                                    }}
-                                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300"
-                                  >
-                                    パスワード変更
-                                  </button>
-                                  <button
-                                    onClick={() => handleToggleActive(user.id, user.isActive !== false)}
-                                    className={`${
-                                      user.isActive !== false
-                                        ? 'text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300'
-                                        : 'text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300'
-                                    }`}
-                                  >
-                                    {user.isActive !== false ? '利用停止' : '有効化'}
-                                  </button>
-                                </div>
-                                {user.accountLockedUntil && new Date(user.accountLockedUntil) > new Date() && (
+                                {user.deactivatedAt ? (
                                   <button
                                     onClick={async () => {
-                                      if (!confirm(`ユーザー「${user.username}」のアカウントロックを解除しますか？`)) {
+                                      if (!confirm(`ユーザー「${user.username}」のアカウントを復旧しますか？`)) {
                                         return;
                                       }
                                       try {
-                                        const res = await fetch(`/api/admin/users/${user.id}/unlock`, {
+                                        const res = await fetch(`/api/admin/users/${user.id}/reactivate`, {
                                           method: 'POST',
                                           credentials: 'include',
                                         });
@@ -834,18 +1040,71 @@ export default function AdminPage() {
                                         if (res.ok) {
                                           // ユーザー一覧を再取得
                                           await fetchUsers();
-                                          alert('アカウントロックを解除しました');
+                                          alert('アカウントを復旧しました');
                                         } else {
-                                          alert(data.error || 'アカウントロック解除に失敗しました');
+                                          alert(data.error || 'アカウントの復旧に失敗しました');
                                         }
                                       } catch (err) {
-                                        alert('アカウントロック解除に失敗しました');
+                                        alert('アカウントの復旧に失敗しました');
                                       }
                                     }}
-                                    className="text-orange-600 dark:text-orange-400 hover:text-orange-900 dark:hover:text-orange-300"
+                                    className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
                                   >
-                                    ロック解除
+                                    復旧
                                   </button>
+                                ) : (
+                                  <>
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={() => {
+                                          setEditingUserId(user.id);
+                                          setPasswordForm({ userId: user.id, password: '' });
+                                          setPasswordError('');
+                                        }}
+                                        className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300"
+                                      >
+                                        パスワード変更
+                                      </button>
+                                      <button
+                                        onClick={() => handleToggleActive(user.id, user.isActive !== false)}
+                                        className={`${
+                                          user.isActive !== false
+                                            ? 'text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300'
+                                            : 'text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300'
+                                        }`}
+                                      >
+                                        {user.isActive !== false ? '利用停止' : '有効化'}
+                                      </button>
+                                    </div>
+                                    {user.accountLockedUntil && new Date(user.accountLockedUntil) > new Date() && (
+                                      <button
+                                        onClick={async () => {
+                                          if (!confirm(`ユーザー「${user.username}」のアカウントロックを解除しますか？`)) {
+                                            return;
+                                          }
+                                          try {
+                                            const res = await fetch(`/api/admin/users/${user.id}/unlock`, {
+                                              method: 'POST',
+                                              credentials: 'include',
+                                            });
+                                            const data = await res.json();
+                                            if (res.ok) {
+                                              // ユーザー一覧を再取得
+                                              await fetchUsers();
+                                              alert('アカウントロックを解除しました');
+                                            } else {
+                                              alert(data.error || 'アカウントロック解除に失敗しました');
+                                            }
+                                          } catch (err) {
+                                            alert('アカウントロック解除に失敗しました');
+                                          }
+                                        }}
+                                        className="text-orange-600 dark:text-orange-400 hover:text-orange-900 dark:hover:text-orange-300"
+                                      >
+                                        ロック解除
+                                      </button>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             </td>
@@ -1245,6 +1504,77 @@ export default function AdminPage() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* メンテナンス表示タブ */}
+          {activeTab === 'maintenance' && (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                  メンテナンス設定
+                </h2>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={maintenanceSettings.isMaintenance}
+                        onChange={(e) => setMaintenanceSettings({
+                          ...maintenanceSettings,
+                          isMaintenance: e.target.checked,
+                        })}
+                        className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <span className="text-lg font-medium text-gray-900 dark:text-white">
+                        メンテナンスモードを有効にする
+                      </span>
+                    </label>
+                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 ml-8">
+                      メンテナンスモードを有効にすると、すべてのユーザーがメンテナンスページにリダイレクトされます。
+                      管理者のみ通常のページにアクセスできます。
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      メンテナンスメッセージ
+                    </label>
+                    <textarea
+                      value={maintenanceSettings.maintenanceMessage}
+                      onChange={(e) => setMaintenanceSettings({
+                        ...maintenanceSettings,
+                        maintenanceMessage: e.target.value,
+                      })}
+                      rows={4}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      placeholder="現在メンテナンス中です。ご迷惑をおかけいたします。"
+                    />
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      メンテナンスページに表示されるメッセージです。
+                    </p>
+                  </div>
+
+                  <div className="pt-4">
+                    <button
+                      onClick={handleUpdateMaintenance}
+                      disabled={updatingMaintenance}
+                      className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {updatingMaintenance ? '更新中...' : '設定を保存'}
+                    </button>
+                  </div>
+
+                  {maintenanceSettings.isMaintenance && (
+                    <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                      <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                        ⚠️ メンテナンスモードが有効になっています。すべてのユーザーがメンテナンスページにリダイレクトされます。
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>

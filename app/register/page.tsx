@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
@@ -21,6 +21,41 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [checkingMaintenance, setCheckingMaintenance] = useState(true);
+
+  // メンテナンス状態をチェック
+  useEffect(() => {
+    const checkMaintenance = async () => {
+      try {
+        // 管理者チェック
+        const adminRes = await fetch('/api/admin/check');
+        const adminData = await adminRes.json();
+        
+        if (adminData.isAdmin) {
+          // 管理者の場合はメンテナンスチェックをスキップ
+          setCheckingMaintenance(false);
+          return;
+        }
+
+        // メンテナンス状態をチェック
+        const res = await fetch('/api/system/maintenance');
+        const data = await res.json();
+        
+        if (data.isMaintenance === true) {
+          // メンテナンス中はメンテナンスページにリダイレクト
+          router.push('/maintenance');
+          return;
+        }
+        
+        setCheckingMaintenance(false);
+      } catch (err) {
+        // エラー時は通常通り表示
+        setCheckingMaintenance(false);
+      }
+    };
+    
+    checkMaintenance();
+  }, [router]);
 
   const creatorTypes = [
     { value: 'writer', label: '小説家' },
@@ -120,6 +155,19 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
+
+  if (checkingMaintenance) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 flex items-center justify-center">
+          <div className="text-center text-gray-700 dark:text-gray-300">
+            <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

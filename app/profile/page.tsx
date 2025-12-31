@@ -845,6 +845,47 @@ export default function ProfilePage() {
             </div>
           )}
 
+          {/* 退会セクション */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 border-2 border-red-200 dark:border-red-800">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              アカウント管理
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              アカウントを退会すると、ログインできなくなります。退会後は、ログインページからメールアドレスとパスワードでアカウントを復旧できます。
+            </p>
+            <button
+              onClick={async () => {
+                const reason = prompt('退会理由を入力してください（任意）:');
+                if (reason === null) {
+                  return; // キャンセルされた場合
+                }
+                if (!confirm('本当に退会しますか？退会後は、ログインページからアカウントを復旧できます。')) {
+                  return;
+                }
+                try {
+                  const res = await fetch('/api/auth/deactivate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ reason: reason || undefined }),
+                  });
+                  const data = await res.json();
+                  if (res.ok) {
+                    alert('退会処理が完了しました');
+                    window.location.href = '/';
+                  } else {
+                    alert(data.error || '退会処理に失敗しました');
+                  }
+                } catch (err) {
+                  alert('退会処理に失敗しました');
+                }
+              }}
+              className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+            >
+              アカウントを退会する
+            </button>
+          </div>
+
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
               投稿一覧 ({posts.length})

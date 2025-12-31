@@ -18,6 +18,7 @@ export default function Navbar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [feedbackNotificationCount, setFeedbackNotificationCount] = useState(0);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [isMaintenance, setIsMaintenance] = useState(false);
 
   const fetchUser = async (skipLoading = false) => {
     if (!skipLoading) {
@@ -218,6 +219,25 @@ export default function Navbar() {
       // エラーは静かに無視
     }
   };
+
+  // メンテナンス状態を取得
+  useEffect(() => {
+    const checkMaintenance = async () => {
+      try {
+        const res = await fetch('/api/system/maintenance');
+        const data = await res.json();
+        setIsMaintenance(data.isMaintenance === true);
+      } catch (err) {
+        // エラー時はメンテナンス状態をfalseに
+        setIsMaintenance(false);
+      }
+    };
+    
+    checkMaintenance();
+    // 定期的にチェック（10秒ごと）
+    const interval = setInterval(checkMaintenance, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     fetchUser();
@@ -525,40 +545,53 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link
-                  href="/login"
-                  onClick={(e) => {
-                    if (document.activeElement instanceof HTMLElement) {
-                      document.activeElement.blur();
-                    }
-                  }}
-                  onMouseDown={(e) => {
-                    if (document.activeElement instanceof HTMLElement) {
-                      document.activeElement.blur();
-                    }
-                  }}
-                  className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-                  style={{ pointerEvents: 'auto', zIndex: 100 }}
-                >
-                  ログイン
-                </Link>
-                <Link
-                  href="/register"
-                  onClick={(e) => {
-                    if (document.activeElement instanceof HTMLElement) {
-                      document.activeElement.blur();
-                    }
-                  }}
-                  onMouseDown={(e) => {
-                    if (document.activeElement instanceof HTMLElement) {
-                      document.activeElement.blur();
-                    }
-                  }}
-                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg hover:from-purple-700 hover:to-purple-600 transition-all shadow-md hover:shadow-lg"
-                  style={{ pointerEvents: 'auto', zIndex: 100 }}
-                >
-                  新規登録
-                </Link>
+                {isMaintenance && !isAdmin ? (
+                  <>
+                    <span className="text-gray-400 dark:text-gray-600 cursor-not-allowed">
+                      ログイン
+                    </span>
+                    <span className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-600 rounded-lg cursor-not-allowed">
+                      新規登録
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      onClick={(e) => {
+                        if (document.activeElement instanceof HTMLElement) {
+                          document.activeElement.blur();
+                        }
+                      }}
+                      onMouseDown={(e) => {
+                        if (document.activeElement instanceof HTMLElement) {
+                          document.activeElement.blur();
+                        }
+                      }}
+                      className="text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                      style={{ pointerEvents: 'auto', zIndex: 100 }}
+                    >
+                      ログイン
+                    </Link>
+                    <Link
+                      href="/register"
+                      onClick={(e) => {
+                        if (document.activeElement instanceof HTMLElement) {
+                          document.activeElement.blur();
+                        }
+                      }}
+                      onMouseDown={(e) => {
+                        if (document.activeElement instanceof HTMLElement) {
+                          document.activeElement.blur();
+                        }
+                      }}
+                      className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg hover:from-purple-700 hover:to-purple-600 transition-all shadow-md hover:shadow-lg"
+                      style={{ pointerEvents: 'auto', zIndex: 100 }}
+                    >
+                      新規登録
+                    </Link>
+                  </>
+                )}
               </>
             )}
             </div>
@@ -749,42 +782,55 @@ export default function Navbar() {
                 )}
                 {!user && (
                   <>
-                    <Link
-                      href="/login"
-                      onClick={(e) => {
-                        if (document.activeElement instanceof HTMLElement) {
-                          document.activeElement.blur();
-                        }
-                        setShowSidebar(false);
-                      }}
-                      onMouseDown={(e) => {
-                        if (document.activeElement instanceof HTMLElement) {
-                          document.activeElement.blur();
-                        }
-                      }}
-                      className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-800 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg transition-colors"
-                      style={{ pointerEvents: 'auto', zIndex: 100 }}
-                    >
-                      ログイン
-                    </Link>
-                    <Link
-                      href="/register"
-                      onClick={(e) => {
-                        if (document.activeElement instanceof HTMLElement) {
-                          document.activeElement.blur();
-                        }
-                        setShowSidebar(false);
-                      }}
-                      onMouseDown={(e) => {
-                        if (document.activeElement instanceof HTMLElement) {
-                          document.activeElement.blur();
-                        }
-                      }}
-                      className="block px-3 py-2 text-sm bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg hover:from-purple-700 hover:to-purple-600 transition-all shadow-md text-center font-semibold"
-                      style={{ pointerEvents: 'auto', zIndex: 100 }}
-                    >
-                      新規登録
-                    </Link>
+                    {isMaintenance && !isAdmin ? (
+                      <>
+                        <span className="block px-3 py-2 text-sm text-gray-400 dark:text-gray-600 cursor-not-allowed">
+                          ログイン
+                        </span>
+                        <span className="block px-3 py-2 text-sm bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-600 rounded-lg cursor-not-allowed text-center font-semibold">
+                          新規登録
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          href="/login"
+                          onClick={(e) => {
+                            if (document.activeElement instanceof HTMLElement) {
+                              document.activeElement.blur();
+                            }
+                            setShowSidebar(false);
+                          }}
+                          onMouseDown={(e) => {
+                            if (document.activeElement instanceof HTMLElement) {
+                              document.activeElement.blur();
+                            }
+                          }}
+                          className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-800 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg transition-colors"
+                          style={{ pointerEvents: 'auto', zIndex: 100 }}
+                        >
+                          ログイン
+                        </Link>
+                        <Link
+                          href="/register"
+                          onClick={(e) => {
+                            if (document.activeElement instanceof HTMLElement) {
+                              document.activeElement.blur();
+                            }
+                            setShowSidebar(false);
+                          }}
+                          onMouseDown={(e) => {
+                            if (document.activeElement instanceof HTMLElement) {
+                              document.activeElement.blur();
+                            }
+                          }}
+                          className="block px-3 py-2 text-sm bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-lg hover:from-purple-700 hover:to-purple-600 transition-all shadow-md text-center font-semibold"
+                          style={{ pointerEvents: 'auto', zIndex: 100 }}
+                        >
+                          新規登録
+                        </Link>
+                      </>
+                    )}
                   </>
                 )}
               </nav>

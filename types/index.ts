@@ -29,6 +29,7 @@ export interface User {
   lastBumpAt?: string; // 最後に挙げた時刻（24時間クールタイム管理用）
   failedLoginAttempts?: number; // 連続ログイン失敗回数
   accountLockedUntil?: string; // アカウントロック解除時刻（ISO形式）
+  deactivatedAt?: string; // 退会日時（ISO形式）
   createdAt: string;
 }
 

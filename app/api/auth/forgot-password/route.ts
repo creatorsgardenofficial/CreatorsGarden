@@ -46,8 +46,9 @@ export async function POST(request: NextRequest) {
       }, { status: 200 });
     }
 
-    // 利用停止チェック
-    if (user.isActive === false) {
+    // 退会済みアカウントもパスワードリセット可能（復旧のため）
+    // 利用停止チェック（退会済みは除く）
+    if (user.isActive === false && !user.deactivatedAt) {
       return NextResponse.json(
         { error: 'このアカウントは利用停止されています' },
         { status: 403 }

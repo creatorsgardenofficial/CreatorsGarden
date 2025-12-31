@@ -1,56 +1,58 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
-function ResetPasswordContent() {
+export default function ResetPasswordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [email, setEmail] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [validating, setValidating] = useState(true);
+  const [email, setEmail] = useState('');
 
   useEffect(() => {
     const tokenParam = searchParams.get('token');
-    if (!tokenParam) {
-      setError('無効なリンクです。');
-      setLoading(false);
-      return;
+    if (tokenParam) {
+      setToken(tokenParam);
+      validateToken(tokenParam);
+    } else {
+      setError('無効なリンクです');
+      setValidating(false);
     }
-
-    setToken(tokenParam);
-
-    // トークンの検証
-    fetch(`/api/auth/reset-password?token=${tokenParam}`)
-      .then(async (res) => {
-        const data = await res.json();
-        if (res.ok && data.valid) {
-          setEmail(data.email);
-          setLoading(false);
-        } else {
-          setError(data.error || '無効または期限切れのリンクです。');
-          setLoading(false);
-        }
-      })
-      .catch(err => {
-        setError('トークンの検証に失敗しました。');
-        setLoading(false);
-      });
   }, [searchParams]);
+
+  const validateToken = async (tokenValue: string) => {
+    try {
+      const res = await fetch(`/api/auth/reset-password?token=${encodeURIComponent(tokenValue)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || '無効または期限切れのリンクです');
+        setValidating(false);
+        return;
+      }
+
+      setEmail(data.email || '');
+      setValidating(false);
+    } catch (err) {
+      setError('トークンの検証に失敗しました');
+      setValidating(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!password) {
-      setError('パスワードを入力してください');
+    if (password !== confirmPassword) {
+      setError('パスワードが一致しません');
       return;
     }
 
@@ -59,17 +61,7 @@ function ResetPasswordContent() {
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError('パスワードが一致しません');
-      return;
-    }
-
-    if (!token) {
-      setError('トークンが無効です');
-      return;
-    }
-
-    setSubmitting(true);
+    setLoading(true);
 
     try {
       const res = await fetch('/api/auth/reset-password', {
@@ -82,41 +74,19 @@ function ResetPasswordContent() {
 
       if (!res.ok) {
         setError(data.error || 'パスワードのリセットに失敗しました');
-        setSubmitting(false);
+        setLoading(false);
         return;
       }
 
       setSuccess(true);
-      setSubmitting(false);
-
-      // 3秒後にログインページにリダイレクト
-      setTimeout(() => {
-        router.push('/login');
-      }, 3000);
+      setLoading(false);
     } catch (err) {
       setError('パスワードのリセットに失敗しました');
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <>
-        <Navbar />
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12">
-          <div className="max-w-md mx-auto px-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-              <div className="flex items-center justify-center">
-                <div className="w-8 h-8 border-4 border-gray-300 border-t-indigo-600 rounded-full animate-spin"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  if (success) {
+  if (validating) {
     return (
       <>
         <Navbar />
@@ -124,36 +94,8 @@ function ResetPasswordContent() {
           <div className="max-w-md mx-auto px-4">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
               <div className="text-center">
-                <div className="mb-4">
-                  <svg
-                    className="w-16 h-16 mx-auto text-green-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  パスワードをリセットしました
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  新しいパスワードでログインしてください。
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-500 mb-6">
-                  3秒後にログインページにリダイレクトします...
-                </p>
-                <Link
-                  href="/login"
-                  className="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
-                >
-                  ログインページへ
-                </Link>
+                <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-600 dark:text-gray-400">トークンを検証中...</p>
               </div>
             </div>
           </div>
@@ -178,87 +120,78 @@ function ResetPasswordContent() {
               </div>
             )}
 
-            {email && (
-              <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-blue-700 dark:text-blue-400">
-                <p className="text-sm">
-                  メールアドレス: <span className="font-semibold">{email}</span>
-                </p>
+            {success ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400">
+                  <p>パスワードをリセットしました。新しいパスワードでログインしてください。</p>
+                </div>
+                <div className="text-center">
+                  <Link
+                    href="/login"
+                    className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
+                  >
+                    ログインページに戻る
+                  </Link>
+                </div>
               </div>
+            ) : (
+              <>
+                {email && (
+                  <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                    メールアドレス: {email}
+                  </p>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      新しいパスワード
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      placeholder="8文字以上"
+                      minLength={8}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      パスワード（確認）
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      placeholder="パスワードを再入力"
+                      minLength={8}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'リセット中...' : 'パスワードをリセット'}
+                  </button>
+                </form>
+
+                <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+                  <Link href="/login" className="text-indigo-600 dark:text-indigo-400 hover:underline">
+                    ログインページに戻る
+                  </Link>
+                </p>
+              </>
             )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  新しいパスワード
-                </label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  placeholder="8文字以上"
-                  minLength={8}
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  パスワードは8文字以上である必要があります
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  パスワード（確認）
-                </label>
-                <input
-                  type="password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  placeholder="パスワードを再入力"
-                  minLength={8}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={submitting || !token}
-                className="w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting ? 'リセット中...' : 'パスワードをリセット'}
-              </button>
-            </form>
-
-            <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-              <Link href="/login" className="text-indigo-600 dark:text-indigo-400 hover:underline">
-                ログインページに戻る
-              </Link>
-            </p>
           </div>
         </div>
       </div>
     </>
   );
 }
-
-export default function ResetPasswordPage() {
-  return (
-    <Suspense fallback={
-      <>
-        <Navbar />
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12">
-          <div className="max-w-md mx-auto px-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-              <div className="flex items-center justify-center">
-                <div className="w-8 h-8 border-4 border-gray-300 border-t-indigo-600 rounded-full animate-spin"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </>
-    }>
-      <ResetPasswordContent />
-    </Suspense>
-  );
-}
-

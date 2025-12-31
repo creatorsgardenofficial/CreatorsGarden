@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUsers, updateUser } from '@/lib/storage';
+import { getUsers, updateUser, getSystemSettings } from '@/lib/storage';
 import { validateEmail } from '@/lib/contentFilter';
 import { verifyPassword, hashPassword, isPasswordHashed } from '@/lib/password';
 import { generateCsrfToken } from '@/lib/csrf';
 import { logSecurityEvent } from '@/lib/securityLog';
 import { getClientIp } from '@/lib/utils';
+import { isAdmin } from '@/lib/admin';
 import { User } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -46,6 +47,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // メンテナンスモードチェック
+    const settings = await getSystemSettings();
+    const isMaintenanceMode = settings?.isMaintenance === true;
+
     const users = await getUsers();
     const user = users.find(u => u.email === email);
 
@@ -63,6 +68,37 @@ export async function POST(request: NextRequest) {
         { error: 'メールアドレスまたはパスワードが正しくありません' },
         { status: 401 }
       );
+    }
+
+    // メンテナンス中の場合、管理者のみログイン可能
+    if (isMaintenanceMode && !isAdmin(user.email)) {
+      return NextResponse.json(
+        { error: '現在メンテナンス中です。ご迷惑をおかけいたします。' },
+        { status: 503 }
+      );
+    }
+
+    // 退会済みアカウントのチェック（パスワード確認前にチェック）
+    if (user.deactivatedAt) {
+      // 退会済みアカウントの場合、パスワードが正しければ復旧を提案
+      const isValidPassword = await verifyPassword(password, user.password);
+      if (isValidPassword) {
+        // パスワードが正しい場合、復旧可能であることを示すエラーメッセージを返す
+        return NextResponse.json(
+          { 
+            error: 'このアカウントは退会済みです。アカウントを復旧するには、ログインページの「アカウントを復旧する」から復旧してください。',
+            canReactivate: true,
+            email: user.email
+          },
+          { status: 403 }
+        );
+      } else {
+        // パスワードが間違っている場合は通常のエラー
+        return NextResponse.json(
+          { error: 'メールアドレスまたはパスワードが正しくありません' },
+          { status: 401 }
+        );
+      }
     }
 
     // 利用停止チェック

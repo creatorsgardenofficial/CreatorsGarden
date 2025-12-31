@@ -11,13 +11,12 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [resetLink, setResetLink] = useState<string | null>(null);
+  const [resetLink, setResetLink] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess(false);
-    setResetLink(null);
     setLoading(true);
 
     try {
@@ -36,8 +35,7 @@ export default function ForgotPasswordPage() {
       }
 
       setSuccess(true);
-      // 開発環境ではリンクを表示
-      if (data.resetLink) {
+      if (data?.resetLink) {
         setResetLink(data.resetLink);
       }
       setLoading(false);
@@ -63,67 +61,78 @@ export default function ForgotPasswordPage() {
               </div>
             )}
 
-            {success && (
-              <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400">
-                <p className="font-semibold mb-2">メールを送信しました</p>
-                <p className="text-sm">
-                  メールアドレスが登録されている場合、パスワードリセットリンクを送信しました。
-                  メールフォルダを確認してください。
-                </p>
-                {resetLink && (
-                  <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                      開発環境用リンク:
-                    </p>
-                    <a
-                      href={resetLink}
-                      className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline break-all"
-                    >
-                      {resetLink}
-                    </a>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {!success && (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    メールアドレス
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    placeholder="登録時のメールアドレス"
-                  />
-                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    登録時のメールアドレスを入力してください。パスワードリセットリンクを送信します。
+            {success ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400">
+                  <p className="mb-2">
+                    メールアドレスが登録されている場合、パスワードリセットリンクを送信しました。
+                  </p>
+                  <p className="text-sm">
+                    メールボックスを確認して、パスワードリセットリンクをクリックしてください。
                   </p>
                 </div>
+                {resetLink && (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <p className="text-sm text-blue-800 dark:text-blue-300 mb-2">
+                      開発環境: 以下のリンクをクリックしてパスワードをリセットしてください。
+                    </p>
+                    <Link
+                      href={resetLink}
+                      className="text-blue-600 dark:text-blue-400 hover:underline break-all"
+                    >
+                      {resetLink}
+                    </Link>
+                  </div>
+                )}
+                <div className="text-center">
+                  <Link
+                    href="/login"
+                    className="text-indigo-600 dark:text-indigo-400 hover:underline"
+                  >
+                    ログインページに戻る
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <>
+                <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
+                  登録時のメールアドレスを入力してください。パスワードリセットリンクを送信します。
+                </p>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? '送信中...' : '送信'}
-                </button>
-              </form>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      メールアドレス
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      placeholder="登録時のメールアドレス"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? '送信中...' : 'パスワードリセットリンクを送信'}
+                  </button>
+                </form>
+
+                <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+                  <Link href="/login" className="text-indigo-600 dark:text-indigo-400 hover:underline">
+                    ログインページに戻る
+                  </Link>
+                </p>
+              </>
             )}
-
-            <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-              <Link href="/login" className="text-indigo-600 dark:text-indigo-400 hover:underline">
-                ログインページに戻る
-              </Link>
-            </p>
           </div>
         </div>
       </div>
     </>
   );
 }
-

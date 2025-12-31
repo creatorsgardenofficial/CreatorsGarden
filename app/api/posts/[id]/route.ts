@@ -45,6 +45,15 @@ export async function PUT(
       );
     }
 
+    // メンテナンスモードチェック
+    const { isMaintenanceMode } = await import('@/lib/maintenance');
+    if (await isMaintenanceMode(userId)) {
+      return NextResponse.json(
+        { error: '現在メンテナンス中です。ご迷惑をおかけいたします。' },
+        { status: 503 }
+      );
+    }
+
     const { id } = await params;
     const post = await getPostById(id);
 
@@ -258,6 +267,15 @@ export async function DELETE(
       return NextResponse.json(
         { error: 'ログインが必要です' },
         { status: 401 }
+      );
+    }
+
+    // メンテナンスモードチェック
+    const { isMaintenanceMode } = await import('@/lib/maintenance');
+    if (await isMaintenanceMode(userId)) {
+      return NextResponse.json(
+        { error: '現在メンテナンス中です。ご迷惑をおかけいたします。' },
+        { status: 503 }
       );
     }
 

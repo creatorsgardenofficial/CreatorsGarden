@@ -15,7 +15,9 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   failed_login_attempts INTEGER DEFAULT 0,
   account_locked_until TIMESTAMP WITH TIME ZONE,
-  subscription JSONB DEFAULT '{"planType": "free", "status": "active"}'::jsonb
+  subscription JSONB DEFAULT '{"planType": "free", "status": "active"}'::jsonb,
+  deactivated_at TIMESTAMP WITH TIME ZONE,
+  deactivation_reason TEXT
 );
 
 -- 投稿テーブル
@@ -167,6 +169,14 @@ CREATE TABLE IF NOT EXISTS security_logs (
   user_agent TEXT,
   details JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- システム設定テーブル（メンテナンスモード用）
+CREATE TABLE IF NOT EXISTS system_settings (
+  id TEXT PRIMARY KEY DEFAULT 'maintenance',
+  is_maintenance BOOLEAN DEFAULT false,
+  maintenance_message TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- インデックスの作成

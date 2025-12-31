@@ -102,9 +102,17 @@ export async function POST(request: NextRequest) {
 
     // パスワードをハッシュ化して更新
     const hashedPassword = await hashPassword(password);
-    await updateUser(user.id, {
+    const updateData: any = {
       password: hashedPassword,
-    });
+    };
+    
+    // 退会済みアカウントの場合は復旧も同時に行う
+    if (user.deactivatedAt) {
+      updateData.deactivatedAt = undefined;
+      updateData.isActive = true;
+    }
+    
+    await updateUser(user.id, updateData);
 
     // トークンを使用済みにマーク
     await markPasswordResetTokenAsUsed(token);

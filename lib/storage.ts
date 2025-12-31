@@ -222,6 +222,51 @@ export async function updateUser(id: string, updates: Partial<User>): Promise<Us
   return users[index];
 }
 
+// 退会処理
+export async function deactivateUser(userId: string, reason?: string): Promise<User | null> {
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { deactivateUser: deactivateUserDb } = await import('./storage-db');
+    return deactivateUserDb(userId, reason);
+  }
+  
+  const users = await getUsers();
+  const index = users.findIndex(u => u.id === userId);
+  if (index === -1) return null;
+  
+  users[index] = {
+    ...users[index],
+    deactivatedAt: new Date().toISOString(),
+    deactivationReason: reason,
+    isActive: false,
+  };
+  
+  await saveUsers(users);
+  return users[index];
+}
+
+// アカウント復旧処理
+export async function reactivateUser(userId: string): Promise<User | null> {
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { reactivateUser: reactivateUserDb } = await import('./storage-db');
+    return reactivateUserDb(userId);
+  }
+  
+  const users = await getUsers();
+  const index = users.findIndex(u => u.id === userId);
+  if (index === -1) return null;
+  
+  users[index] = {
+    ...users[index],
+    deactivatedAt: undefined,
+    isActive: true,
+  };
+  
+  await saveUsers(users);
+  return users[index];
+}
+
 // 投稿管理
 export async function getPosts(): Promise<Post[]> {
   // データベースが利用可能な場合はデータベースを使用
@@ -1910,5 +1955,88 @@ export async function deleteAnnouncement(id: string): Promise<boolean> {
   
   await saveAnnouncements(filtered);
   return true;
+}
+
+// ==================== システム設定（メンテナンスモード） ====================
+
+export interface SystemSettings {
+  id: string;
+  isMaintenance: boolean;
+  maintenanceMessage: string | null;
+  updatedAt: string;
+}
+
+export async function getSystemSettings(): Promise<SystemSettings> {
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { getSystemSettings: getSystemSettingsDb } = await import('./storage-db');
+    const settings = await getSystemSettingsDb();
+    return settings || {
+      id: 'maintenance',
+      isMaintenance: false,
+      maintenanceMessage: '現在メンテナンス中です。ご迷惑をおかけいたします。',
+      updatedAt: new Date().toISOString(),
+    };
+  }
+  
+  // ファイルシステムを使用する場合（開発環境のみ）
+  try {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    const filePath = path.join(process.cwd(), 'data', 'system-settings.json');
+    
+    try {
+      const data = await fs.readFile(filePath, 'utf-8');
+      return JSON.parse(data);
+    } catch {
+      // ファイルが存在しない場合はデフォルト値を返す
+      const defaultSettings: SystemSettings = {
+        id: 'maintenance',
+        isMaintenance: false,
+        maintenanceMessage: '現在メンテナンス中です。ご迷惑をおかけいたします。',
+        updatedAt: new Date().toISOString(),
+      };
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+      await fs.writeFile(filePath, JSON.stringify(defaultSettings, null, 2));
+      return defaultSettings;
+    }
+  } catch (error) {
+    console.error('Failed to get system settings:', error);
+    return {
+      id: 'maintenance',
+      isMaintenance: false,
+      maintenanceMessage: '現在メンテナンス中です。ご迷惑をおかけいたします。',
+      updatedAt: new Date().toISOString(),
+    };
+  }
+}
+
+export async function updateSystemSettings(settings: Partial<SystemSettings>): Promise<SystemSettings> {
+  const { shouldUseDatabase } = await import('./db');
+  if (shouldUseDatabase()) {
+    const { updateSystemSettings: updateSystemSettingsDb } = await import('./storage-db');
+    return updateSystemSettingsDb(settings);
+  }
+  
+  // ファイルシステムを使用する場合（開発環境のみ）
+  try {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    const filePath = path.join(process.cwd(), 'data', 'system-settings.json');
+    
+    const currentSettings = await getSystemSettings();
+    const updatedSettings: SystemSettings = {
+      ...currentSettings,
+      ...settings,
+      updatedAt: new Date().toISOString(),
+    };
+    
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    await fs.writeFile(filePath, JSON.stringify(updatedSettings, null, 2));
+    return updatedSettings;
+  } catch (error) {
+    console.error('Failed to update system settings:', error);
+    throw error;
+  }
 }
 

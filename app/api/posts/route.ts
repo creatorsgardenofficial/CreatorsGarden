@@ -134,6 +134,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // メンテナンスモードチェック
+    const { isMaintenanceMode } = await import('@/lib/maintenance');
+    if (await isMaintenanceMode(userId)) {
+      return NextResponse.json(
+        { error: '現在メンテナンス中です。ご迷惑をおかけいたします。' },
+        { status: 503 }
+      );
+    }
+
     const user = await getUserById(userId);
     if (!user) {
       return NextResponse.json(
