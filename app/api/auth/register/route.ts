@@ -97,13 +97,18 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ user }, { status: 201 });
   } catch (error: any) {
-    console.error('Registration error:', error);
-    console.error('Error details:', {
-      message: error?.message,
-      code: error?.code,
-      name: error?.name,
-      stack: error?.stack,
-    });
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Registration error:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        code: error?.code,
+        name: error?.name,
+        stack: error?.stack,
+      });
+    } else {
+      console.error('Registration error occurred');
+    }
     
     // ファイルシステムエラーの場合、より詳細なメッセージを返す
     if (error?.code === 'EACCES' || error?.code === 'EROFS' || error?.message?.includes('read-only')) {

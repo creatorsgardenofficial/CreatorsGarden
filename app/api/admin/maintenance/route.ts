@@ -32,7 +32,12 @@ export async function GET(request: NextRequest) {
     const settings = await getSystemSettings();
     return NextResponse.json({ settings }, { status: 200 });
   } catch (error) {
-    console.error('Get maintenance settings error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Get maintenance settings error:', error);
+    } else {
+      console.error('Get maintenance settings error occurred');
+    }
     return NextResponse.json(
       { error: 'メンテナンス設定の取得に失敗しました' },
       { status: 500 }
@@ -77,7 +82,12 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ settings: updatedSettings }, { status: 200 });
   } catch (error) {
-    console.error('Update maintenance settings error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Update maintenance settings error:', error);
+    } else {
+      console.error('Update maintenance settings error occurred');
+    }
     return NextResponse.json(
       { error: 'メンテナンス設定の更新に失敗しました' },
       { status: 500 }

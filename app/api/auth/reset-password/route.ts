@@ -43,7 +43,12 @@ export async function GET(request: NextRequest) {
     }, { status: 200 });
 
   } catch (error) {
-    console.error('Reset password token verification error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Reset password token verification error:', error);
+    } else {
+      console.error('Reset password token verification error occurred');
+    }
     return NextResponse.json(
       { error: 'トークンの検証に失敗しました' },
       { status: 500 }
@@ -132,7 +137,12 @@ export async function POST(request: NextRequest) {
     }, { status: 200 });
 
   } catch (error) {
-    console.error('Reset password error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Reset password error:', error);
+    } else {
+      console.error('Reset password error occurred');
+    }
     return NextResponse.json(
       { error: 'パスワードのリセットに失敗しました' },
       { status: 500 }

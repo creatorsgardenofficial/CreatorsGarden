@@ -1,6 +1,8 @@
 import { randomBytes } from 'crypto';
 
-// CSRFトークンのストア（セッション用、本番環境ではRedisなどを推奨）
+// CSRFトークンのストア（セッション用）
+// ⚠️ 注意: 本番環境でマルチインスタンス構成の場合は、Redisなどの永続化ストレージの使用を推奨
+// 現在の実装は単一インスタンス環境では問題なく動作します
 const csrfTokens = new Map<string, { token: string; expiresAt: number }>();
 
 // トークンの有効期限（30分）

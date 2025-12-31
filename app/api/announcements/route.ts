@@ -28,7 +28,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ announcements });
     }
   } catch (error: any) {
-    console.error('Failed to fetch announcements:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Failed to fetch announcements:', error);
+    } else {
+      console.error('Failed to fetch announcements');
+    }
     return NextResponse.json(
       { error: 'お知らせの取得に失敗しました' },
       { status: 500 }
@@ -71,7 +76,12 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ announcement }, { status: 201 });
   } catch (error: any) {
-    console.error('Failed to create announcement:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Failed to create announcement:', error);
+    } else {
+      console.error('Failed to create announcement');
+    }
     return NextResponse.json(
       { error: 'お知らせの作成に失敗しました' },
       { status: 500 }
@@ -121,7 +131,12 @@ export async function PUT(request: NextRequest) {
     
     return NextResponse.json({ announcement });
   } catch (error: any) {
-    console.error('Failed to update announcement:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Failed to update announcement:', error);
+    } else {
+      console.error('Failed to update announcement');
+    }
     return NextResponse.json(
       { error: 'お知らせの更新に失敗しました' },
       { status: 500 }
@@ -161,7 +176,12 @@ export async function DELETE(request: NextRequest) {
     
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('Failed to delete announcement:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Failed to delete announcement:', error);
+    } else {
+      console.error('Failed to delete announcement');
+    }
     return NextResponse.json(
       { error: 'お知らせの削除に失敗しました' },
       { status: 500 }

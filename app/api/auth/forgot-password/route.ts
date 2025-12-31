@@ -68,9 +68,8 @@ export async function POST(request: NextRequest) {
     const baseUrl = getBaseUrl();
     const resetLink = `${baseUrl}/reset-password?token=${token}`;
     
-    // デバッグ: 本番環境でのURL生成をログ出力
-    const isVercelProduction = process.env.VERCEL === '1' || process.env.VERCEL_ENV === 'production';
-    if (isVercelProduction) {
+    // デバッグ: 開発環境でのみURL生成をログ出力
+    if (process.env.NODE_ENV === 'development') {
       console.log('🔍 Password reset URL generation:');
       console.log('  Base URL:', baseUrl);
       console.log('  Generated reset link:', resetLink.substring(0, 50) + '...');
@@ -83,7 +82,12 @@ export async function POST(request: NextRequest) {
       // SMTP設定がある場合、または本番環境の場合: 実際にメールを送信を試行
       const emailSent = await sendPasswordResetEmail(user.email, resetLink);
       if (!emailSent) {
-        console.error('Failed to send password reset email to:', user.email);
+        // 本番環境では機密情報をログに出力しない
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to send password reset email to:', user.email);
+        } else {
+          console.error('Failed to send password reset email');
+        }
         
         // 本番環境でメール送信に失敗した場合
         if (isProduction) {
@@ -115,7 +119,12 @@ Creators Garden
               
               const emailFile = path.join(emailsDir, `password-reset-${Date.now()}.txt`);
               await fs.writeFile(emailFile, emailContent, 'utf-8');
-              console.error('メール送信に失敗しました。メール内容をファイルに保存しました:', emailFile);
+              // 本番環境では機密情報をログに出力しない
+              if (process.env.NODE_ENV === 'development') {
+                console.error('メール送信に失敗しました。メール内容をファイルに保存しました:', emailFile);
+              } else {
+                console.error('メール送信に失敗しました。メール内容をファイルに保存しました');
+              }
             } catch (fileError) {
               console.error('⚠️ ファイルへの保存にも失敗しました:', fileError);
             }
@@ -161,9 +170,11 @@ Creators Garden
           console.log('Reset link (console only):', resetLink);
         }
       } else {
-        // Vercel本番環境ではファイルシステムに書き込めないため、ログにのみ出力
-        console.log('Reset link (console only):', resetLink);
-        console.log('⚠️ Vercel本番環境ではファイルシステムへの書き込みはできません。');
+        // Vercel本番環境ではファイルシステムに書き込めないため、開発環境でのみログ出力
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Reset link (console only):', resetLink);
+          console.log('⚠️ Vercel本番環境ではファイルシステムへの書き込みはできません。');
+        }
       }
     }
 
@@ -187,7 +198,12 @@ Creators Garden
     }, { status: 200 });
 
   } catch (error) {
-    console.error('Forgot password error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Forgot password error:', error);
+    } else {
+      console.error('Forgot password error occurred');
+    }
     return NextResponse.json(
       { error: 'パスワードリセット申請に失敗しました' },
       { status: 500 }

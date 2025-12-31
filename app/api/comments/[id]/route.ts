@@ -23,7 +23,12 @@ export async function GET(
 
     return NextResponse.json({ comment }, { status: 200 });
   } catch (error) {
-    console.error('Get comment error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Get comment error:', error);
+    } else {
+      console.error('Get comment error occurred');
+    }
     return NextResponse.json(
       { error: 'コメントの取得に失敗しました' },
       { status: 500 }
@@ -93,7 +98,12 @@ export async function PUT(
 
     return NextResponse.json({ comment: updatedComment }, { status: 200 });
   } catch (error) {
-    console.error('Update comment error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Update comment error:', error);
+    } else {
+      console.error('Update comment error occurred');
+    }
     return NextResponse.json(
       { error: 'コメントの更新に失敗しました' },
       { status: 500 }
@@ -154,7 +164,12 @@ export async function DELETE(
       return NextResponse.json({ message: 'コメントを削除しました' }, { status: 200 });
     }
   } catch (error) {
-    console.error('Delete comment error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Delete comment error:', error);
+    } else {
+      console.error('Delete comment error occurred');
+    }
     return NextResponse.json(
       { error: 'コメントの削除に失敗しました' },
       { status: 500 }

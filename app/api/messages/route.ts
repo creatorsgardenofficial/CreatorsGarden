@@ -86,7 +86,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ conversations: filteredConversations }, { status: 200 });
   } catch (error) {
-    console.error('Get messages error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Get messages error:', error);
+    } else {
+      console.error('Get messages error occurred');
+    }
     return NextResponse.json(
       { error: 'メッセージの取得に失敗しました' },
       { status: 500 }
@@ -184,7 +189,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ message }, { status: 201 });
   } catch (error) {
-    console.error('Create message error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Create message error:', error);
+    } else {
+      console.error('Create message error occurred');
+    }
     return NextResponse.json(
       { error: 'メッセージの送信に失敗しました' },
       { status: 500 }

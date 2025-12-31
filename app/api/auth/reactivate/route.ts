@@ -112,7 +112,12 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error: any) {
-    console.error('Reactivate account error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Reactivate account error:', error);
+    } else {
+      console.error('Reactivate account error occurred');
+    }
     return NextResponse.json(
       { error: 'アカウントの復旧に失敗しました' },
       { status: 500 }

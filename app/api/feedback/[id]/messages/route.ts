@@ -123,7 +123,12 @@ export async function POST(
 
     return NextResponse.json({ feedback: updatedFeedback }, { status: 200 });
   } catch (error) {
-    console.error('Add feedback message error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Add feedback message error:', error);
+    } else {
+      console.error('Add feedback message error occurred');
+    }
     return NextResponse.json(
       { error: 'メッセージの送信に失敗しました' },
       { status: 500 }

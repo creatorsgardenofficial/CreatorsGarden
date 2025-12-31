@@ -233,12 +233,17 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error: any) {
-    console.error('Login error:', error);
-    console.error('Login error details:', {
-      message: error?.message,
-      stack: error?.stack,
-      name: error?.name,
-    });
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Login error:', error);
+      console.error('Login error details:', {
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name,
+      });
+    } else {
+      console.error('Login error occurred');
+    }
     return NextResponse.json(
       { 
         error: 'ログインに失敗しました',

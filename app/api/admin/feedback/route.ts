@@ -39,7 +39,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ feedbacks: sortedFeedbacks }, { status: 200 });
   } catch (error) {
-    console.error('Get feedbacks error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Get feedbacks error:', error);
+    } else {
+      console.error('Get feedbacks error occurred');
+    }
     return NextResponse.json(
       { error: 'フィードバックの取得に失敗しました' },
       { status: 500 }
@@ -94,7 +99,12 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error('Delete feedback error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Delete feedback error:', error);
+    } else {
+      console.error('Delete feedback error occurred');
+    }
     return NextResponse.json(
       { error: 'フィードバックの削除に失敗しました' },
       { status: 500 }

@@ -115,7 +115,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ posts }, { status: 200 });
   } catch (error) {
-    console.error('Get posts error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Get posts error:', error);
+    } else {
+      console.error('Get posts error occurred');
+    }
     return NextResponse.json(
       { error: '投稿の取得に失敗しました' },
       { status: 500 }
@@ -346,7 +351,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ post }, { status: 201 });
   } catch (error) {
-    console.error('Create post error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Create post error:', error);
+    } else {
+      console.error('Create post error occurred');
+    }
     return NextResponse.json(
       { error: '投稿の作成に失敗しました' },
       { status: 500 }

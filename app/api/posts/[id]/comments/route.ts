@@ -43,7 +43,12 @@ export async function GET(
     const comments = await getCommentsByPostId(id);
     return NextResponse.json({ comments }, { status: 200 });
   } catch (error) {
-    console.error('Get comments error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Get comments error:', error);
+    } else {
+      console.error('Get comments error occurred');
+    }
     return NextResponse.json(
       { error: 'コメントの取得に失敗しました' },
       { status: 500 }
@@ -144,7 +149,12 @@ export async function POST(
 
     return NextResponse.json({ comment }, { status: 201 });
   } catch (error) {
-    console.error('Create comment error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Create comment error:', error);
+    } else {
+      console.error('Create comment error occurred');
+    }
     return NextResponse.json(
       { error: 'コメントの作成に失敗しました' },
       { status: 500 }

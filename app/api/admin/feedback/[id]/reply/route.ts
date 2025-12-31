@@ -80,7 +80,12 @@ export async function POST(
 
     return NextResponse.json({ feedback: updatedFeedback }, { status: 200 });
   } catch (error) {
-    console.error('Reply to feedback error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Reply to feedback error:', error);
+    } else {
+      console.error('Reply to feedback error occurred');
+    }
     return NextResponse.json(
       { error: '返信の送信に失敗しました' },
       { status: 500 }
@@ -145,7 +150,12 @@ export async function DELETE(
 
     return NextResponse.json({ feedback: updatedFeedback }, { status: 200 });
   } catch (error) {
-    console.error('Delete reply error:', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Delete reply error:', error);
+    } else {
+      console.error('Delete reply error occurred');
+    }
     return NextResponse.json(
       { error: '返信の削除に失敗しました' },
       { status: 500 }

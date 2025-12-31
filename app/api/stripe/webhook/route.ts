@@ -35,9 +35,17 @@ export async function POST(request: NextRequest) {
 
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-      console.log('Webhook: イベント受信:', event.type);
+      // 開発環境でのみログ出力
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Webhook: イベント受信:', event.type);
+      }
     } catch (err: any) {
-      console.error('Webhook: 署名検証失敗:', err.message);
+      // 本番環境では詳細なエラー情報をログに出力しない
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Webhook: 署名検証失敗:', err.message);
+      } else {
+        console.error('Webhook: 署名検証失敗');
+      }
       return NextResponse.json(
         { error: `Webhookエラー: ${err.message}` },
         { status: 400 }
@@ -160,13 +168,26 @@ export async function POST(request: NextRequest) {
               }
               if (updated) {
                 await savePosts(posts);
-                console.log('Webhook: 投稿の優先表示フラグ更新完了');
+                // 開発環境でのみログ出力
+                if (process.env.NODE_ENV === 'development') {
+                  console.log('Webhook: 投稿の優先表示フラグ更新完了');
+                }
               }
             } else {
-              console.error('Webhook: ユーザーが見つかりません', { userId });
+              // 本番環境では機密情報をログに出力しない
+              if (process.env.NODE_ENV === 'development') {
+                console.error('Webhook: ユーザーが見つかりません', { userId });
+              } else {
+                console.error('Webhook: ユーザーが見つかりません');
+              }
             }
           } else {
-            console.error('Webhook: メタデータが不足しています', { userId, metadataPlanType });
+            // 本番環境では機密情報をログに出力しない
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Webhook: メタデータが不足しています', { userId, metadataPlanType });
+            } else {
+              console.error('Webhook: メタデータが不足しています');
+            }
           }
         }
         break;
@@ -322,10 +343,20 @@ export async function POST(request: NextRequest) {
                 }
               }
             } else {
-              console.error('Webhook: ユーザーが見つかりません', { userId });
+              // 本番環境では機密情報をログに出力しない
+              if (process.env.NODE_ENV === 'development') {
+                console.error('Webhook: ユーザーが見つかりません', { userId });
+              } else {
+                console.error('Webhook: ユーザーが見つかりません');
+              }
             }
           } else {
-            console.error('Webhook: 顧客メタデータにuserIdがありません', { customerId });
+            // 本番環境では機密情報をログに出力しない
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Webhook: 顧客メタデータにuserIdがありません', { customerId });
+            } else {
+              console.error('Webhook: 顧客メタデータにuserIdがありません');
+            }
           }
         }
         break;
@@ -379,10 +410,20 @@ export async function POST(request: NextRequest) {
                 await savePosts(posts);
               }
             } else {
-              console.error('Webhook: ユーザーが見つかりません', { userId });
+              // 本番環境では機密情報をログに出力しない
+              if (process.env.NODE_ENV === 'development') {
+                console.error('Webhook: ユーザーが見つかりません', { userId });
+              } else {
+                console.error('Webhook: ユーザーが見つかりません');
+              }
             }
           } else {
-            console.error('Webhook: 顧客メタデータにuserIdがありません', { customerId });
+            // 本番環境では機密情報をログに出力しない
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Webhook: 顧客メタデータにuserIdがありません', { customerId });
+            } else {
+              console.error('Webhook: 顧客メタデータにuserIdがありません');
+            }
           }
         }
         break;
@@ -390,7 +431,10 @@ export async function POST(request: NextRequest) {
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice;
         const customerId = invoice.customer as string;
-        console.log('Webhook: invoice.payment_succeeded', { customerId });
+        // 開発環境でのみログ出力（機密情報を含む）
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Webhook: invoice.payment_succeeded', { customerId });
+        }
         
         const customer = await stripe.customers.retrieve(customerId);
         if (!customer.deleted && 'metadata' in customer) {
@@ -454,9 +498,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (error: any) {
-    console.error('Webhook: エラー発生', error);
+    // 本番環境では詳細なエラー情報をログに出力しない
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Webhook: エラー発生', error);
+    } else {
+      console.error('Webhook: エラー発生');
+    }
     return NextResponse.json(
-      { error: error.message || 'Webhook処理に失敗しました' },
+      { error: 'Webhook処理に失敗しました' },
       { status: 500 }
     );
   }

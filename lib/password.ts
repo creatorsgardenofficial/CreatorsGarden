@@ -17,10 +17,13 @@ export async function hashPassword(password: string): Promise<string> {
  * @returns 一致する場合はtrue
  */
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-  // 既存の平文パスワードとの互換性チェック（移行期間中）
+  // ⚠️ セキュリティ警告: 既存の平文パスワードとの互換性チェック（移行期間中のみ）
   // ハッシュ化されていないパスワード（平文）の場合は、直接比較
+  // TODO: 全ユーザーのパスワードがハッシュ化されたら、この処理を削除すること
+  // 削除予定: 移行完了後（全ユーザーのパスワードがハッシュ化された後）
   if (!hashedPassword.startsWith('$2a$') && !hashedPassword.startsWith('$2b$') && !hashedPassword.startsWith('$2y$')) {
     // bcryptハッシュではない場合、平文と比較（後方互換性）
+    // ⚠️ セキュリティリスク: 平文パスワードの比較は移行期間中のみ許可
     return password === hashedPassword;
   }
   
