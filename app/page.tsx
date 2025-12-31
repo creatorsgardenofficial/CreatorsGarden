@@ -14,23 +14,18 @@ export default function Home() {
               <span className="text-6xl md:text-7xl">🌱</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
-            クリエイターのための
-              <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-green-500">
-                コラボレーションプラットフォーム
+                Creators Garden
+              </span>
+              <br />
+              <span className="text-3xl md:text-5xl">
+                クリエイターのための創作・コラボレーションコミュニティ
               </span>
             </h1>
-            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed">
-              小説家、イラストレーター、漫画家、作曲家、歌手、声優、ゲームクリエイター、動画編集者、3Dモデラー、Live2Dモデラー、Webエンジニアなど
-              <br />
-              様々なクリエイター同士が
-              <br />
-              アイデアを共有し、コラボレーションを見つける場所
-            </p>
-            {/* 検索エンジン向け説明文 */}
-            <div className="max-w-3xl mx-auto mb-8 px-4">
-              <p className="text-base text-gray-700 dark:text-gray-300 leading-relaxed text-center">
-                Creators Gardenは、クリエイター同士がつながり、コラボレーションや作品発表、交流を行うための創作コミュニティです。小説家、イラストレーター、作曲家、AIクリエイターなどが参加し、共同制作やアイデア共有の場として利用できます。クリエイター向けのコラボサイト、創作コミュニティ、創作SNSとして、あなたの創作活動をサポートします。
+            {/* SEO導入文（検索エンジンが最初に読む本文） */}
+            <div className="max-w-3xl mx-auto mb-10">
+              <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 leading-relaxed text-center">
+                Creators Garden（クリエイターズ ガーデン）は、創作活動を行うクリエイター同士がつながり、コラボレーションや作品発表、交流を行うためのオンラインコミュニティです。小説家、イラストレーター、作曲家、AIクリエイターなど、分野の異なるクリエイターが集まり、共同制作やアイデア共有のきっかけを生み出します。
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -137,6 +132,51 @@ export default function Home() {
           </div>
         </div>
 
+        {/* SEO最適化セクション */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-white/50 dark:bg-gray-800/50 rounded-3xl my-8">
+          {/* Creators Gardenでできること */}
+          <div className="mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6 text-center">
+              Creators Gardenでできること
+            </h2>
+            <p className="text-base text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-6 text-center leading-relaxed">
+              Creators Gardenは、以下のような目的を持つクリエイターに利用されています。
+            </p>
+            <ul className="max-w-3xl mx-auto space-y-3 text-gray-700 dark:text-gray-300">
+              <li className="flex items-start">
+                <span className="text-purple-500 dark:text-purple-400 mr-3 mt-1">・</span>
+                <span>自分の作品を他のクリエイターに見てもらいたい</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-purple-500 dark:text-purple-400 mr-3 mt-1">・</span>
+                <span>イラスト、音楽、小説など分野を超えてコラボしたい</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-purple-500 dark:text-purple-400 mr-3 mt-1">・</span>
+                <span>共同制作のパートナーを探したい</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-purple-500 dark:text-purple-400 mr-3 mt-1">・</span>
+                <span>創作仲間と安心して交流できる場所がほしい</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-purple-500 dark:text-purple-400 mr-3 mt-1">・</span>
+                <span>AIを活用した創作活動について情報交換したい</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Creators Gardenの特徴 */}
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6 text-center">
+              Creators Gardenの特徴
+            </h2>
+            <p className="text-base text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed text-center">
+              Creators Gardenは、初心者から経験豊富なクリエイターまで、誰でも参加できるオープンな創作コミュニティです。プロフィール作成、メッセージ機能、作品投稿、コラボ募集など、創作活動に必要な機能を備えており、安心して長く利用できる環境を提供しています。
+            </p>
+          </div>
+        </div>
+
         {/* ガーデンの世界観セクション */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center mb-6">
@@ -149,9 +189,6 @@ export default function Home() {
               「アイデアの種」を投稿し、仲間と育てて「作品として花開かせる」ための
               <br className="hidden md:block" />
               創作者コミュニティサービスです。
-            </p>
-            <p className="text-base text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              クリエイターコラボサイト、創作コミュニティ、創作プラットフォームとして、小説家とイラストレーターのコラボ、作曲家と歌手のコラボ、AIクリエイターの交流など、様々な創作活動をサポートしています。創作SNSとして、アイデア共有からコラボレーションまで、クリエイター同士のつながりを育む場を提供します。
             </p>
           </div>
 
@@ -199,6 +236,15 @@ export default function Home() {
           <div className="flex justify-center">
             <A8Ad className="max-w-full" />
           </div>
+        </div>
+
+        {/* SEO補強文（フッター直前） */}
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+          <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed">
+            創作活動をもっと自由に、もっと楽しく。
+            <br />
+            Creators Gardenは、クリエイターのつながりを育てる場所です。
+          </p>
         </div>
       </div>
     </>
