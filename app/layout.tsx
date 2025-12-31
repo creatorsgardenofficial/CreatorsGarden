@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Creators Garden - アイデア共有＋コラボマッチング",
   description: "創作者・アマチュアクリエイター向けのアイデア共有とコラボレーションプラットフォーム",
+  verification: {
+    google: "tnvZBYxvA9j53zFrADBPbcq2tg_fgPYkRA7Q5cO-05U",
+  },
 };
 
 export default function RootLayout({
