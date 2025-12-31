@@ -657,6 +657,11 @@ export async function adminDeleteComment(id: string): Promise<boolean> {
 
 // フィードバック管理
 export async function getFeedbacks(): Promise<Feedback[]> {
+  if (await shouldUseDatabaseStorage()) {
+    const { getFeedbacks: getFeedbacksDb } = await import('./storage-db');
+    return getFeedbacksDb();
+  }
+  
   await ensureDataDir();
   try {
     const data = await fs.readFile(FEEDBACK_FILE, 'utf-8');
@@ -667,11 +672,20 @@ export async function getFeedbacks(): Promise<Feedback[]> {
 }
 
 export async function saveFeedbacks(feedbacks: Feedback[]): Promise<void> {
+  if (await shouldUseDatabaseStorage()) {
+    throw new Error('saveFeedbacks should not be called when using database. Use storage-db functions instead.');
+  }
+  
   await ensureDataDir();
   await fs.writeFile(FEEDBACK_FILE, JSON.stringify(feedbacks, null, 2), 'utf-8');
 }
 
 export async function createFeedback(feedback: Omit<Feedback, 'id' | 'createdAt'>): Promise<Feedback> {
+  if (await shouldUseDatabaseStorage()) {
+    const { createFeedback: createFeedbackDb } = await import('./storage-db');
+    return createFeedbackDb(feedback);
+  }
+  
   const feedbacks = await getFeedbacks();
   const newFeedback: Feedback = {
     ...feedback,

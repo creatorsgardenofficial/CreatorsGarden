@@ -2100,6 +2100,190 @@ export async function updateSystemSettings(settings: Partial<SystemSettings>): P
   }
 }
 
-// 他の関数も同様に実装する必要がありますが、まずはユーザー関連、パスワードリセットトークン、投稿、メッセージ、会話、お知らせ、ブロックユーザー、グループチャット、グループメッセージを完成させました
-// 残りの関数（comments, feedback等）は後で追加します
+// ==================== フィードバック管理 ====================
+
+export async function getFeedbacks(): Promise<Feedback[]> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        user_id as "userId",
+        subject,
+        content as "message",
+        status,
+        reply,
+        replied_by as "repliedBy",
+        replied_at as "repliedAt",
+        messages,
+        created_at as "createdAt"
+      FROM feedback
+      ORDER BY created_at DESC
+    `);
+    
+    return result.rows.map(row => ({
+      id: row.id,
+      userId: row.userId || undefined,
+      subject: row.subject,
+      message: row.message,
+      messages: row.messages || undefined,
+      reply: row.reply || undefined,
+      repliedAt: row.repliedAt || undefined,
+      repliedBy: row.repliedBy || undefined,
+      createdAt: row.createdAt,
+    })) as Feedback[];
+  } catch (error) {
+    console.error('Failed to get feedbacks from database:', error);
+    throw error;
+  }
+}
+
+export async function createFeedback(feedback: Omit<Feedback, 'id' | 'createdAt'>): Promise<Feedback> {
+  try {
+    const id = Date.now().toString();
+    const createdAt = new Date().toISOString();
+    
+    // user_idはオプショナル（匿名フィードバック対応）
+    // スキーマを修正してuser_idをNULL許可にする必要があります
+    // 修正前: user_id TEXT NOT NULL
+    // 修正後: user_id TEXT (NULL許可)
+    const userId = feedback.userId || null;
+    
+    await pool.query(`
+      INSERT INTO feedback (
+        id, user_id, subject, content, status, messages, created_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7
+      )
+    `, [
+      id,
+      userId,
+      feedback.subject,
+      feedback.message,
+      'open',
+      JSON.stringify(feedback.messages || []),
+      createdAt,
+    ]);
+    
+    return {
+      ...feedback,
+      id,
+      createdAt,
+    } as Feedback;
+  } catch (error) {
+    console.error('Failed to create feedback in database:', error);
+    throw error;
+  }
+}
+
+export async function getFeedbackById(id: string): Promise<Feedback | null> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        user_id as "userId",
+        subject,
+        content as "message",
+        status,
+        reply,
+        replied_by as "repliedBy",
+        replied_at as "repliedAt",
+        messages,
+        created_at as "createdAt"
+      FROM feedback
+      WHERE id = $1
+      LIMIT 1
+    `, [id]);
+    
+    if (result.rows.length === 0) return null;
+    
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      userId: row.userId || undefined,
+      subject: row.subject,
+      message: row.message,
+      messages: row.messages || undefined,
+      reply: row.reply || undefined,
+      repliedAt: row.repliedAt || undefined,
+      repliedBy: row.repliedBy || undefined,
+      createdAt: row.createdAt,
+    } as Feedback;
+  } catch (error) {
+    console.error('Failed to get feedback by id from database:', error);
+    throw error;
+  }
+}
+
+export async function updateFeedback(id: string, updates: Partial<Feedback>): Promise<Feedback | null> {
+  try {
+    const existingFeedback = await getFeedbackById(id);
+    if (!existingFeedback) return null;
+    
+    const updateFields: string[] = [];
+    const updateValues: any[] = [];
+    let paramIndex = 1;
+    
+    if (updates.reply !== undefined) {
+      updateFields.push(`reply = $${paramIndex++}`);
+      updateValues.push(updates.reply);
+    }
+    
+    if (updates.repliedBy !== undefined) {
+      updateFields.push(`replied_by = $${paramIndex++}`);
+      updateValues.push(updates.repliedBy);
+    }
+    
+    if (updates.repliedAt !== undefined) {
+      updateFields.push(`replied_at = $${paramIndex++}`);
+      updateValues.push(updates.repliedAt);
+    }
+    
+    if (updates.messages !== undefined) {
+      updateFields.push(`messages = $${paramIndex++}`);
+      updateValues.push(JSON.stringify(updates.messages));
+    }
+    
+    if (updates.subject !== undefined) {
+      updateFields.push(`subject = $${paramIndex++}`);
+      updateValues.push(updates.subject);
+    }
+    
+    if (updates.message !== undefined) {
+      updateFields.push(`content = $${paramIndex++}`);
+      updateValues.push(updates.message);
+    }
+    
+    if (updateFields.length === 0) {
+      return existingFeedback;
+    }
+    
+    updateFields.push(`updated_at = NOW()`);
+    updateValues.push(id);
+    
+    await pool.query(`
+      UPDATE feedback
+      SET ${updateFields.join(', ')}
+      WHERE id = $${paramIndex}
+    `, updateValues);
+    
+    return await getFeedbackById(id);
+  } catch (error) {
+    console.error('Failed to update feedback in database:', error);
+    throw error;
+  }
+}
+
+export async function deleteFeedback(id: string): Promise<boolean> {
+  try {
+    const result = await pool.query(`
+      DELETE FROM feedback
+      WHERE id = $1
+    `, [id]);
+    
+    return result.rowCount !== null && result.rowCount > 0;
+  } catch (error) {
+    console.error('Failed to delete feedback in database:', error);
+    throw error;
+  }
+}
 
