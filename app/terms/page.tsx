@@ -1,5 +1,11 @@
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '利用規約｜Creators Garden',
+  description: 'Creators Gardenの利用規約です。クリエイター向けの創作コミュニティサービスにおける利用条件、禁止事項、著作権、AI生成物の取り扱いなどを定めています。',
+};
 
 export default function TermsPage() {
   return (

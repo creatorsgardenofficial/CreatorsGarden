@@ -27,6 +27,12 @@ export default function Home() {
               <br />
               アイデアを共有し、コラボレーションを見つける場所
             </p>
+            {/* 検索エンジン向け説明文 */}
+            <div className="max-w-3xl mx-auto mb-8 px-4">
+              <p className="text-base text-gray-700 dark:text-gray-300 leading-relaxed text-center">
+                Creators Gardenは、クリエイター同士がつながり、コラボレーションや作品発表、交流を行うための創作コミュニティです。小説家、イラストレーター、作曲家、AIクリエイターなどが参加し、共同制作やアイデア共有の場として利用できます。クリエイター向けのコラボサイト、創作コミュニティ、創作SNSとして、あなたの創作活動をサポートします。
+              </p>
+            </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
                 href="/register"
@@ -137,12 +143,15 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Creators Garden とは
             </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed mb-4">
               Creators Gardenは、クリエイター同士が集まり、
               <br className="hidden md:block" />
               「アイデアの種」を投稿し、仲間と育てて「作品として花開かせる」ための
               <br className="hidden md:block" />
               創作者コミュニティサービスです。
+            </p>
+            <p className="text-base text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+              クリエイターコラボサイト、創作コミュニティ、創作プラットフォームとして、小説家とイラストレーターのコラボ、作曲家と歌手のコラボ、AIクリエイターの交流など、様々な創作活動をサポートしています。創作SNSとして、アイデア共有からコラボレーションまで、クリエイター同士のつながりを育む場を提供します。
             </p>
           </div>
 
