@@ -703,6 +703,11 @@ export async function getFeedbackById(id: string): Promise<Feedback | null> {
 }
 
 export async function updateFeedback(id: string, updates: Partial<Feedback>): Promise<Feedback | null> {
+  if (await shouldUseDatabaseStorage()) {
+    const { updateFeedback: updateFeedbackDb } = await import('./storage-db');
+    return updateFeedbackDb(id, updates);
+  }
+  
   const feedbacks = await getFeedbacks();
   const index = feedbacks.findIndex(f => f.id === id);
   if (index === -1) return null;
@@ -716,6 +721,11 @@ export async function updateFeedback(id: string, updates: Partial<Feedback>): Pr
 }
 
 export async function deleteFeedback(id: string): Promise<boolean> {
+  if (await shouldUseDatabaseStorage()) {
+    const { deleteFeedback: deleteFeedbackDb } = await import('./storage-db');
+    return deleteFeedbackDb(id);
+  }
+  
   const feedbacks = await getFeedbacks();
   const filtered = feedbacks.filter(f => f.id !== id);
   if (filtered.length === feedbacks.length) return false;
