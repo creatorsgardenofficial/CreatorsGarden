@@ -133,35 +133,35 @@ export default function Home() {
         </div>
 
         {/* SEO最適化セクション */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-white/50 dark:bg-gray-800/50 rounded-3xl my-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* Creators Gardenでできること */}
-          <div className="mb-12">
+          <div className="mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6 text-center">
               Creators Gardenでできること
             </h2>
-            <p className="text-base text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-6 text-center leading-relaxed">
+            <p className="text-base text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8 text-center leading-relaxed">
               Creators Gardenは、以下のような目的を持つクリエイターに利用されています。
             </p>
-            <ul className="max-w-3xl mx-auto space-y-3 text-gray-700 dark:text-gray-300">
+            <ul className="max-w-3xl mx-auto space-y-4 text-gray-700 dark:text-gray-300">
               <li className="flex items-start">
-                <span className="text-purple-500 dark:text-purple-400 mr-3 mt-1">・</span>
-                <span>自分の作品を他のクリエイターに見てもらいたい</span>
+                <span className="text-purple-500 dark:text-purple-400 mr-3 mt-0.5 font-bold">・</span>
+                <span className="leading-relaxed">自分の作品を他のクリエイターに見てもらいたい</span>
               </li>
               <li className="flex items-start">
-                <span className="text-purple-500 dark:text-purple-400 mr-3 mt-1">・</span>
-                <span>イラスト、音楽、小説など分野を超えてコラボしたい</span>
+                <span className="text-purple-500 dark:text-purple-400 mr-3 mt-0.5 font-bold">・</span>
+                <span className="leading-relaxed">イラスト、音楽、小説など分野を超えてコラボしたい</span>
               </li>
               <li className="flex items-start">
-                <span className="text-purple-500 dark:text-purple-400 mr-3 mt-1">・</span>
-                <span>共同制作のパートナーを探したい</span>
+                <span className="text-purple-500 dark:text-purple-400 mr-3 mt-0.5 font-bold">・</span>
+                <span className="leading-relaxed">共同制作のパートナーを探したい</span>
               </li>
               <li className="flex items-start">
-                <span className="text-purple-500 dark:text-purple-400 mr-3 mt-1">・</span>
-                <span>創作仲間と安心して交流できる場所がほしい</span>
+                <span className="text-purple-500 dark:text-purple-400 mr-3 mt-0.5 font-bold">・</span>
+                <span className="leading-relaxed">創作仲間と安心して交流できる場所がほしい</span>
               </li>
               <li className="flex items-start">
-                <span className="text-purple-500 dark:text-purple-400 mr-3 mt-1">・</span>
-                <span>AIを活用した創作活動について情報交換したい</span>
+                <span className="text-purple-500 dark:text-purple-400 mr-3 mt-0.5 font-bold">・</span>
+                <span className="leading-relaxed">AIを活用した創作活動について情報交換したい</span>
               </li>
             </ul>
           </div>
