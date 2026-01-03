@@ -10,7 +10,7 @@ import { getClientIp } from '@/lib/utils';
 export async function POST(request: NextRequest) {
   try {
     // データベースが利用可能でない場合はスキップ
-    if (!shouldUseDatabaseStorage()) {
+    if (!(await shouldUseDatabaseStorage())) {
       return NextResponse.json({ success: true, skipped: true }, { status: 200 });
     }
 
