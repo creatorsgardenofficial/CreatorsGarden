@@ -1541,8 +1541,8 @@ export default function AdminPage() {
                                 />
                                 <Tooltip 
                                   contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                                  formatter={(value: number, name: string, props: any) => [
-                                    value.toLocaleString(), 
+                                  formatter={(value: number | undefined, name: string, props: any) => [
+                                    (value ?? 0).toLocaleString(), 
                                     'アクセス数',
                                     `パス: ${analytics.viewsByPath[props.payload.index]?.path || props.payload.path}`
                                   ]}
