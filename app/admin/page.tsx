@@ -1541,7 +1541,7 @@ export default function AdminPage() {
                                 />
                                 <Tooltip 
                                   contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                                  formatter={(value: number | undefined, name: string, props: any) => [
+                                  formatter={(value: number | undefined, name: string | undefined, props: any) => [
                                     (value ?? 0).toLocaleString(), 
                                     'アクセス数',
                                     `パス: ${analytics.viewsByPath[props.payload.index]?.path || props.payload.path}`
@@ -1599,7 +1599,7 @@ export default function AdminPage() {
                                 <Tooltip 
                                   contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                                   labelFormatter={(value) => new Date(value).toLocaleDateString('ja-JP')}
-                                  formatter={(value: number) => [value.toLocaleString(), 'アクセス数']}
+                                  formatter={(value: number | undefined) => [(value ?? 0).toLocaleString(), 'アクセス数']}
                                 />
                                 <Legend />
                                 <Line 
@@ -1655,7 +1655,7 @@ export default function AdminPage() {
                                 <Tooltip 
                                   contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                                   labelFormatter={(value) => `${value}時`}
-                                  formatter={(value: number) => [value.toLocaleString(), 'アクセス数']}
+                                  formatter={(value: number | undefined) => [(value ?? 0).toLocaleString(), 'アクセス数']}
                                 />
                                 <Legend />
                                 <Bar 
