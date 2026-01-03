@@ -2287,3 +2287,212 @@ export async function deleteFeedback(id: string): Promise<boolean> {
   }
 }
 
+// ==================== アクセスログ管理 ====================
+
+export interface AccessLog {
+  id: string;
+  path: string;
+  method: string;
+  userId?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  referer?: string;
+  createdAt: string;
+}
+
+/**
+ * アクセスログを記録
+ */
+export async function createAccessLog(log: Omit<AccessLog, 'id' | 'createdAt'>): Promise<void> {
+  try {
+    const id = crypto.randomUUID();
+    await pool.query(`
+      INSERT INTO access_logs (id, path, method, user_id, ip_address, user_agent, referer, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+    `, [
+      id,
+      log.path,
+      log.method,
+      log.userId || null,
+      log.ipAddress || null,
+      log.userAgent || null,
+      log.referer || null,
+    ]);
+  } catch (error) {
+    console.error('Failed to create access log:', error);
+    // エラーが発生しても処理を続行（アクセスログの記録失敗でサイトが停止しないように）
+  }
+}
+
+/**
+ * アクセス統計を取得
+ */
+export async function getAccessStats(options: {
+  startDate?: string;
+  endDate?: string;
+  path?: string;
+} = {}): Promise<{
+  totalViews: number;
+  uniqueVisitors: number;
+  viewsByPath: Array<{ path: string; count: number }>;
+  viewsByDate: Array<{ date: string; count: number }>;
+  viewsByHour: Array<{ hour: number; count: number }>;
+  topUserAgents: Array<{ userAgent: string; count: number }>;
+  topReferers: Array<{ referer: string; count: number }>;
+}> {
+  try {
+    // テーブルが存在するかチェック
+    const tableCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'access_logs'
+      );
+    `);
+    
+    if (!tableCheck.rows[0].exists) {
+      console.warn('⚠️ access_logsテーブルが存在しません。SQLスクリプトを実行してください: scripts/add-access-logs-table.sql');
+      return {
+        totalViews: 0,
+        uniqueVisitors: 0,
+        viewsByPath: [],
+        viewsByDate: [],
+        viewsByHour: [],
+        topUserAgents: [],
+        topReferers: [],
+      };
+    }
+    const { startDate, endDate, path } = options;
+    let whereClause = 'WHERE 1=1';
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (startDate) {
+      whereClause += ` AND created_at >= $${paramIndex++}`;
+      params.push(startDate);
+    }
+    if (endDate) {
+      whereClause += ` AND created_at <= $${paramIndex++}`;
+      params.push(endDate);
+    }
+    if (path) {
+      whereClause += ` AND path = $${paramIndex++}`;
+      params.push(path);
+    }
+
+    // 総アクセス数
+    const totalResult = await pool.query(`
+      SELECT COUNT(*) as count
+      FROM access_logs
+      ${whereClause}
+    `, params);
+    const totalViews = parseInt(totalResult.rows[0].count) || 0;
+
+    // ユニークビジター数（IPアドレスベース）
+    const uniqueResult = await pool.query(`
+      SELECT COUNT(DISTINCT ip_address) as count
+      FROM access_logs
+      ${whereClause}
+      AND ip_address IS NOT NULL
+    `, params);
+    const uniqueVisitors = parseInt(uniqueResult.rows[0].count) || 0;
+
+    // パス別アクセス数
+    const pathResult = await pool.query(`
+      SELECT path, COUNT(*) as count
+      FROM access_logs
+      ${whereClause}
+      GROUP BY path
+      ORDER BY count DESC
+      LIMIT 20
+    `, params);
+    const viewsByPath = pathResult.rows.map((row: any) => ({
+      path: row.path,
+      count: parseInt(row.count) || 0,
+    }));
+
+    // 日付別アクセス数
+    const dateResult = await pool.query(`
+      SELECT DATE(created_at) as date, COUNT(*) as count
+      FROM access_logs
+      ${whereClause}
+      GROUP BY DATE(created_at)
+      ORDER BY date DESC
+      LIMIT 30
+    `, params);
+    const viewsByDate = dateResult.rows.map((row: any) => ({
+      date: row.date,
+      count: parseInt(row.count) || 0,
+    }));
+
+    // 時間別アクセス数
+    const hourResult = await pool.query(`
+      SELECT EXTRACT(HOUR FROM created_at)::INTEGER as hour, COUNT(*) as count
+      FROM access_logs
+      ${whereClause}
+      GROUP BY EXTRACT(HOUR FROM created_at)
+      ORDER BY hour
+    `, params);
+    const viewsByHour = hourResult.rows.map((row: any) => ({
+      hour: parseInt(row.hour) || 0,
+      count: parseInt(row.count) || 0,
+    }));
+
+    // トップユーザーエージェント
+    const userAgentResult = await pool.query(`
+      SELECT user_agent, COUNT(*) as count
+      FROM access_logs
+      ${whereClause}
+      AND user_agent IS NOT NULL
+      GROUP BY user_agent
+      ORDER BY count DESC
+      LIMIT 10
+    `, params);
+    const topUserAgents = userAgentResult.rows.map((row: any) => ({
+      userAgent: row.user_agent,
+      count: parseInt(row.count) || 0,
+    }));
+
+    // トップリファラー
+    const refererResult = await pool.query(`
+      SELECT referer, COUNT(*) as count
+      FROM access_logs
+      ${whereClause}
+      AND referer IS NOT NULL
+      GROUP BY referer
+      ORDER BY count DESC
+      LIMIT 10
+    `, params);
+    const topReferers = refererResult.rows.map((row: any) => ({
+      referer: row.referer,
+      count: parseInt(row.count) || 0,
+    }));
+
+    return {
+      totalViews,
+      uniqueVisitors,
+      viewsByPath,
+      viewsByDate,
+      viewsByHour,
+      topUserAgents,
+      topReferers,
+    };
+  } catch (error: any) {
+    console.error('Failed to get access stats:', error);
+    // テーブルが存在しないエラーの場合、より明確なメッセージを表示
+    if (error?.message?.includes('does not exist') || error?.code === '42P01' || error?.message?.includes('relation "access_logs" does not exist')) {
+      console.error('⚠️ access_logsテーブルが存在しません。');
+      console.error('📋 以下のSQLスクリプトを実行してください: scripts/add-access-logs-table.sql');
+    }
+    return {
+      totalViews: 0,
+      uniqueVisitors: 0,
+      viewsByPath: [],
+      viewsByDate: [],
+      viewsByHour: [],
+      topUserAgents: [],
+      topReferers: [],
+    };
+  }
+}
+

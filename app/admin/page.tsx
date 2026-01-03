@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { Feedback, User, CreatorType, Announcement } from '@/types';
 import { creatorTypeLabels } from '@/lib/creatorTypes';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const subjectLabels: Record<string, string> = {
   feature: '機能要望',
@@ -14,7 +15,7 @@ const subjectLabels: Record<string, string> = {
 };
 
 
-type TabType = 'feedback' | 'users' | 'security' | 'announcements' | 'maintenance';
+type TabType = 'feedback' | 'users' | 'security' | 'announcements' | 'maintenance' | 'analytics';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -52,6 +53,9 @@ export default function AdminPage() {
   const [adminLoginPassword, setAdminLoginPassword] = useState('');
   const [adminLoginError, setAdminLoginError] = useState('');
   const [adminLoginLoading, setAdminLoginLoading] = useState(false);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [analyticsDateRange, setAnalyticsDateRange] = useState<'today' | 'week' | 'month' | 'all'>('week');
 
   const fetchSecurityLogs = async () => {
     setLoadingSecurityLogs(true);
@@ -106,8 +110,10 @@ export default function AdminPage() {
       fetchAnnouncements();
     } else if (activeTab === 'maintenance') {
       fetchMaintenanceSettings();
+    } else if (activeTab === 'analytics') {
+      fetchAnalytics();
     }
-  }, [activeTab, isLoggedIn]);
+  }, [activeTab, isLoggedIn, analyticsDateRange]);
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -547,6 +553,44 @@ export default function AdminPage() {
     });
   };
 
+  const fetchAnalytics = async () => {
+    setLoadingAnalytics(true);
+    try {
+      let startDate: string | undefined;
+      const endDate = new Date().toISOString();
+      
+      switch (analyticsDateRange) {
+        case 'today':
+          startDate = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+          break;
+        case 'week':
+          startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+          break;
+        case 'month':
+          startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+          break;
+        case 'all':
+          startDate = undefined;
+          break;
+      }
+
+      const res = await fetch(`/api/admin/analytics?${startDate ? `startDate=${startDate}&` : ''}endDate=${endDate}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'アクセス統計の取得に失敗しました');
+        setLoadingAnalytics(false);
+        return;
+      }
+
+      setAnalytics(data.stats || null);
+    } catch (err) {
+      setError('アクセス統計の取得に失敗しました');
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
+
   // 認証チェック中
   if (checkingAuth) {
     return (
@@ -721,6 +765,16 @@ export default function AdminPage() {
               }`}
             >
               メンテナンス表示
+            </button>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`px-6 py-3 font-semibold transition-colors ${
+                activeTab === 'analytics'
+                  ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              アクセス統計
             </button>
           </div>
 
@@ -1409,6 +1463,280 @@ export default function AdminPage() {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* アクセス統計タブ */}
+          {activeTab === 'analytics' && (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    アクセス統計
+                  </h2>
+                  <select
+                    value={analyticsDateRange}
+                    onChange={(e) => setAnalyticsDateRange(e.target.value as any)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="today">今日</option>
+                    <option value="week">過去7日間</option>
+                    <option value="month">過去30日間</option>
+                    <option value="all">すべて</option>
+                  </select>
+                </div>
+
+                {loadingAnalytics ? (
+                  <div className="flex justify-center items-center h-64">
+                    <div className="w-8 h-8 border-2 border-gray-300 border-t-indigo-600 rounded-full animate-spin"></div>
+                  </div>
+                ) : analytics ? (
+                  <div className="space-y-6">
+                    {/* サマリーカード */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 rounded-lg p-6">
+                        <div className="text-sm text-indigo-700 dark:text-indigo-300 mb-1">総アクセス数</div>
+                        <div className="text-3xl font-bold text-indigo-900 dark:text-indigo-100">
+                          {analytics.totalViews.toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-6">
+                        <div className="text-sm text-purple-700 dark:text-purple-300 mb-1">ユニークビジター数</div>
+                        <div className="text-3xl font-bold text-purple-900 dark:text-purple-100">
+                          {analytics.uniqueVisitors.toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* パス別アクセス数 */}
+                    {analytics.viewsByPath && analytics.viewsByPath.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                          人気のページ
+                        </h3>
+                        <div className="bg-white dark:bg-gray-700/50 rounded-lg p-4">
+                          {/* グラフ */}
+                          <div className="h-64 mb-4">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart 
+                                data={analytics.viewsByPath.slice(0, 10).map((item: any) => ({
+                                  ...item,
+                                  path: item.path.length > 20 ? item.path.substring(0, 20) + '...' : item.path
+                                }))}
+                                layout="vertical"
+                              >
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-600" />
+                                <XAxis 
+                                  type="number"
+                                  stroke="#6b7280"
+                                  className="dark:text-gray-400"
+                                />
+                                <YAxis 
+                                  type="category"
+                                  dataKey="path"
+                                  width={150}
+                                  stroke="#6b7280"
+                                  className="dark:text-gray-400"
+                                />
+                                <Tooltip 
+                                  contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                                  formatter={(value: number, name: string, props: any) => [
+                                    value.toLocaleString(), 
+                                    'アクセス数',
+                                    `パス: ${analytics.viewsByPath[props.payload.index]?.path || props.payload.path}`
+                                  ]}
+                                />
+                                <Legend />
+                                <Bar 
+                                  dataKey="count" 
+                                  fill="#8b5cf6" 
+                                  name="アクセス数"
+                                  radius={[0, 8, 8, 0]}
+                                />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                          {/* 数値リスト */}
+                          <div className="space-y-2 border-t border-gray-200 dark:border-gray-600 pt-4">
+                            {analytics.viewsByPath.slice(0, 10).map((item: any, index: number) => (
+                              <div key={index} className="flex justify-between items-center">
+                                <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">
+                                  {item.path}
+                                </span>
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white ml-4">
+                                  {item.count.toLocaleString()}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 日付別アクセス数 */}
+                    {analytics.viewsByDate && analytics.viewsByDate.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                          日付別アクセス数
+                        </h3>
+                        <div className="bg-white dark:bg-gray-700/50 rounded-lg p-4">
+                          {/* グラフ */}
+                          <div className="h-64 mb-4">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={analytics.viewsByDate.slice().reverse()}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-600" />
+                                <XAxis 
+                                  dataKey="date" 
+                                  tickFormatter={(value) => new Date(value).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })}
+                                  stroke="#6b7280"
+                                  className="dark:text-gray-400"
+                                />
+                                <YAxis 
+                                  stroke="#6b7280"
+                                  className="dark:text-gray-400"
+                                />
+                                <Tooltip 
+                                  contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                                  labelFormatter={(value) => new Date(value).toLocaleDateString('ja-JP')}
+                                  formatter={(value: number) => [value.toLocaleString(), 'アクセス数']}
+                                />
+                                <Legend />
+                                <Line 
+                                  type="monotone" 
+                                  dataKey="count" 
+                                  stroke="#6366f1" 
+                                  strokeWidth={2}
+                                  name="アクセス数"
+                                  dot={{ fill: '#6366f1', r: 4 }}
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                          {/* 数値リスト */}
+                          <div className="space-y-2 border-t border-gray-200 dark:border-gray-600 pt-4">
+                            {analytics.viewsByDate.slice(0, 10).map((item: any, index: number) => (
+                              <div key={index} className="flex justify-between items-center">
+                                <span className="text-sm text-gray-700 dark:text-gray-300">
+                                  {new Date(item.date).toLocaleDateString('ja-JP')}
+                                </span>
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {item.count.toLocaleString()}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 時間別アクセス数 */}
+                    {analytics.viewsByHour && analytics.viewsByHour.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                          時間別アクセス数
+                        </h3>
+                        <div className="bg-white dark:bg-gray-700/50 rounded-lg p-4">
+                          {/* グラフ */}
+                          <div className="h-64 mb-4">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={analytics.viewsByHour}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-600" />
+                                <XAxis 
+                                  dataKey="hour" 
+                                  tickFormatter={(value) => `${value}時`}
+                                  stroke="#6b7280"
+                                  className="dark:text-gray-400"
+                                />
+                                <YAxis 
+                                  stroke="#6b7280"
+                                  className="dark:text-gray-400"
+                                />
+                                <Tooltip 
+                                  contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                                  labelFormatter={(value) => `${value}時`}
+                                  formatter={(value: number) => [value.toLocaleString(), 'アクセス数']}
+                                />
+                                <Legend />
+                                <Bar 
+                                  dataKey="count" 
+                                  fill="#6366f1" 
+                                  name="アクセス数"
+                                  radius={[8, 8, 0, 0]}
+                                />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                          {/* 数値リスト */}
+                          <div className="grid grid-cols-4 md:grid-cols-6 gap-2 border-t border-gray-200 dark:border-gray-600 pt-4">
+                            {analytics.viewsByHour.map((item: any, index: number) => (
+                              <div key={index} className="text-center">
+                                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                  {item.hour}時
+                                </div>
+                                <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {item.count}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* トップユーザーエージェント */}
+                    {analytics.topUserAgents && analytics.topUserAgents.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                          主要なブラウザ・デバイス
+                        </h3>
+                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                          <div className="space-y-2">
+                            {analytics.topUserAgents.map((item: any, index: number) => (
+                              <div key={index} className="flex justify-between items-center">
+                                <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">
+                                  {item.userAgent.length > 60 ? item.userAgent.substring(0, 60) + '...' : item.userAgent}
+                                </span>
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white ml-4">
+                                  {item.count.toLocaleString()}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* トップリファラー */}
+                    {analytics.topReferers && analytics.topReferers.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                          主要な流入元
+                        </h3>
+                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                          <div className="space-y-2">
+                            {analytics.topReferers.map((item: any, index: number) => (
+                              <div key={index} className="flex justify-between items-center">
+                                <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">
+                                  {item.referer.length > 60 ? item.referer.substring(0, 60) + '...' : item.referer}
+                                </span>
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white ml-4">
+                                  {item.count.toLocaleString()}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-gray-600 dark:text-gray-400">
+                      アクセス統計データがありません
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}
