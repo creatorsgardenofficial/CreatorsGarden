@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { shouldUseDatabaseStorage } from '@/lib/storage';
+import { shouldUseDatabaseStorage } from '@/lib/storage-common';
 import { createAccessLog } from '@/lib/storage-db';
 import { getClientIp } from '@/lib/utils';
 
