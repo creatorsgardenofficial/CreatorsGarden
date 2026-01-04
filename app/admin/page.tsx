@@ -14,6 +14,58 @@ const subjectLabels: Record<string, string> = {
   other: 'その他',
 };
 
+/**
+ * ユーザーエージェント文字列を解析してブラウザとOS情報を取得
+ */
+function parseUserAgent(userAgent: string): { browser: string; os: string; device: string } {
+  let browser = 'Unknown';
+  let os = 'Unknown';
+  let device = 'Desktop';
+
+  // ブラウザの検出
+  if (userAgent.includes('Chrome') && !userAgent.includes('Edg')) {
+    const chromeMatch = userAgent.match(/Chrome\/(\d+)/);
+    browser = chromeMatch ? `Chrome ${chromeMatch[1]}` : 'Chrome';
+  } else if (userAgent.includes('Firefox')) {
+    const firefoxMatch = userAgent.match(/Firefox\/(\d+)/);
+    browser = firefoxMatch ? `Firefox ${firefoxMatch[1]}` : 'Firefox';
+  } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
+    const safariMatch = userAgent.match(/Version\/(\d+)/);
+    browser = safariMatch ? `Safari ${safariMatch[1]}` : 'Safari';
+  } else if (userAgent.includes('Edg')) {
+    const edgeMatch = userAgent.match(/Edg\/(\d+)/);
+    browser = edgeMatch ? `Edge ${edgeMatch[1]}` : 'Edge';
+  } else if (userAgent.includes('Opera') || userAgent.includes('OPR')) {
+    const operaMatch = userAgent.match(/(?:Opera|OPR)\/(\d+)/);
+    browser = operaMatch ? `Opera ${operaMatch[1]}` : 'Opera';
+  }
+
+  // OSの検出
+  if (userAgent.includes('Windows NT 10.0')) {
+    os = 'Windows 10/11';
+  } else if (userAgent.includes('Windows NT 6.3')) {
+    os = 'Windows 8.1';
+  } else if (userAgent.includes('Windows NT 6.2')) {
+    os = 'Windows 8';
+  } else if (userAgent.includes('Windows NT 6.1')) {
+    os = 'Windows 7';
+  } else if (userAgent.includes('Mac OS X')) {
+    const macMatch = userAgent.match(/Mac OS X (\d+[._]\d+)/);
+    os = macMatch ? `macOS ${macMatch[1].replace('_', '.')}` : 'macOS';
+  } else if (userAgent.includes('Linux')) {
+    os = 'Linux';
+  } else if (userAgent.includes('Android')) {
+    const androidMatch = userAgent.match(/Android (\d+[.\d]*)/);
+    os = androidMatch ? `Android ${androidMatch[1]}` : 'Android';
+    device = 'Mobile';
+  } else if (userAgent.includes('iPhone') || userAgent.includes('iPad')) {
+    os = userAgent.includes('iPad') ? 'iPadOS' : 'iOS';
+    device = userAgent.includes('iPad') ? 'Tablet' : 'Mobile';
+  }
+
+  return { browser, os, device };
+}
+
 
 type TabType = 'feedback' | 'users' | 'security' | 'announcements' | 'maintenance' | 'analytics';
 
@@ -1692,16 +1744,44 @@ export default function AdminPage() {
                         </h3>
                         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
                           <div className="space-y-3">
-                            {analytics.topUserAgents.map((item: any, index: number) => (
-                              <div key={index} className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 pb-3 border-b border-gray-200 dark:border-gray-600 last:border-b-0">
-                                <span className="text-sm text-gray-700 dark:text-gray-300 break-words flex-1">
-                                  {item.userAgent}
-                                </span>
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white sm:ml-4 sm:whitespace-nowrap">
-                                  {item.count.toLocaleString()}
-                                </span>
-                              </div>
-                            ))}
+                            {analytics.topUserAgents.map((item: any, index: number) => {
+                              const parsed = parseUserAgent(item.userAgent);
+                              return (
+                                <div key={index} className="pb-3 border-b border-gray-200 dark:border-gray-600 last:border-b-0">
+                                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
+                                    <div className="flex-1">
+                                      <div className="flex flex-wrap gap-2 mb-1">
+                                        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded text-xs font-semibold">
+                                          {parsed.browser}
+                                        </span>
+                                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded text-xs font-semibold">
+                                          {parsed.os}
+                                        </span>
+                                        <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded text-xs font-semibold">
+                                          {parsed.device}
+                                        </span>
+                                      </div>
+                                      <details className="mt-2">
+                                        <summary className="text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300">
+                                          詳細なユーザーエージェント文字列を表示
+                                        </summary>
+                                        <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-400 break-all">
+                                          {item.userAgent}
+                                        </div>
+                                      </details>
+                                    </div>
+                                    <div className="text-right sm:text-left">
+                                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                        {item.count.toLocaleString()}
+                                      </div>
+                                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                                        アクセス数
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
