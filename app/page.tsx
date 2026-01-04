@@ -240,7 +240,7 @@ export default function Home() {
           <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed">
             創作活動をもっと自由に、もっと楽しく。
             <br />
-            Creators Gardenは、クリエイターのつながりを育てる場所です。
+            Creators Gardenは、あなたの可能性を形にします。
           </p>
         </div>
       </div>
