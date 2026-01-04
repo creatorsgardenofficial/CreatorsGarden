@@ -316,12 +316,17 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => {
+                      if (formData.portfolioUrls.length >= 3) {
+                        setError('作品URLは最大3つまで登録できます');
+                        return;
+                      }
                       setFormData({
                         ...formData,
                         portfolioUrls: [...formData.portfolioUrls, ''],
                       });
                     }}
-                    className="w-full px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-indigo-500 dark:hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center justify-center gap-2"
+                    disabled={formData.portfolioUrls.length >= 3}
+                    className="w-full px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-indigo-500 dark:hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-300 disabled:hover:text-gray-600"
                   >
                     <svg
                       className="w-5 h-5"

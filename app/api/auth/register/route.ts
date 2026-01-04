@@ -72,6 +72,14 @@ export async function POST(request: NextRequest) {
         })
       : [];
     
+    // URLの数の制限チェック（最大3つ）
+    if (filteredUrls.length > 3) {
+      return NextResponse.json(
+        { error: '作品URLは最大3つまで登録できます。' },
+        { status: 400 }
+      );
+    }
+    
     // URLバリデーションエラーのチェック
     if (portfolioUrls && portfolioUrls.some((url: string) => {
       const trimmedUrl = url.trim();
