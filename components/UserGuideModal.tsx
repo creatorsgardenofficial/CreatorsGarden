@@ -186,7 +186,7 @@ export default function UserGuideModal({ onClose }: UserGuideModalProps) {
                   </p>
                 </div>
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800 opacity-75">
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">🟦 Grow Plan（成長プラン）</h4>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">🟦 Grow Plan（有料）</h4>
                   <p className="text-gray-700 dark:text-gray-300 text-sm mb-2">
                     Seed Planの機能に加えて、より多くの投稿や高度な機能を利用できます。
                   </p>
@@ -195,7 +195,7 @@ export default function UserGuideModal({ onClose }: UserGuideModalProps) {
                   </p>
                 </div>
                 <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border-2 border-purple-200 dark:border-purple-800 opacity-75">
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">🟪 Bloom Plan（開花プラン）</h4>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">🟪 Bloom Plan（有料）</h4>
                   <p className="text-gray-700 dark:text-gray-300 text-sm mb-2">
                     すべての機能をフルに利用できます。最上位プランで、最大限の機能を活用できます。
                   </p>

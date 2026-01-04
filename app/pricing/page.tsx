@@ -149,7 +149,7 @@ function PricingContent() {
       const hasActiveGrowSubscription = user?.subscription?.planType === 'grow' && 
                                        user?.subscription?.status === 'active';
       if (!hasActiveGrowSubscription) {
-        alert('Grow Plan（成長プラン）は現在準備中です。');
+        alert('Grow Plan（有料）は現在準備中です。');
         return;
       }
     }
@@ -310,8 +310,8 @@ function PricingContent() {
               <div className="inline-block px-6 py-3 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 rounded-lg">
                 <span className="font-semibold">現在のプラン: </span>
                 {currentPlan === 'free' && '🟩 Seed Plan（無料）'}
-                {currentPlan === 'grow' && '🟦 Grow Plan（成長プラン）'}
-                {currentPlan === 'bloom' && '🟪 Bloom Plan（開花プラン）'}
+                {currentPlan === 'grow' && '🟦 Grow Plan（有料）'}
+                {currentPlan === 'bloom' && '🟪 Bloom Plan（有料）'}
                 {isActive && currentPlan !== 'free' && (
                   <span className="ml-2 text-sm">✓ アクティブ</span>
                 )}

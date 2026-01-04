@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       
       if (!hasActiveGrowSubscription) {
         return NextResponse.json(
-          { error: 'Grow Plan（成長プラン）は現在準備中です。' },
+          { error: 'Grow Plan（有料）は現在準備中です。' },
           { status: 400 }
         );
       }
