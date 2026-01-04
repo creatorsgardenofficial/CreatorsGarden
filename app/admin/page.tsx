@@ -1691,13 +1691,13 @@ export default function AdminPage() {
                           主要なブラウザ・デバイス
                         </h3>
                         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             {analytics.topUserAgents.map((item: any, index: number) => (
-                              <div key={index} className="flex justify-between items-center">
-                                <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">
-                                  {item.userAgent.length > 60 ? item.userAgent.substring(0, 60) + '...' : item.userAgent}
+                              <div key={index} className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 pb-3 border-b border-gray-200 dark:border-gray-600 last:border-b-0">
+                                <span className="text-sm text-gray-700 dark:text-gray-300 break-words flex-1">
+                                  {item.userAgent}
                                 </span>
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white ml-4">
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white sm:ml-4 sm:whitespace-nowrap">
                                   {item.count.toLocaleString()}
                                 </span>
                               </div>
@@ -1714,13 +1714,13 @@ export default function AdminPage() {
                           主要な流入元
                         </h3>
                         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             {analytics.topReferers.map((item: any, index: number) => (
-                              <div key={index} className="flex justify-between items-center">
-                                <span className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">
-                                  {item.referer.length > 60 ? item.referer.substring(0, 60) + '...' : item.referer}
+                              <div key={index} className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 pb-3 border-b border-gray-200 dark:border-gray-600 last:border-b-0">
+                                <span className="text-sm text-gray-700 dark:text-gray-300 break-words flex-1">
+                                  {item.referer}
                                 </span>
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white ml-4">
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white sm:ml-4 sm:whitespace-nowrap">
                                   {item.count.toLocaleString()}
                                 </span>
                               </div>
