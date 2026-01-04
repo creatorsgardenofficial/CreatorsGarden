@@ -882,7 +882,7 @@ export default function ProfilePage() {
               }}
               className="px-6 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
             >
-              アカウントを退会する
+              退会する
             </button>
           </div>
 
