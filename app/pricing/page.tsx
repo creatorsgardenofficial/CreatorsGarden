@@ -423,7 +423,7 @@ function PricingContent() {
               <div className="text-center mb-6">
                 <div className="text-4xl mb-2">🟦</div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  Grow Plan（成長プラン）
+                  Grow Plan（有料）
                 </h2>
                 <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
                   準備中
@@ -495,7 +495,7 @@ function PricingContent() {
               <div className="text-center mb-6">
                 <div className="text-4xl mb-2">🟪</div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  Bloom Plan（開花プラン）
+                  Bloom Plan（有料）
                 </h2>
                 <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
                   近日公開
