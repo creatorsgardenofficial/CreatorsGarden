@@ -182,7 +182,7 @@ export default function BookmarksPage() {
                             ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' 
                             : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
                         }`}>
-                          {bookmark.post.status === 'open' ? 'メンバー募集中' : 'メンバー決定'}
+                          {bookmark.post.status === 'open' ? 'open' : 'close'}
                         </span>
                       </div>
                       <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-2">

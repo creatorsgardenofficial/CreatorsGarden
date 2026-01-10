@@ -531,8 +531,8 @@ export default function PostsPage() {
                   onChange={(value) => setFilters({ ...filters, status: value as PostStatus | '' })}
                   options={[
                     { value: '', label: 'すべて' },
-                    { value: 'open', label: 'メンバー募集中' },
-                    { value: 'closed', label: 'メンバー決定' },
+                    { value: 'open', label: 'open' },
+                    { value: 'closed', label: 'close' },
                   ]}
                   placeholder="すべて"
                 />
@@ -765,7 +765,7 @@ export default function PostsPage() {
                              ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' 
                              : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
                          }`}>
-                           {post.status === 'open' ? 'メンバー募集中' : 'メンバー決定'}
+                           {post.status === 'open' ? 'open' : 'close'}
                          </span>
                        </div>
                        <AutoSizeTitle
@@ -945,7 +945,7 @@ export default function PostsPage() {
                           ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' 
                           : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
                       }`}>
-                        {post.status === 'open' ? 'メンバー募集中' : 'メンバー決定'}
+                        {post.status === 'open' ? 'open' : 'close'}
                       </span>
                     </div>
                     <AutoSizeTitle
