@@ -549,20 +549,20 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
       {/* ヘッダー */}
       {!embedded && (
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
             <button
               onClick={() => setShowCreateModal(!showCreateModal)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              className="px-3 md:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm md:text-base whitespace-nowrap"
             >
               {showCreateModal ? 'グループ一覧' : '新規グループ作成'}
             </button>
             {selectedGroupChat && !showCreateModal && (
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white truncate">
                   {selectedGroupChat.name}
                 </h2>
                 {selectedGroupChat.description && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 truncate">
                     {selectedGroupChat.description}
                   </p>
                 )}
@@ -583,20 +583,20 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
         </div>
       )}
       {embedded && (
-        <div className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2 md:gap-4 p-4 border-b border-gray-200 dark:border-gray-700">
           <button
             onClick={() => setShowCreateModal(!showCreateModal)}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            className="px-3 md:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm md:text-base whitespace-nowrap"
           >
             {showCreateModal ? 'グループ一覧' : '新規グループ作成'}
           </button>
           {selectedGroupChat && !showCreateModal && (
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white truncate">
                 {selectedGroupChat.name}
               </h2>
               {selectedGroupChat.description && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 truncate">
                   {selectedGroupChat.description}
                 </p>
               )}
@@ -608,16 +608,16 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
         </div>
       )}
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
           {/* サイドバー（グループ一覧 or 作成フォーム） */}
-          <div className={`w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col ${showCreateModal ? '' : 'hidden md:block'}`}>
+          <div className={`w-full md:w-80 border-r border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden min-h-0 ${showCreateModal ? '' : 'hidden md:block'} ${showCreateModal ? 'md:block' : ''}`}>
             {showCreateModal ? (
-              <div className="flex flex-col h-full overflow-hidden">
-                <div className="p-4 flex-shrink-0">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">新規グループ作成</h3>
+              <div className="flex flex-col h-full overflow-hidden min-h-0">
+                <div className="p-3 md:p-4 flex-shrink-0">
+                  <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white mb-3 md:mb-4">新規グループ作成</h3>
                 </div>
-                <form onSubmit={handleCreateGroupChat} className="flex flex-col h-full overflow-hidden">
-                  <div className="flex-1 overflow-y-auto px-4 space-y-4">
+                <form onSubmit={handleCreateGroupChat} className="flex flex-col h-full overflow-hidden min-h-0">
+                  <div className="flex-1 overflow-y-auto px-3 md:px-4 space-y-3 md:space-y-4 min-h-0">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         グループ名 <span className="text-red-500">*</span>
@@ -671,21 +671,21 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                         </button>
                       </div>
                       {searchedUser && (
-                        <div className="mb-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                          <div className="flex items-center justify-between">
-                            <div>
+                        <div className="mb-2 p-2 md:p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                            <div className="min-w-0 flex-1">
                               <Link
                                 href={`/users/${searchedUser.id}`}
                                 onClick={onClose}
-                                className="block font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                                className="block font-medium text-indigo-600 dark:text-indigo-400 hover:underline break-words"
                               >
                                 {searchedUser.username}
                               </Link>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                              <div className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
                                 {creatorTypeLabels[searchedUser.creatorType as CreatorType]}
                               </div>
                               {searchedUser.publicId && (
-                                <div className="text-xs text-gray-400 dark:text-gray-500">
+                                <div className="text-xs text-gray-400 dark:text-gray-500 break-all">
                                   ID: {searchedUser.publicId}
                                 </div>
                               )}
@@ -693,13 +693,80 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                             <button
                               type="button"
                               onClick={handleAddParticipant}
-                              className="px-3 py-1 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                              className="px-3 py-1 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors whitespace-nowrap flex-shrink-0"
                             >
                               追加
                             </button>
                           </div>
                         </div>
                       )}
+                    <div className="md:hidden">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        参加者を追加（ユーザー名で検索）
+                      </label>
+                      <div className="flex flex-col sm:flex-row gap-2 mb-2">
+                        <input
+                          type="text"
+                          value={rightSideSearchQuery}
+                          onChange={(e) => setRightSideSearchQuery(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSearchUserByUsername();
+                            }
+                          }}
+                          className="flex-1 px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white min-w-0"
+                          placeholder="ユーザー名を入力"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSearchUserByUsername}
+                          disabled={rightSideSearching}
+                          className="px-4 py-2 text-sm md:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+                        >
+                          {rightSideSearching ? '検索中...' : '検索'}
+                        </button>
+                      </div>
+                      {rightSideSearchedUsers.length > 0 && (
+                        <div className="space-y-2 max-h-48 overflow-y-auto mb-2">
+                          {rightSideSearchedUsers.map((user) => (
+                            <div key={user.id} className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                                <div className="min-w-0 flex-1">
+                                  <Link
+                                    href={`/users/${user.id}`}
+                                    onClick={onClose}
+                                    className="block font-medium text-indigo-600 dark:text-indigo-400 hover:underline text-base md:text-lg break-words"
+                                  >
+                                    {user.username}
+                                  </Link>
+                                  <div className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    {creatorTypeLabels[user.creatorType as CreatorType]}
+                                  </div>
+                                  {user.publicId && (
+                                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-1 break-all">
+                                      ID: {user.publicId}
+                                    </div>
+                                  )}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleAddParticipantFromRightSide(user)}
+                                  className="px-3 md:px-4 py-1 md:py-2 text-sm md:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors whitespace-nowrap flex-shrink-0"
+                                >
+                                  追加
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {rightSideSearchQuery.trim() && rightSideSearchedUsers.length === 0 && !rightSideSearching && (
+                        <div className="text-center text-gray-500 dark:text-gray-400 py-2 text-sm mb-2">
+                          該当するユーザーが見つかりません
+                        </div>
+                      )}
+                    </div>
                     {participantUsers.length > 0 && (
                       <div className="space-y-2">
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">追加済みの参加者:</p>
@@ -719,11 +786,11 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                             
                             return (
                               <div key={index} className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                <div className="flex flex-col gap-1 min-w-0 flex-1" style={{ maxWidth: 'calc(100% - 3rem)' }}>
+                                <div className="flex flex-col gap-1 min-w-0 flex-1">
                                   <Link
                                     href={`/users/${user.id}`}
                                     onClick={onClose}
-                                    className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline whitespace-nowrap"
+                                    className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline break-words"
                                     style={{ fontSize: `${usernameFontSize}rem` }}
                                     title={user.username}
                                   >
@@ -731,7 +798,7 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                                   </Link>
                                   {user.publicId && (
                                     <span 
-                                      className="text-gray-500 dark:text-gray-400 whitespace-nowrap"
+                                      className="text-gray-500 dark:text-gray-400 break-all"
                                       style={{ fontSize: `${idFontSize}rem` }}
                                       title={`ID: ${user.publicId}`}
                                     >
@@ -757,7 +824,7 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                     )}
                     </div>
                   </div>
-                  <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 space-y-2">
+                  <div className="flex-shrink-0 p-3 md:p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 space-y-2">
                     <button
                       type="button"
                       onClick={handleSaveDraft}
@@ -776,8 +843,8 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                 </form>
               </div>
             ) : (
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">グループ一覧</h3>
+              <div className="p-3 md:p-4">
+                <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white mb-4">グループ一覧</h3>
                 {loading ? (
                   <div className="text-center text-gray-500 dark:text-gray-400">読み込み中...</div>
                 ) : groupChats.length === 0 ? (
@@ -821,19 +888,19 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
           </div>
 
           {/* メッセージエリア */}
-          <div className="flex-1 flex flex-col">
+          <div className={`flex-1 flex flex-col ${showCreateModal ? 'hidden md:flex' : ''}`}>
             {selectedGroupChat ? (
               <>
                 {/* 参加者一覧（ヘッダー下） */}
-                <div className="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <div className="p-2 md:p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                   <div className="flex items-center gap-2 flex-wrap mb-2">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">参加者:</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">参加者:</span>
                     {selectedGroupChat.participants?.map((p) => (
                       <Link
                         key={p.id}
                         href={`/users/${p.id}`}
                         onClick={onClose}
-                        className="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+                        className="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors break-words max-w-full"
                       >
                         {p.username}
                       </Link>
@@ -847,7 +914,7 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                       {leaving ? '退出中...' : '退出'}
                     </button>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                       <input
                         type="text"
                         value={searchPublicId}
@@ -858,20 +925,20 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                             handleSearchUserByPublicId();
                           }
                         }}
-                        className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        className="flex-1 min-w-[120px] px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                         placeholder="表示用IDで検索"
                       />
                       <button
                         onClick={handleSearchUserByPublicId}
                         disabled={searching}
-                        className="px-3 py-1 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                        className="px-3 py-1 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 whitespace-nowrap"
                       >
                         検索
                       </button>
                       {searchedUser && (
                         <button
                           onClick={handleAddParticipantToGroup}
-                          className="px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          className="px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
                         >
                           追加
                         </button>
@@ -879,18 +946,18 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                     </div>
                     {searchedUser && (
                       <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                        <div className="text-sm">
+                        <div className="text-sm break-words">
                           <Link
                             href={`/users/${searchedUser.id}`}
                             onClick={onClose}
-                            className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+                            className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline break-words"
                           >
                             {searchedUser.username}
                           </Link>
                           <span className="text-gray-500 dark:text-gray-400 ml-2">
                             {creatorTypeLabels[searchedUser.creatorType as CreatorType]}
                           </span>
-                          <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">
+                          <span className="text-xs text-gray-400 dark:text-gray-500 ml-2 break-all">
                             ID: {searchedUser.publicId}
                           </span>
                         </div>
@@ -899,7 +966,7 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                 </div>
 
                 {/* メッセージリスト */}
-                <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-2 md:p-4 space-y-4">
                   {messages.map((message) => {
                     const isOwn = message.senderId === currentUserId;
                     const isEditing = editingMessageId === message.id;
@@ -1020,8 +1087,8 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
 
                 {/* 削除確認ダイアログ */}
                 {deletingMessageId && (
-                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 max-w-md mx-4">
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-4 md:p-6 max-w-md w-full">
                       <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                         メッセージを削除しますか？
                       </h3>
@@ -1062,20 +1129,20 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                 )}
 
                 {/* メッセージ入力 */}
-                <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200 dark:border-gray-700">
+                <form onSubmit={handleSendMessage} className="p-2 md:p-4 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={messageContent}
                       onChange={(e) => setMessageContent(e.target.value)}
                       placeholder="メッセージを入力..."
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      className="flex-1 px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                       disabled={sending}
                     />
                     <button
                       type="submit"
                       disabled={sending || !messageContent.trim()}
-                      className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 md:px-6 py-2 text-sm md:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                     >
                       {sending ? '送信中...' : '送信'}
                     </button>
@@ -1083,25 +1150,25 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                 </form>
               </>
             ) : (
-              <div className="flex-1 flex p-8 gap-6">
+              <div className="flex-1 flex flex-col md:flex-row p-2 md:p-8 gap-3 md:gap-6 overflow-y-auto min-h-0">
                 {/* 左側: グループチャットの作成方法の説明 */}
-                <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">グループチャットの作成方法</h3>
-                  <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+                <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg p-3 md:p-6 border border-gray-200 dark:border-gray-700 min-w-0 overflow-hidden flex flex-col">
+                  <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white mb-3 md:mb-4">グループチャットの作成方法</h3>
+                  <div className="space-y-3 md:space-y-4 text-sm text-gray-700 dark:text-gray-300 overflow-y-auto flex-1 min-h-0">
                     <div className="space-y-2">
                       <p className="font-medium">グループチャットを作成する手順:</p>
-                      <ol className="list-decimal list-inside space-y-2 ml-2">
-                        <li>左側の「新規グループ作成」ボタンをクリック</li>
-                        <li>グループ名を入力（必須）</li>
-                        <li>説明を入力（任意）</li>
-                        <li>「参加者を追加（表示用IDで検索）」欄で表示用IDを検索、または右側の「ユーザーを検索」でユーザー名を検索</li>
-                        <li>検索結果から参加者を追加</li>
-                        <li>「グループを作成」ボタンをクリック</li>
+                      <ol className="list-decimal list-outside space-y-2 ml-4 md:ml-6">
+                        <li className="break-words pl-1">左側の「新規グループ作成」ボタンをクリック</li>
+                        <li className="break-words pl-1">グループ名を入力（必須）</li>
+                        <li className="break-words pl-1">説明を入力（任意）</li>
+                        <li className="break-words pl-1">「参加者を追加（表示用IDで検索）」欄で表示用IDを検索、または右側の「ユーザーを検索」でユーザー名を検索</li>
+                        <li className="break-words pl-1">検索結果から参加者を追加</li>
+                        <li className="break-words pl-1">「グループを作成」ボタンをクリック</li>
                       </ol>
                     </div>
-                    <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
-                      <p className="text-purple-700 dark:text-purple-300 font-medium">💡 ヒント</p>
-                      <p className="text-purple-600 dark:text-purple-400 text-xs mt-1">
+                    <div className="mt-3 md:mt-4 p-2 md:p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+                      <p className="text-purple-700 dark:text-purple-300 font-medium text-sm">💡 ヒント</p>
+                      <p className="text-purple-600 dark:text-purple-400 text-xs mt-1 break-words">
                         左側のフォームでは表示用IDで検索できます。右側の「ユーザーを検索」ではユーザー名で検索でき、検索結果から「追加」ボタンをクリックすると、左側のフォームに自動的に追加されます。複数の参加者を追加してからグループを作成できます。
                       </p>
                     </div>
@@ -1109,10 +1176,10 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                 </div>
                 
                 {/* 右側: ユーザー検索機能（ユーザー名で検索） */}
-                <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">ユーザーを検索</h3>
-                  <div className="space-y-4">
-                    <div className="flex gap-2">
+                <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg p-3 md:p-6 border border-gray-200 dark:border-gray-700 min-w-0 overflow-hidden flex flex-col">
+                  <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white mb-3 md:mb-4">ユーザーを検索</h3>
+                  <div className="space-y-3 md:space-y-4 overflow-y-auto flex-1 min-h-0">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <input
                         type="text"
                         value={rightSideSearchQuery}
@@ -1123,42 +1190,42 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
                             handleSearchUserByUsername();
                           }
                         }}
-                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        className="flex-1 px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white min-w-0"
                         placeholder="ユーザー名を入力"
                       />
                       <button
                         onClick={handleSearchUserByUsername}
                         disabled={rightSideSearching}
-                        className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                        className="px-4 md:px-6 py-2 text-sm md:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 whitespace-nowrap"
                       >
                         {rightSideSearching ? '検索中...' : '検索'}
                       </button>
                     </div>
                       {rightSideSearchedUsers.length > 0 && (
-                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                        <div className="space-y-2 overflow-y-auto">
                           {rightSideSearchedUsers.map((user) => (
-                            <div key={user.id} className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                              <div className="flex items-center justify-between">
-                                <div>
+                            <div key={user.id} className="p-3 md:p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                                <div className="min-w-0 flex-1">
                                   <Link
                                     href={`/users/${user.id}`}
                                     onClick={onClose}
-                                    className="block font-medium text-indigo-600 dark:text-indigo-400 hover:underline text-lg"
+                                    className="block font-medium text-indigo-600 dark:text-indigo-400 hover:underline text-base md:text-lg break-words"
                                   >
                                     {user.username}
                                   </Link>
-                                  <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                  <div className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-1">
                                     {creatorTypeLabels[user.creatorType as CreatorType]}
                                   </div>
                                   {user.publicId && (
-                                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-1 break-all">
                                       ID: {user.publicId}
                                     </div>
                                   )}
                                 </div>
                                 <button
                                   onClick={() => handleAddParticipantFromRightSide(user)}
-                                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                  className="px-3 md:px-4 py-1 md:py-2 text-sm md:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors whitespace-nowrap flex-shrink-0"
                                 >
                                   追加
                                 </button>
@@ -1186,8 +1253,8 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-0 md:p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-none md:rounded-xl shadow-2xl w-full h-full md:w-full md:max-w-5xl md:h-[85vh] flex flex-col overflow-hidden">
         {content}
       </div>
     </div>
