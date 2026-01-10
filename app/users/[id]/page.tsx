@@ -61,7 +61,7 @@ export default function UserProfilePage() {
 
   const postTypeLabels: Record<PostType, string> = {
     collab: '🤝 コラボ募集',
-    idea: '💡 アイデア共有',
+    idea: '💡 作品紹介',
     seeking: '🔍 パートナー探し',
   };
 

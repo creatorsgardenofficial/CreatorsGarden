@@ -25,7 +25,7 @@ export default function Home() {
             {/* SEO導入文（検索エンジンが最初に読む本文） */}
             <div className="max-w-3xl mx-auto mb-10">
               <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 leading-relaxed text-center">
-                Creators Garden（クリエイターズ ガーデン）は、創作活動を行うクリエイター同士がつながり、コラボレーションや作品発表、交流を行うためのオンラインコミュニティです。小説家、イラストレーター、作曲家、AIクリエイターなど、分野の異なるクリエイターが集まり、共同制作やアイデア共有のきっかけを生み出します。
+                Creators Garden（クリエイターズ ガーデン）は、創作活動を行うクリエイター同士がつながり、コラボレーションや作品発表、交流を行うためのオンラインコミュニティです。小説家、イラストレーター、作曲家、AIクリエイターなど、分野の異なるクリエイターが集まり、共同制作や作品紹介のきっかけを生み出します。
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -96,10 +96,10 @@ export default function Home() {
               >
                 <div className="text-4xl mb-4 text-center">💡</div>
                 <h3 className="text-xl font-bold text-green-900 dark:text-green-300 mb-3 text-center">
-                  アイデア共有
+                  作品紹介
                 </h3>
                 <p className="text-green-700 dark:text-green-400 text-center leading-relaxed">
-                  自分のアイデアを共有し、フィードバックを得る
+                  自分の作品を紹介し、フィードバックを得る
                 </p>
               </Link>
 

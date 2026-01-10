@@ -301,7 +301,7 @@ export default function EditPostPage() {
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 >
                   <option value="collab">🤝 コラボ募集</option>
-                  <option value="idea">💡 アイデア共有</option>
+                  <option value="idea">💡 作品紹介</option>
                   <option value="seeking">🔍 パートナー探し</option>
                 </select>
               </div>

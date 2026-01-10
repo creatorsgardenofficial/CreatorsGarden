@@ -58,7 +58,7 @@ export default function UserGuideModal({ onClose }: UserGuideModalProps) {
                 <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border-l-4 border-purple-500">
                   <h4 className="font-semibold text-gray-900 dark:text-white mb-2">1. 投稿を作成する</h4>
                   <p className="text-gray-700 dark:text-gray-300 text-sm">
-                    「投稿する」ボタンから、アイデア共有・コラボ募集・パートナー探しの3種類の投稿を作成できます。
+                    「投稿する」ボタンから、作品紹介・コラボ募集・パートナー探しの3種類の投稿を作成できます。
                     タイトル、内容、タグを設定して、あなたのアイデアや募集内容を投稿しましょう。
                   </p>
                 </div>
@@ -88,9 +88,9 @@ export default function UserGuideModal({ onClose }: UserGuideModalProps) {
               <div className="grid md:grid-cols-3 gap-4">
                 <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
                   <div className="text-3xl mb-2">💡</div>
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">アイデア共有</h4>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">作品紹介</h4>
                   <p className="text-gray-700 dark:text-gray-300 text-sm">
-                    自分のアイデアを共有し、フィードバックを得たい時に使用します。
+                    自分の作品を紹介し、フィードバックを得たい時に使用します。
                     他のクリエイターからの意見やアドバイスを集めることができます。
                   </p>
                 </div>

@@ -237,7 +237,7 @@ export default function PostsPage() {
 
   const postTypeLabels: Record<PostType, string> = {
     collab: '🤝 コラボ募集',
-    idea: '💡 アイデア共有',
+    idea: '💡 作品紹介',
     seeking: '🔍 パートナー探し',
   };
 
@@ -489,7 +489,7 @@ export default function PostsPage() {
                   options={[
                     { value: '', label: 'すべて' },
                     { value: 'collab', label: 'コラボ募集' },
-                    { value: 'idea', label: 'アイデア共有' },
+                    { value: 'idea', label: '作品紹介' },
                     { value: 'seeking', label: 'パートナー探し' },
                   ]}
                   placeholder="すべて"
