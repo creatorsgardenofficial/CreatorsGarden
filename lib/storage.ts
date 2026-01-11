@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { User, Post, Comment, Feedback, Message, Conversation, GroupMessage, GroupChat, Bookmark, PasswordResetToken, Announcement } from '@/types';
+import { User, Post, Comment, Feedback, Message, Conversation, GroupMessage, GroupChat, Bookmark, PasswordResetToken, Announcement, Event } from '@/types';
 import { shouldUseDatabaseStorage, isVercelProduction, throwDatabaseRequiredError } from './storage-common';
 
 const DATA_DIR = path.join(process.cwd(), 'data');

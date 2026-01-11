@@ -1,5 +1,5 @@
 import { pool } from './db';
-import { User, Post, Comment, Feedback, Message, Conversation, GroupMessage, GroupChat, Bookmark, PasswordResetToken, Announcement } from '@/types';
+import { User, Post, Comment, Feedback, Message, Conversation, GroupMessage, GroupChat, Bookmark, PasswordResetToken, Announcement, Event } from '@/types';
 
 /**
  * PostgreSQL対応のストレージ実装

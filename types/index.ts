@@ -56,11 +56,29 @@ export interface Post {
 
 export interface Comment {
   id: string;
-  postId: string;
+  postId?: string;
+  eventId?: string;
   userId: string;
   username: string;
   content: string;
   createdAt: string;
+}
+
+export interface Event {
+  id: string;
+  userId: string;
+  username: string;
+  creatorType: CreatorType;
+  name: string;
+  content: string;
+  startDate: string;
+  endDate: string;
+  status: 'open' | 'close';
+  urls?: Array<{ url: string; description?: string }>;
+  likes: string[];
+  bumpedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type FeedbackSubject = 'feature' | 'bug' | 'improvement' | 'other';
@@ -160,4 +178,6 @@ export interface Announcement {
   createdAt: string;
   updatedAt: string;
 }
+
+
 

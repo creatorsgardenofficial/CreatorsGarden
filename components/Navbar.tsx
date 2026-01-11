@@ -433,6 +433,23 @@ export default function Navbar() {
             >
               投稿一覧
             </Link>
+            <Link
+              href="/events"
+              onClick={(e) => {
+                if (document.activeElement instanceof HTMLElement) {
+                  document.activeElement.blur();
+                }
+              }}
+              onMouseDown={(e) => {
+                if (document.activeElement instanceof HTMLElement) {
+                  document.activeElement.blur();
+                }
+              }}
+              className="text-xs sm:text-sm md:text-base text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors whitespace-nowrap flex-shrink-0 py-2"
+              style={{ pointerEvents: 'auto', zIndex: 100 }}
+            >
+              イベント
+            </Link>
             {!isAdmin && (
               <Link
                 href="/feedback"
@@ -663,6 +680,24 @@ export default function Navbar() {
                   style={{ pointerEvents: 'auto', zIndex: 100 }}
                 >
                   投稿一覧
+                </Link>
+                <Link
+                  href="/events"
+                  onClick={(e) => {
+                    if (document.activeElement instanceof HTMLElement) {
+                      document.activeElement.blur();
+                    }
+                    setShowSidebar(false);
+                  }}
+                  onMouseDown={(e) => {
+                    if (document.activeElement instanceof HTMLElement) {
+                      document.activeElement.blur();
+                    }
+                  }}
+                  className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-800 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg transition-colors"
+                  style={{ pointerEvents: 'auto', zIndex: 100 }}
+                >
+                  イベント
                 </Link>
                 {!isAdmin && (
                   <Link
