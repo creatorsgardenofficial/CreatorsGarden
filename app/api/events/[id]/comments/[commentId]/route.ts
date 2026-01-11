@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteEventComment } from '@/lib/storage-db-events';
 import { shouldUseDatabaseStorage } from '@/lib/storage-common';
-import { checkUserActive } from '@/lib/auth';
+import { checkUserActive } from '@/lib/utils';
 
 /**
  * イベントのコメントを削除

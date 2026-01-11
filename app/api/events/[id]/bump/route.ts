@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { bumpEvent } from '@/lib/storage-db-events';
 import { shouldUseDatabaseStorage } from '@/lib/storage-common';
-import { checkUserActive } from '@/lib/auth';
+import { checkUserActive } from '@/lib/utils';
 
 /**
  * イベントを挙げる（24時間クールタイム）

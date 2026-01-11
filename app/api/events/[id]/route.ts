@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getEventById, updateEvent, deleteEvent } from '@/lib/storage-db-events';
 import { shouldUseDatabaseStorage } from '@/lib/storage-common';
 import { validateContent, validateUrl } from '@/lib/contentFilter';
-import { checkUserActive } from '@/lib/auth';
+import { checkUserActive } from '@/lib/utils';
 
 /**
  * イベントを取得

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getEventComments, createEventComment } from '@/lib/storage-db-events';
 import { shouldUseDatabaseStorage } from '@/lib/storage-common';
 import { validateContent } from '@/lib/contentFilter';
-import { checkUserActive } from '@/lib/auth';
+import { checkUserActive } from '@/lib/utils';
 
 /**
  * イベントのコメント一覧を取得
