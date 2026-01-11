@@ -31,6 +31,21 @@ export default function EditEventPage() {
     fetchUser();
   }, [params.id]);
 
+  const formatDateForInput = (dateString: string | Date): string => {
+    if (!dateString) return '';
+    // 既にYYYY-MM-DD形式の文字列の場合はそのまま返す
+    if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
+    }
+    // DateオブジェクトまたはISO文字列の場合、YYYY-MM-DD形式に変換
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    if (isNaN(date.getTime())) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const fetchEvent = async () => {
     try {
       const res = await fetch(`/api/events/${params.id}`);
@@ -41,8 +56,8 @@ export default function EditEventPage() {
         setFormData({
           name: event.name,
           content: event.content,
-          startDate: event.startDate,
-          endDate: event.endDate,
+          startDate: formatDateForInput(event.startDate),
+          endDate: formatDateForInput(event.endDate),
           urls: event.urls && event.urls.length > 0
             ? event.urls.map((u: { url: string; description?: string }) => ({
                 url: u.url,
