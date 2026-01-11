@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getEventById, updateEvent, deleteEvent } from '@/lib/storage-db-events';
+import { getEventById, updateEvent, deleteEvent, closeExpiredEvents } from '@/lib/storage-db-events';
 import { shouldUseDatabaseStorage } from '@/lib/storage-common';
 import { validateContent, validateUrl } from '@/lib/contentFilter';
 import { checkUserActive } from '@/lib/utils';
@@ -20,6 +20,9 @@ export async function GET(
         { status: 503 }
       );
     }
+
+    // 開催期間が終了したイベントのステータスを自動的にcloseに変更
+    await closeExpiredEvents();
 
     const event = await getEventById(id);
     if (!event) {
