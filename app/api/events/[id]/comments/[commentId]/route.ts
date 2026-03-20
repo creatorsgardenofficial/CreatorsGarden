@@ -40,7 +40,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('Failed to delete event comment:', error);
     return NextResponse.json(
       { error: 'Failed to delete event comment' },
       { status: 500 }

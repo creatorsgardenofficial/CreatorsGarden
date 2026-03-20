@@ -54,10 +54,8 @@ export default function UserProfilePage() {
       const postsData = await postsRes.json();
       setPosts(postsData.posts || []);
     } catch (err) {
-      console.error('Failed to fetch user posts:', err);
-    }
+      }
   };
-
 
   const postTypeLabels: Record<PostType, string> = {
     collab: '🤝 コラボ募集',

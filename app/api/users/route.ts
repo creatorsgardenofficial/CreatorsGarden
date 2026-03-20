@@ -63,7 +63,6 @@ export async function GET(request: NextRequest) {
       },
     }, { status: 200 });
   } catch (error) {
-    console.error('Get users error:', error);
     return NextResponse.json(
       { error: 'ユーザー一覧の取得に失敗しました' },
       { status: 500 }

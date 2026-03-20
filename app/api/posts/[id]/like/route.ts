@@ -77,7 +77,6 @@ export async function POST(
     
     return response;
   } catch (error) {
-    console.error('Toggle like error:', error);
     return NextResponse.json(
       { error: 'いいねの更新に失敗しました' },
       { status: 500 }
@@ -112,7 +111,6 @@ export async function GET(
       likesCount: post.likes.length,
     }, { status: 200 });
   } catch (error) {
-    console.error('Get like status error:', error);
     return NextResponse.json(
       { error: 'いいね状態の取得に失敗しました' },
       { status: 500 }

@@ -55,7 +55,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ stats }, { status: 200 });
   } catch (error: any) {
-    console.error('Failed to get access stats:', error);
     // テーブルが存在しないエラーの場合、より明確なメッセージを返す
     if (error?.message?.includes('does not exist') || error?.code === '42P01') {
       return NextResponse.json(

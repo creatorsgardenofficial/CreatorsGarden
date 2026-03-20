@@ -58,8 +58,7 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
         }
       }
     } catch (err) {
-      console.error('❌ Failed to load saved draft:', err);
-    }
+      }
     return { groupName: '', groupDescription: '', publicIds: [], users: [] };
   };
 
@@ -166,8 +165,7 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
         setGroupChats(data.groupChats);
       }
     } catch (err) {
-      console.error('[GroupChat] Failed to fetch group chats:', err);
-    }
+      }
   }, []);
 
   // メッセージを取得
@@ -180,7 +178,6 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
     try {
       const res = await fetch(`/api/group-chats?groupChatId=${groupChatId}`);
       if (!res.ok) {
-        console.error('❌ Failed to fetch messages:', res.status, res.statusText);
         setMessages([]);
         return;
       }
@@ -189,11 +186,9 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
       if (data.messages && Array.isArray(data.messages)) {
         setMessages(data.messages);
       } else {
-        console.warn('⚠️ Invalid messages data:', data);
         setMessages([]);
       }
     } catch (err) {
-      console.error('❌ Error fetching messages:', err);
       setMessages([]);
     }
   }, []);
@@ -210,7 +205,6 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
       localStorage.setItem('groupChatDraft', JSON.stringify(dataToSave));
       alert('一時保存しました');
     } catch (err) {
-      console.error('❌ Failed to save draft:', err);
       alert('一時保存に失敗しました');
     }
   };
@@ -411,8 +405,7 @@ export default function GroupChat({ currentUserId, onClose, embedded = false }: 
         try {
           localStorage.removeItem('groupChatDraft');
         } catch (err) {
-          console.error('Failed to clear saved draft:', err);
-        }
+          }
         // 作成したグループチャットを選択
         const updated = await fetch('/api/group-chats').then(r => r.json());
         if (updated.groupChats) {

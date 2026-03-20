@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
     const count = await getBookmarkCount(userId);
     return NextResponse.json({ count }, { status: 200 });
   } catch (error) {
-    console.error('Get bookmark count error:', error);
     return NextResponse.json(
       { error: 'ブックマーク数の取得に失敗しました' },
       { status: 500 }

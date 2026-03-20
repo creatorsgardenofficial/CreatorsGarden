@@ -34,7 +34,6 @@ export async function GET(request: NextRequest) {
     const blocked = await isUserBlocked(userId!, targetUserId);
     return NextResponse.json({ blocked }, { status: 200 });
   } catch (error) {
-    console.error('Get block status error:', error);
     return NextResponse.json(
       { error: 'ブロック状態の取得に失敗しました' },
       { status: 500 }
@@ -85,7 +84,6 @@ export async function POST(request: NextRequest) {
     await blockUser(userId!, blockedUserId);
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error('Block user error:', error);
     return NextResponse.json(
       { error: 'ユーザーのブロックに失敗しました' },
       { status: 500 }
@@ -119,7 +117,6 @@ export async function DELETE(request: NextRequest) {
     await unblockUser(userId!, blockedUserId);
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error('Unblock user error:', error);
     return NextResponse.json(
       { error: 'ユーザーのブロック解除に失敗しました' },
       { status: 500 }

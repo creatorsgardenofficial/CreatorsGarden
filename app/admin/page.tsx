@@ -66,7 +66,6 @@ function parseUserAgent(userAgent: string): { browser: string; os: string; devic
   return { browser, os, device };
 }
 
-
 type TabType = 'feedback' | 'users' | 'security' | 'announcements' | 'maintenance' | 'analytics';
 
 export default function AdminPage() {
@@ -119,8 +118,7 @@ export default function AdminPage() {
         setAnomalies(data.anomalies || null);
       }
     } catch (err) {
-      console.error('Failed to fetch security logs:', err);
-    } finally {
+      } finally {
       setLoadingSecurityLogs(false);
     }
   };
@@ -313,7 +311,6 @@ export default function AdminPage() {
       setDeletingId(null);
     }
   };
-
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();

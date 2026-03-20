@@ -48,8 +48,7 @@ export default function EventsPage() {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch events:', error);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };

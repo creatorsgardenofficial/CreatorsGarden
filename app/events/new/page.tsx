@@ -141,7 +141,6 @@ export default function NewEventPage() {
 
       router.push(`/events/${data.event.id}`);
     } catch (error) {
-      console.error('Failed to create event:', error);
       setError('イベントの作成に失敗しました');
       setSubmitting(false);
     }

@@ -88,12 +88,6 @@ export async function POST(
       );
     }
 
-    console.log('Bump: 投稿を挙げました', {
-      postId: id,
-      userId,
-      bumpedAt: now,
-    });
-
     return NextResponse.json({
       success: true,
       message: '投稿を挙げました',
@@ -102,7 +96,6 @@ export async function POST(
     }, { status: 200 });
 
   } catch (error) {
-    console.error('Bump post error:', error);
     return NextResponse.json(
       { error: '投稿の挙げに失敗しました' },
       { status: 500 }
@@ -187,7 +180,6 @@ export async function GET(
     }, { status: 200 });
 
   } catch (error) {
-    console.error('Get bump status error:', error);
     return NextResponse.json(
       { error: '挙げ機能の状態取得に失敗しました' },
       { status: 500 }

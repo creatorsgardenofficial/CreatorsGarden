@@ -49,12 +49,10 @@ async function logAccess(request: NextRequest, pathname: string) {
       }),
     }).catch((error) => {
       // エラーを無視（アクセスログの記録失敗でサイトが停止しないように）
-      console.error('Failed to log access (non-blocking):', error);
-    });
+      });
   } catch (error) {
     // エラーを無視
-    console.error('Access logging error (non-blocking):', error);
-  }
+    }
 }
 
 export async function middleware(request: NextRequest) {
@@ -140,8 +138,7 @@ export async function middleware(request: NextRequest) {
     }
   } catch (error) {
     // エラー時は通常通り処理を続行
-    console.error('Maintenance check error:', error);
-  }
+    }
   
   return NextResponse.next();
 }

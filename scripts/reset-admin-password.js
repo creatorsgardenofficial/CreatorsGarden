@@ -26,7 +26,6 @@ async function resetAdminPassword(newPassword) {
     const adminUser = users.find(u => u.email === ADMIN_EMAIL);
 
     if (!adminUser) {
-      console.error(`エラー: ${ADMIN_EMAIL} のユーザーが見つかりません。`);
       process.exit(1);
     }
 
@@ -39,14 +38,7 @@ async function resetAdminPassword(newPassword) {
     // ユーザーデータを保存
     await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
 
-    console.log('✅ パスワードをリセットしました！');
-    console.log(`   メールアドレス: ${ADMIN_EMAIL}`);
-    console.log(`   ユーザー名: ${adminUser.username}`);
-    console.log(`   新しいパスワード: ${newPassword}`);
-    console.log('\n新しいパスワードでログインできます。');
-
-  } catch (error) {
-    console.error('エラーが発生しました:', error);
+    } catch (error) {
     process.exit(1);
   }
 }
@@ -55,13 +47,10 @@ async function resetAdminPassword(newPassword) {
 const newPassword = process.argv[2];
 
 if (!newPassword) {
-  console.error('使用方法: node scripts/reset-admin-password.js <新しいパスワード>');
-  console.error('例: node scripts/reset-admin-password.js newpassword123');
   process.exit(1);
 }
 
 if (newPassword.length < 8) {
-  console.error('エラー: パスワードは8文字以上である必要があります。');
   process.exit(1);
 }
 

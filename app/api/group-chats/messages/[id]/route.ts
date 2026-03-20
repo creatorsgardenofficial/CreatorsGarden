@@ -74,10 +74,8 @@ export async function PUT(
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Update group message error:', error);
-    } else {
-      console.error('Update group message error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'メッセージの更新に失敗しました' },
       { status: 500 }
@@ -133,10 +131,8 @@ export async function DELETE(
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Delete group message error:', error);
-    } else {
-      console.error('Delete group message error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'メッセージの削除に失敗しました' },
       { status: 500 }

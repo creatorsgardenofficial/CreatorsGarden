@@ -86,7 +86,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ users: usersWithoutPassword }, { status: 200 });
     }
   } catch (error) {
-    console.error('Search user error:', error);
     return NextResponse.json(
       { error: 'ユーザー検索に失敗しました' },
       { status: 500 }

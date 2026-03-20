@@ -34,7 +34,6 @@ export async function GET(
 
     return NextResponse.json({ event });
   } catch (error: any) {
-    console.error('Failed to get event:', error);
     return NextResponse.json(
       { error: 'Failed to get event' },
       { status: 500 }
@@ -169,7 +168,6 @@ export async function PUT(
 
     return NextResponse.json({ event: updatedEvent });
   } catch (error: any) {
-    console.error('Failed to update event:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to update event' },
       { status: 500 }
@@ -230,7 +228,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('Failed to delete event:', error);
     return NextResponse.json(
       { error: 'Failed to delete event' },
       { status: 500 }

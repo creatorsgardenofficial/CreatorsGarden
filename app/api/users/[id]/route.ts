@@ -29,7 +29,6 @@ export async function GET(
 
     return NextResponse.json({ user: userWithoutPassword }, { status: 200 });
   } catch (error) {
-    console.error('Get user profile error:', error);
     return NextResponse.json(
       { error: 'ユーザー情報の取得に失敗しました' },
       { status: 500 }

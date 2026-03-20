@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  // 開発時のログ（HMR/Fast Refresh等）を抑制
+  logging: false,
   // Turbopackの設定（空のオブジェクトでTurbopackを有効化しつつ、webpack設定との競合を回避）
   turbopack: {},
   // Webpackを使用（Turbopackが有効な場合は無視されるが、--webpackフラグで使用可能）

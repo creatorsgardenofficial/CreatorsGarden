@@ -20,8 +20,7 @@ async function ensureDataDir() {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
   } catch (error) {
-    console.error('Failed to create data directory:', error);
-  }
+    }
 }
 
 // ファイルパス
@@ -70,12 +69,6 @@ export async function saveUsers(users: User[]): Promise<void> {
   // Vercelの本番環境ではファイルシステムへの書き込みができない
   if (isVercelProduction()) {
     const error = new Error('File system is read-only in Vercel production. Database storage is required.');
-    console.error('Cannot write to file system in Vercel production environment.');
-    console.error('Error details:', {
-      VERCEL: process.env.VERCEL,
-      VERCEL_ENV: process.env.VERCEL_ENV,
-      NODE_ENV: process.env.NODE_ENV,
-    });
     throw error;
   }
   
@@ -83,12 +76,6 @@ export async function saveUsers(users: User[]): Promise<void> {
   try {
     await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
   } catch (error: any) {
-    console.error('Failed to save users:', error);
-    console.error('Error details:', {
-      code: error?.code,
-      message: error?.message,
-      stack: error?.stack,
-    });
     // Vercelの本番環境ではファイルシステムへの書き込みができない
     if (error?.code === 'EACCES' || error?.code === 'EROFS' || error?.message?.includes('read-only')) {
       throw new Error('File system is read-only. Database storage is required in production environment.');
@@ -1617,8 +1604,7 @@ export async function markPasswordResetTokenAsUsed(token: string): Promise<void>
       await fs.writeFile(PASSWORD_RESET_TOKENS_FILE, JSON.stringify(tokens, null, 2), 'utf-8');
     }
   } catch (error) {
-    console.error('Failed to mark password reset token as used:', error);
-  }
+    }
 }
 
 export async function deleteExpiredPasswordResetTokens(): Promise<void> {
@@ -1649,8 +1635,7 @@ export async function deleteExpiredPasswordResetTokens(): Promise<void> {
       await fs.writeFile(PASSWORD_RESET_TOKENS_FILE, JSON.stringify(validTokens, null, 2), 'utf-8');
     }
   } catch (error) {
-    console.error('Failed to delete expired password reset tokens:', error);
-  }
+    }
 }
 
 // ブロックリスト管理
@@ -2025,7 +2010,6 @@ export async function getSystemSettings(): Promise<SystemSettings> {
       return defaultSettings;
     }
   } catch (error) {
-    console.error('Failed to get system settings:', error);
     return {
       id: 'maintenance',
       isMaintenance: false,
@@ -2059,7 +2043,6 @@ export async function updateSystemSettings(settings: Partial<SystemSettings>): P
     await fs.writeFile(filePath, JSON.stringify(updatedSettings, null, 2));
     return updatedSettings;
   } catch (error) {
-    console.error('Failed to update system settings:', error);
     throw error;
   }
 }

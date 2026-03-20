@@ -82,10 +82,8 @@ export async function POST(
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Reply to feedback error:', error);
-    } else {
-      console.error('Reply to feedback error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: '返信の送信に失敗しました' },
       { status: 500 }
@@ -152,10 +150,8 @@ export async function DELETE(
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Delete reply error:', error);
-    } else {
-      console.error('Delete reply error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: '返信の削除に失敗しました' },
       { status: 500 }

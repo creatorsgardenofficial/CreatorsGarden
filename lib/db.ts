@@ -52,24 +52,14 @@ const getConnectionString = (): string | null => {
   // Prisma Accelerateエンドポイントでない最初の有効な接続文字列を使用
   for (const candidate of candidates) {
     if (candidate.value && !isPrismaAccelerateEndpoint(candidate.value)) {
-      console.log(`✅ Using connection string from: ${candidate.name}`);
       return candidate.value;
     } else if (candidate.value && isPrismaAccelerateEndpoint(candidate.value)) {
       const hostname = extractHostname(candidate.value);
-      console.warn(`⚠️  Skipping Prisma Accelerate endpoint (${candidate.name}): ${hostname}`);
-    }
+      }
   }
   
   // すべての接続文字列がPrisma Accelerateエンドポイントの場合
   // Prisma Accelerateの制限に達しているため、接続を拒否する
-  console.error('❌ All connection strings point to Prisma Accelerate endpoints');
-  console.error('❌ Prisma Accelerate account limit reached (planLimitReached)');
-    console.error('❌ Please configure database connection string');
-    console.error('❌ For Vercel Postgres: Go to Vercel Dashboard → Storage → Your Database → Settings');
-    console.error('❌ For Neon DB: Go to Neon Dashboard → Connection Details → Copy connection string');
-    console.error('❌ Set it as POSTGRES_URL_NON_POOLING');
-    console.error('❌ Vercel Postgres format: postgres://user:pass@aws-0-*.pooler.supabase.com:5432/db');
-    console.error('❌ Neon DB format: postgres://user:pass@ep-xxx-xxx.region.aws.neon.tech/dbname');
   return null; // 接続を拒否
 };
 
@@ -78,47 +68,27 @@ const isVercelEnvironment = process.env.VERCEL === '1' || process.env.VERCEL_ENV
 
 // デバッグ: 環境変数の状態をログ出力（本番環境のみ）
 if (isVercelEnvironment) {
-  console.log('🔍 Database environment variables check:');
-  
   // 各環境変数のホスト名を表示
   if (process.env.POSTGRES_PRISMA_URL) {
     const hostname = extractHostname(process.env.POSTGRES_PRISMA_URL);
-    console.log('  POSTGRES_PRISMA_URL:', true, `(host: ${hostname || 'unknown'})`);
     if (hostname && (hostname.includes('db.prisma.io') || hostname.includes('prisma.io'))) {
-      console.error('    ❌ This points to Prisma Accelerate endpoint!');
-    }
+      }
   } else {
-    console.log('  POSTGRES_PRISMA_URL:', false);
-  }
+    }
   
   if (process.env.POSTGRES_URL) {
     const hostname = extractHostname(process.env.POSTGRES_URL);
-    console.log('  POSTGRES_URL:', true, `(host: ${hostname || 'unknown'})`);
     if (hostname && (hostname.includes('db.prisma.io') || hostname.includes('prisma.io'))) {
-      console.error('    ❌ This points to Prisma Accelerate endpoint!');
-    }
+      }
   } else {
-    console.log('  POSTGRES_URL:', false);
-  }
+    }
   
   if (process.env.PRISMA_DATABASE_URL) {
     const hostname = extractHostname(process.env.PRISMA_DATABASE_URL);
-    console.log('  PRISMA_DATABASE_URL:', true, `(host: ${hostname || 'unknown'}, format: ${process.env.PRISMA_DATABASE_URL.startsWith('prisma+postgres://') ? 'prisma+postgres://' : 'postgres://'})`);
     if (hostname && (hostname.includes('db.prisma.io') || hostname.includes('prisma.io'))) {
-      console.error('    ❌ This points to Prisma Accelerate endpoint!');
-    }
+      }
   } else {
-    console.log('  PRISMA_DATABASE_URL:', false);
-  }
-  
-  console.log('  STORAGE_PRISMA_URL:', !!process.env.STORAGE_PRISMA_URL);
-  console.log('  STORAGE_URL:', !!process.env.STORAGE_URL);
-  console.log('  POSTGRES_URL_NON_POOLING:', !!process.env.POSTGRES_URL_NON_POOLING);
-  console.log('  CGDB_POSTGRES_URL_NON_POOLING:', !!process.env.CGDB_POSTGRES_URL_NON_POOLING);
-  console.log('  CGDB_DATABASE_URL_UNPOOLED:', !!process.env.CGDB_DATABASE_URL_UNPOOLED);
-  console.log('  CGDB_POSTGRES_URL:', !!process.env.CGDB_POSTGRES_URL);
-  console.log('  CGDB_DATABASE_URL:', !!process.env.CGDB_DATABASE_URL);
-  console.log('  Using connection string:', connectionString ? 'Found' : 'Not found');
+    }
   
   if (connectionString) {
     const format = connectionString.startsWith('postgres://') ? 'postgres://' : 
@@ -126,22 +96,12 @@ if (isVercelEnvironment) {
                    'unknown';
     const hostname = extractHostname(connectionString);
     const isPrismaEndpoint = isPrismaAccelerateEndpoint(connectionString);
-    console.log('  Connection string format:', format);
-    console.log('  Connection string host:', hostname || 'unknown');
     if (connectionString.startsWith('prisma+postgres://')) {
-      console.error('  ❌ ERROR: prisma+postgres:// format cannot be used with pg library!');
-    }
+      }
     if (isPrismaEndpoint) {
-      console.error('  ❌ ERROR: Connection string points to Prisma Accelerate endpoint (db.prisma.io)!');
-      console.error('  ❌ ERROR: Prisma Accelerate endpoints cannot be used with pg library!');
-    }
+      }
   } else {
-    console.error('  ❌ ERROR: No valid connection string found!');
-    console.error('  💡 Please set POSTGRES_PRISMA_URL or POSTGRES_URL in Vercel dashboard');
-    console.error('  💡 Note: Do NOT use PRISMA_DATABASE_URL if it points to Prisma Accelerate (db.prisma.io)');
-    console.error('  💡 Note: POSTGRES_PRISMA_URL and POSTGRES_URL must NOT point to db.prisma.io');
-    console.error('  💡 They should point to Vercel Postgres endpoints (e.g., aws-0-*.pooler.supabase.com)');
-  }
+    }
 }
 
 // pool を遅延初期化（lazy initialization）でエクスポート
@@ -161,8 +121,6 @@ const getPool = (): Pool => {
     const errorMessage = '❌ Database connection string is not set or all connection strings point to Prisma Accelerate endpoints. Please configure POSTGRES_URL_NON_POOLING with Vercel Postgres connection string in Vercel dashboard.';
     if (isBuildTime) {
       // ビルド時は警告だけを出して、ダミーのPoolを返す（実際には使用されない）
-      console.warn(errorMessage);
-      console.warn('   This is a build-time warning. The connection will be validated at runtime.');
       // ビルド時はダミーのPoolを作成（実際には使用されない）
       poolInstance = new Pool({
         connectionString: 'postgres://dummy:dummy@dummy:5432/dummy',
@@ -171,11 +129,8 @@ const getPool = (): Pool => {
       return poolInstance;
     } else {
       // 実行時はエラーを投げる
-      console.error(errorMessage);
       if (isVercelEnvironment) {
-        console.error('   Go to: Vercel Dashboard → Storage → Your Database → Settings');
-        console.error('   Copy the "Direct Connection" string and set it as POSTGRES_URL_NON_POOLING');
-      }
+        }
       throw new Error(errorMessage);
     }
   }
@@ -205,28 +160,18 @@ const getPool = (): Pool => {
     
     // 接続エラーのハンドリング
     poolInstance.on('error', (err: any) => {
-      console.error('❌ Unexpected error on idle database client:', err);
       // Prisma Accelerateの制限エラーの場合、より明確なメッセージを表示
       if (err?.message?.includes('planLimitReached') || err?.message?.includes('account has restrictions')) {
-        console.error('❌ Prisma Accelerate account limit reached');
-        console.error('❌ Please use Vercel Postgres connection string instead');
-        console.error('❌ Go to: Vercel Dashboard → Storage → Your Database → Settings');
-        console.error('❌ Copy the "Direct Connection" string and set it as POSTGRES_URL_NON_POOLING');
-      }
+        }
     });
     
     if (!isBuildTime) {
-      console.log('✅ PostgreSQL Pool created successfully');
-    }
+      }
     return poolInstance;
   } catch (error: any) {
-    console.error('❌ Failed to create PostgreSQL Pool:', error);
-    console.error('Connection string (first 50 chars):', connectionString.substring(0, 50) + '...');
-    
     // Prisma Accelerateの制限エラーの場合、より明確なメッセージを表示
     if (error?.message?.includes('planLimitReached') || error?.message?.includes('account has restrictions')) {
       const errorMessage = '❌ Prisma Accelerate account limit reached. Please use Vercel Postgres connection string. Go to: Vercel Dashboard → Storage → Your Database → Settings → Copy "Direct Connection" string and set as POSTGRES_URL_NON_POOLING';
-      console.error(errorMessage);
       throw new Error(errorMessage);
     }
     
@@ -258,31 +203,15 @@ export const pool: Pool = poolProxy as Pool;
 export async function testConnection(): Promise<boolean> {
   try {
     await pool.query('SELECT 1');
-    console.log('✅ Database connection test successful');
     return true;
   } catch (error: any) {
-    console.error('❌ Database connection test failed:', error);
-    console.error('Error code:', error?.code);
-    console.error('Error message:', error?.message);
-    console.error('Error name:', error?.name);
-    console.error('Error stack:', error?.stack);
-    
     // Prisma Accelerateの制限エラーの場合、より明確なメッセージを表示
     if (error?.message?.includes('planLimitReached') || error?.message?.includes('account has restrictions')) {
-      console.error('❌ Prisma Accelerate account limit reached');
-      console.error('❌ Please use Vercel Postgres connection string instead');
-      console.error('❌ Go to: Vercel Dashboard → Storage → Your Database → Settings');
-      console.error('❌ Copy the "Direct Connection" string and set it as POSTGRES_URL_NON_POOLING');
-      console.error('❌ The connection string should look like: postgres://user:pass@aws-0-*.pooler.supabase.com:5432/db');
-    } else if (error?.code === 'ECONNREFUSED') {
-      console.error('⚠️  Connection refused. Check database server status and firewall rules.');
-    } else if (error?.code === '28P01') {
-      console.error('⚠️  Authentication failed. Check database credentials (username/password).');
-    } else if (error?.code === 'ENOTFOUND') {
-      console.error('⚠️  Database host not found. Check connection string host.');
-    } else if (error?.code === 'invalid_connection_string') {
-      console.error('⚠️  Invalid connection string. Ensure it is a valid PostgreSQL connection URL.');
-    }
+      } else if (error?.code === 'ECONNREFUSED') {
+      } else if (error?.code === '28P01') {
+      } else if (error?.code === 'ENOTFOUND') {
+      } else if (error?.code === 'invalid_connection_string') {
+      }
     return false;
   }
 }
@@ -328,5 +257,4 @@ export function shouldUseDatabase(): boolean {
 // 以前は @vercel/postgres の sql タグを再エクスポートしていたが、
 // 現在は pg の Pool を使用しているため sql は提供しない。
 // 代わりに pool を経由してクエリを実行する。
-
 

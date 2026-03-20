@@ -27,7 +27,6 @@ function PricingContent() {
       const checkSessionSubscription = async () => {
         if (sessionId) {
           try {
-            console.log('Checkout: セッションIDからサブスクリプションを確認', { sessionId });
             const res = await fetch(`/api/stripe/check-session?session_id=${sessionId}`, {
               credentials: 'include',
             });
@@ -42,8 +41,7 @@ function PricingContent() {
               return true;
             }
           } catch (error) {
-            console.error('Checkout: セッション確認エラー', error);
-          }
+            }
         }
         return false;
       };
@@ -66,11 +64,6 @@ function PricingContent() {
           },
         });
         const data = await res.json();
-        
-        console.log(`Checkout: ポーリング試行 ${attempts}/${maxAttempts}`, {
-          planType: data.user?.subscription?.planType,
-          status: data.user?.subscription?.status,
-        });
         
         if (data.user && data.user.subscription?.planType !== 'free' && data.user.subscription?.status === 'active') {
           // プランが更新された
@@ -122,19 +115,12 @@ function PricingContent() {
       if (res.ok && data.user) {
         const previousPlan = user?.subscription?.planType;
         setUser(data.user);
-        console.log('User subscription updated:', data.user.subscription);
-        
         // 自動同期が有効で、プランが変更された場合
         if (autoSync && previousPlan && previousPlan !== data.user.subscription?.planType) {
-          console.log('AutoSync: プランが変更されました', {
-            previous: previousPlan,
-            current: data.user.subscription?.planType,
-          });
-        }
+          }
       }
     } catch (error) {
-      console.error('Failed to fetch user:', error);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };
@@ -171,8 +157,6 @@ function PricingContent() {
         data = JSON.parse(text);
       } catch (jsonError) {
         // JSONパースに失敗した場合（HTMLが返された可能性）
-        console.error('JSON parse error:', jsonError);
-        console.error('Response text (first 500 chars):', text.substring(0, 500));
         alert('サーバーエラーが発生しました。ページを再読み込みしてください。');
         return;
       }
@@ -184,7 +168,6 @@ function PricingContent() {
 
       // 既存のサブスクリプションを更新した場合（Webhookを待たない）
       if (data.planUpdated) {
-        console.log('Checkout: プランが即座に更新されました');
         // ユーザー情報を再取得（キャッシュを無効化）
         setLoading(true);
         try {
@@ -198,11 +181,9 @@ function PricingContent() {
           const userData = await res.json();
           if (res.ok && userData.user) {
             setUser(userData.user);
-            console.log('Checkout: ユーザー情報を再取得しました', userData.user.subscription);
-          }
+            }
         } catch (error) {
-          console.error('Checkout: ユーザー情報の再取得に失敗', error);
-        } finally {
+          } finally {
           setLoading(false);
         }
         alert('プランが更新されました！');
@@ -215,7 +196,6 @@ function PricingContent() {
         window.location.href = data.url;
       }
     } catch (error) {
-      console.error('Subscription error:', error);
       if (error instanceof SyntaxError) {
         alert('サーバーからの応答が正しくありません。ページを再読み込みしてください。');
       } else {
@@ -242,8 +222,6 @@ function PricingContent() {
         data = JSON.parse(text);
       } catch (jsonError) {
         // JSONパースに失敗した場合（HTMLが返された可能性）
-        console.error('JSON parse error:', jsonError);
-        console.error('Response text (first 500 chars):', text.substring(0, 500));
         alert('サーバーエラーが発生しました。ページを再読み込みしてください。');
         return;
       }
@@ -258,7 +236,6 @@ function PricingContent() {
         window.location.href = data.url;
       }
     } catch (error) {
-      console.error('Portal error:', error);
       if (error instanceof SyntaxError) {
         alert('サーバーからの応答が正しくありません。ページを再読み込みしてください。');
       } else {
@@ -275,8 +252,7 @@ function PricingContent() {
   
   // デバッグ用（開発環境のみ）
   if (process.env.NODE_ENV === 'development' && user) {
-    console.log('Current user subscription:', user.subscription);
-  }
+    }
 
   if (loading) {
     return (
@@ -341,13 +317,10 @@ function PricingContent() {
                         if (syncData.success && syncData.updated) {
                           alert('プラン情報をStripeから同期しました！');
                         } else if (syncData.success) {
-                          console.log('プラン情報は最新です');
-                        } else {
-                          console.warn('同期に失敗しましたが、続行します', syncData.error);
-                        }
+                          } else {
+                          }
                       }
                     } catch (error) {
-                      console.error('同期エラー:', error);
                       // エラーが発生しても、通常の更新は続行
                     }
                     // ユーザー情報を再取得

@@ -105,70 +105,21 @@ function main() {
                            process.env.POSTGRES_PRISMA_URL;
   
   if (!connectionString) {
-    console.error('❌ エラー: 接続文字列が見つかりません');
-    console.error('\n使用方法:');
-    console.error('  1. 環境変数 POSTGRES_URL を設定');
-    console.error('  2. または、引数として接続文字列を指定:');
-    console.error('     node scripts/parse-connection-string.js "postgres://user:pass@host:port/db"');
     process.exit(1);
   }
   
   // Prisma Accelerateエンドポイントをチェック
   if (connectionString.includes('db.prisma.io') || connectionString.includes('accelerate.prisma.io')) {
-    console.error('❌ エラー: Prisma Accelerateエンドポイントは直接接続できません');
-    console.error('💡 Vercelダッシュボードから「Direct Connection」文字列を取得してください');
     process.exit(1);
   }
   
   const parsed = parseConnectionString(connectionString);
   
   if (!parsed) {
-    console.error('❌ エラー: 接続文字列の解析に失敗しました');
-    console.error('接続文字列:', connectionString.substring(0, 50) + '...');
     process.exit(1);
   }
   
-  console.log('📋 データベース接続設定情報\n');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('Name: Neon DB / Vercel Postgres (任意の名前)');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`Host:     ${parsed.host}`);
-  console.log(`Port:     ${parsed.port}`);
-  console.log(`User:     ${parsed.user}`);
-  console.log(`Password: ${parsed.password}`);
-  console.log(`Database: ${parsed.database}`);
-  console.log(`SSL:      ${parsed.ssl ? `有効 (${parsed.sslMode || 'require'})` : '無効'}`);
-  console.log('Role:     (空欄、またはUserと同じ)');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-  
-  console.log('💡 pgAdminでの設定方法:');
-  console.log('  1. pgAdminを起動');
-  console.log('  2. 左側の「Servers」を右クリック → 「Register」 → 「Server...」');
-  console.log('  3. 「General」タブ:');
-  console.log('     - Name: Neon DB (任意の名前)');
-  console.log('  4. 「Connection」タブ:');
-  console.log(`     - Host name/address: ${parsed.host}`);
-  console.log(`     - Port: ${parsed.port}`);
-  console.log(`     - Maintenance database: ${parsed.database}`);
-  console.log(`     - Username: ${parsed.user}`);
-  console.log(`     - Password: ${parsed.password}`);
-  console.log('  5. 「SSL」タブ:');
-  console.log('     - SSL mode: 「Require」を選択');
-  console.log('  6. 「Save」をクリック');
-  console.log('  7. 接続をテスト\n');
-  
-  console.log('💡 TablePlusでの設定方法:');
-  console.log('  1. TablePlusで「New Connection」をクリック');
-  console.log('  2. PostgreSQLを選択');
-  console.log('  3. 上記の情報を入力');
-  console.log('  4. SSLタブ（またはAdvancedタブ）でSSLを有効化');
-  console.log('  5. SSL Modeを「require」に設定');
-  console.log('  6. 「Test」をクリックして接続を確認');
-  console.log('  7. 「Save」をクリック\n');
-}
+  }
 
 main();
-
-
-
 

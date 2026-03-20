@@ -46,7 +46,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ bookmarks: bookmarkedPosts }, { status: 200 });
   } catch (error) {
-    console.error('Get bookmarks error:', error);
     return NextResponse.json(
       { error: 'ブックマークの取得に失敗しました' },
       { status: 500 }
@@ -103,7 +102,6 @@ export async function POST(request: NextRequest) {
     const bookmark = await createBookmark(userId, postId);
     return NextResponse.json({ bookmark }, { status: 201 });
   } catch (error) {
-    console.error('Create bookmark error:', error);
     return NextResponse.json(
       { error: 'ブックマークの追加に失敗しました' },
       { status: 500 }
@@ -144,7 +142,6 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ message: 'ブックマークを削除しました' }, { status: 200 });
   } catch (error) {
-    console.error('Delete bookmark error:', error);
     return NextResponse.json(
       { error: 'ブックマークの削除に失敗しました' },
       { status: 500 }

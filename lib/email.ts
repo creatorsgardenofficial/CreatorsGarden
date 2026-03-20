@@ -17,14 +17,11 @@ function createTransporter() {
   // 本番環境では、設定が不完全でも警告を出して試行
   if (!smtpHost || !smtpUser || !smtpPass) {
     if (isProduction) {
-      console.error('⚠️ 警告: SMTP設定が不完全です。メール送信が失敗する可能性があります。');
-      console.error('環境変数 SMTP_HOST, SMTP_USER, SMTP_PASS を設定してください。');
       // 本番環境では設定がなくても試行（エラーは後で処理）
       if (!smtpHost || !smtpUser || !smtpPass) {
         return null;
       }
     } else {
-      console.warn('SMTP設定が不完全です。環境変数を確認してください。');
       return null;
     }
   }
@@ -50,7 +47,6 @@ export async function sendPasswordResetEmail(
   try {
     const transporter = createTransporter();
     if (!transporter) {
-      console.error('メール送信設定が不完全です');
       return false;
     }
 

@@ -156,8 +156,7 @@ export async function GET(request: NextRequest) {
         
         // 開発環境でのみデバッグログを出力
         if (process.env.NODE_ENV === 'development') {
-          console.log(`[GroupChat] Group ${gc.id} unreadCount: ${unreadCount} for user ${userId}, total messages: ${messages.length}`);
-        }
+          }
         
         // 参加者情報を取得
         const participants = await Promise.all(
@@ -185,10 +184,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Get group chats error:', error);
-    } else {
-      console.error('Get group chats error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'グループチャットの取得に失敗しました' },
       { status: 500 }
@@ -277,10 +274,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Create group chat error:', error);
-    } else {
-      console.error('Create group chat error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'グループチャットの作成に失敗しました' },
       { status: 500 }
@@ -407,10 +402,8 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Update group chat error:', error);
-    } else {
-      console.error('Update group chat error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'グループチャットの更新に失敗しました' },
       { status: 500 }

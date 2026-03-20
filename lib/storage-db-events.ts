@@ -67,7 +67,6 @@ export async function getEvents(): Promise<Event[]> {
     
     return events;
   } catch (error) {
-    console.error('Failed to get events from database:', error);
     throw error;
   }
 }
@@ -133,7 +132,6 @@ export async function getEventById(id: string): Promise<Event | null> {
       updatedAt: row.updatedAt,
     } as Event;
   } catch (error) {
-    console.error('Failed to get event by id from database:', error);
     throw error;
   }
 }
@@ -201,7 +199,6 @@ export async function createEvent(event: Omit<Event, 'id' | 'createdAt' | 'updat
       updatedAt: now,
     } as Event;
   } catch (error) {
-    console.error('Failed to create event in database:', error);
     throw error;
   }
 }
@@ -271,7 +268,6 @@ export async function updateEvent(id: string, updates: Partial<Event>): Promise<
     
     return await getEventById(id);
   } catch (error) {
-    console.error('Failed to update event in database:', error);
     throw error;
   }
 }
@@ -292,7 +288,6 @@ export async function deleteEvent(id: string, userId: string): Promise<boolean> 
     
     return result.rowCount !== null && result.rowCount > 0;
   } catch (error) {
-    console.error('Failed to delete event in database:', error);
     throw error;
   }
 }
@@ -339,7 +334,6 @@ export async function bumpEvent(eventId: string, userId: string): Promise<Event 
     
     return await getEventById(eventId);
   } catch (error) {
-    console.error('Failed to bump event in database:', error);
     throw error;
   }
 }
@@ -370,7 +364,6 @@ export async function toggleEventLike(eventId: string, userId: string): Promise<
     
     return await getEventById(eventId);
   } catch (error) {
-    console.error('Failed to toggle event like in database:', error);
     throw error;
   }
 }
@@ -390,7 +383,6 @@ export async function closeExpiredEvents(): Promise<number> {
     
     return result.rowCount || 0;
   } catch (error) {
-    console.error('Failed to close expired events in database:', error);
     throw error;
   }
 }
@@ -425,7 +417,6 @@ export async function getEventComments(eventId: string): Promise<Comment[]> {
       createdAt: row.createdAt,
     })) as Comment[];
   } catch (error) {
-    console.error('Failed to get event comments from database:', error);
     throw error;
   }
 }
@@ -465,7 +456,6 @@ export async function createEventComment(comment: Omit<Comment, 'id' | 'createdA
       createdAt: now,
     } as Comment;
   } catch (error) {
-    console.error('Failed to create event comment in database:', error);
     throw error;
   }
 }
@@ -486,7 +476,6 @@ export async function deleteEventComment(commentId: string, userId: string): Pro
     
     return result.rowCount !== null && result.rowCount > 0;
   } catch (error) {
-    console.error('Failed to delete event comment in database:', error);
     throw error;
   }
 }

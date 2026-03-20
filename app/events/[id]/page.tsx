@@ -44,7 +44,6 @@ export default function EventDetailPage() {
         router.push('/events');
       }
     } catch (error) {
-      console.error('Failed to fetch event:', error);
       router.push('/events');
     } finally {
       setLoading(false);
@@ -59,8 +58,7 @@ export default function EventDetailPage() {
         setComments(data.comments);
       }
     } catch (error) {
-      console.error('Failed to fetch comments:', error);
-    }
+      }
   };
 
   const fetchUser = async () => {

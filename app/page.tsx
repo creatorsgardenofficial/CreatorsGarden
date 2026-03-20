@@ -19,13 +19,17 @@ export default function Home() {
               </span>
               <br />
               <span className="text-3xl md:text-5xl">
-                クリエイターのための創作・コラボレーションコミュニティ
+                異ジャンルコラボの、専用の場所。
               </span>
             </h1>
+            {/* UVP：差別化を明確に */}
+            <p className="text-xl md:text-2xl font-semibold text-purple-600 dark:text-purple-400 mb-4">
+              小説×イラスト×音楽。分野を超えて、本気のパートナーを見つける。
+            </p>
             {/* SEO導入文（検索エンジンが最初に読む本文） */}
             <div className="max-w-3xl mx-auto mb-10">
               <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 leading-relaxed text-center">
-                Creators Garden（クリエイターズ ガーデン）は、創作活動を行うクリエイター同士がつながり、コラボレーションや作品発表、交流を行うためのオンラインコミュニティです。小説家、イラストレーター、作曲家、AIクリエイターなど、分野の異なるクリエイターが集まり、共同制作や作品紹介のきっかけを生み出します。
+                Creators Gardenは、pixivやXでは見つかりにくい「異ジャンル横断のコラボ」に特化したコミュニティです。小説家とイラストレーター、作曲家と歌い手、AIクリエイターと人間クリエイターなど、分野の異なるクリエイターが集まり、募集・マッチング・交流を行います。
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -33,13 +37,13 @@ export default function Home() {
                 href="/register"
                 className="px-8 py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-2xl text-lg font-semibold hover:from-purple-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
               >
-                今すぐ始める
+                コラボ相手を探す
               </Link>
               <Link
                 href="/posts"
                 className="px-8 py-4 bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 rounded-2xl text-lg font-semibold border-2 border-purple-300 dark:border-purple-600 hover:bg-purple-50 dark:hover:bg-gray-700 transition-all shadow-md hover:shadow-lg"
               >
-                投稿を見る
+                募集を見る
               </Link>
             </div>
           </div>
@@ -132,8 +136,31 @@ export default function Home() {
           </div>
         </div>
 
-        {/* SEO最適化セクション */}
+        {/* なぜ Creators Garden か（差別化セクション） */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 md:p-12 border-2 border-purple-200 dark:border-purple-800/50 mb-16">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center">
+              なぜ Creators Garden か
+            </h2>
+            <p className="text-lg text-gray-700 dark:text-gray-300 text-center max-w-3xl mx-auto mb-8">
+              pixivはイラスト、Skebは依頼・収益化に特化。Xではノイズが多く、コラボ相手を探しづらい。Creators Gardenは<strong className="text-purple-600 dark:text-purple-400">異ジャンル横断のコラボ</strong>に特化した、日本ではまだ少ない専用の場所です。
+            </p>
+            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              <div className="text-center p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20">
+                <p className="font-semibold text-purple-700 dark:text-purple-300 mb-1">小説 × イラスト</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">物語に挿絵を、挿絵に物語を</p>
+              </div>
+              <div className="text-center p-4 rounded-xl bg-green-50 dark:bg-green-900/20">
+                <p className="font-semibold text-green-700 dark:text-green-300 mb-1">音楽 × 動画</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">曲にMVを、動画にBGMを</p>
+              </div>
+              <div className="text-center p-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/20">
+                <p className="font-semibold text-yellow-700 dark:text-yellow-300 mb-1">AI × 人間</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">生成と手描きの融合</p>
+              </div>
+            </div>
+          </div>
+
           {/* Creators Gardenでできること */}
           <div className="mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-8 text-center">
@@ -238,9 +265,9 @@ export default function Home() {
         {/* SEO補強文（フッター直前） */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
           <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed">
-            創作活動をもっと自由に、もっと楽しく。
+            異ジャンルコラボの、専用の場所。
             <br />
-            Creators Gardenは、あなたの可能性を形にします。
+            Creators Gardenで、本気のパートナーを見つけましょう。
           </p>
         </div>
       </div>

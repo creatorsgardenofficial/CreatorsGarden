@@ -55,7 +55,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-
     let body;
     try {
       body = await request.json();
@@ -67,7 +66,6 @@ export async function POST(request: NextRequest) {
       );
     }
     const { planType } = body;
-
 
     if (!planType || !['grow', 'bloom'].includes(planType)) {
       // 無効なプラン
@@ -151,7 +149,6 @@ export async function POST(request: NextRequest) {
           },
         });
       } catch (updateError) {
-        console.error('User update error:', updateError);
         // 顧客IDは作成できたので、エラーを無視して続行
       }
     }
@@ -245,7 +242,6 @@ export async function POST(request: NextRequest) {
           },
         });
       } catch (stripeError: any) {
-        console.error('Checkout: Stripe subscription update error:', stripeError);
         return NextResponse.json(
           { error: `サブスクリプションの更新に失敗しました: ${stripeError.message || '不明なエラー'}` },
           { 
@@ -259,12 +255,6 @@ export async function POST(request: NextRequest) {
     }
 
     // 新しいチェックアウトセッションを作成
-    console.log('Checkout: 新しいチェックアウトセッションを作成', {
-      customerId,
-      priceId,
-      planType: validPlanType,
-    });
-    
     try {
       const session = await stripeInstance.checkout.sessions.create({
         customer: customerId,
@@ -284,11 +274,6 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      console.log('Checkout: チェックアウトセッション作成完了', {
-        sessionId: session.id,
-        url: session.url,
-      });
-
       return NextResponse.json({ 
         sessionId: session.id,
         url: session.url 
@@ -299,7 +284,6 @@ export async function POST(request: NextRequest) {
         },
       });
     } catch (stripeError: any) {
-      console.error('Checkout: Stripe checkout session creation error:', stripeError);
       return NextResponse.json(
         { error: `決済セッションの作成に失敗しました: ${stripeError.message || '不明なエラー'}` },
         { 
@@ -311,7 +295,6 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error: any) {
-    console.error('Unexpected error in create-checkout:', error);
     // エラーがErrorオブジェクトでない場合の処理
     const errorMessage = error?.message || error?.toString() || '不明なエラーが発生しました';
     return NextResponse.json(

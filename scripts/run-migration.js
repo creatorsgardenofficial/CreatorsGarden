@@ -37,16 +37,12 @@ try {
 
 async function runMigration(migrationFile) {
   try {
-    console.log(`📖 マイグレーションファイル "${migrationFile}" を読み込んでいます...`);
-    
     // マイグレーションファイルを読み込む
     // migrationFileが既にscripts/を含んでいる場合はそのまま、そうでなければ追加
     const migrationPath = migrationFile.startsWith('scripts/') 
       ? path.join(__dirname, '..', migrationFile)
       : path.join(__dirname, migrationFile);
     const migrationSQL = await fsPromises.readFile(migrationPath, 'utf-8');
-    
-    console.log('🚀 マイグレーションを実行しています...\n');
     
     // データベース接続（CGDB_プレフィックス付きの環境変数にも対応）
     const connectionString = 
@@ -68,8 +64,6 @@ async function runMigration(migrationFile) {
     try {
       // SQLを実行
       await client.query(migrationSQL);
-      console.log('✅ マイグレーションが完了しました！');
-      
       // カラムが追加されたか確認（マイグレーションファイルに応じて）
       if (migrationFile.includes('migrate-posts-urls')) {
         const result = await client.query(`
@@ -80,10 +74,8 @@ async function runMigration(migrationFile) {
         `);
         
         if (result.rows.length > 0) {
-          console.log('\n追加されたカラム:');
           result.rows.forEach(row => {
-            console.log(`  ✓ ${row.column_name} (${row.data_type})`);
-          });
+            });
         }
       } else if (migrationFile.includes('migrate-group-chats')) {
         const result = await client.query(`
@@ -95,10 +87,8 @@ async function runMigration(migrationFile) {
         `);
         
         if (result.rows.length > 0) {
-          console.log('\n追加されたカラム:');
           result.rows.forEach(row => {
-            console.log(`  ✓ ${row.column_name} (${row.data_type})`);
-          });
+            });
         }
       } else if (migrationFile.includes('add-bumped-at-column')) {
         const result = await client.query(`
@@ -109,10 +99,8 @@ async function runMigration(migrationFile) {
         `);
         
         if (result.rows.length > 0) {
-          console.log('\n追加されたカラム:');
           result.rows.forEach(row => {
-            console.log(`  ✓ ${row.column_name} (${row.data_type})`);
-          });
+            });
         }
       }
       
@@ -121,21 +109,11 @@ async function runMigration(migrationFile) {
     }
     
   } catch (error) {
-    console.error('\n❌ エラーが発生しました:', error);
-    console.error('\nエラー詳細:');
-    console.error('  Message:', error.message);
-    console.error('  Code:', error.code);
-    
     // "already exists"エラーは無視
     if (error.message && error.message.includes('already exists')) {
-      console.log('\n⚠ カラムは既に存在しています（スキップ）');
       process.exit(0);
     }
     
-    console.log('\n💡 トラブルシューティング:');
-    console.log('   1. 環境変数 POSTGRES_URL が設定されているか確認してください');
-    console.log('   2. データベースが正しく作成されているか確認してください');
-    console.log('   3. Vercelダッシュボードで環境変数を確認してください');
     process.exit(1);
   }
 }
@@ -155,20 +133,8 @@ const connectionString =
   process.env.PRISMA_DATABASE_URL;
 
 if (!connectionString) {
-  console.error('❌ エラー: 環境変数が設定されていません');
-  console.error('\n以下のいずれかの環境変数が必要です:');
-  console.error('  - CGDB_POSTGRES_URL_NON_POOLING (推奨: Neon DB)');
-  console.error('  - CGDB_DATABASE_URL_UNPOOLED (Neon DB)');
-  console.error('  - POSTGRES_URL_NON_POOLING');
-  console.error('  - CGDB_POSTGRES_URL');
-  console.error('  - CGDB_DATABASE_URL');
-  console.error('  - POSTGRES_URL');
-  console.error('  - POSTGRES_PRISMA_URL');
-  console.error('  - PRISMA_DATABASE_URL');
   process.exit(1);
 }
-
-console.log('🔗 データベースに接続しています...\n');
 
 runMigration(migrationFile);
 

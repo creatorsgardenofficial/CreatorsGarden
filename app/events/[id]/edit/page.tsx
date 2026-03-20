@@ -69,7 +69,6 @@ export default function EditEventPage() {
         router.push('/events');
       }
     } catch (error) {
-      console.error('Failed to fetch event:', error);
       router.push('/events');
     } finally {
       setLoading(false);
@@ -194,7 +193,6 @@ export default function EditEventPage() {
 
       router.push(`/events/${params.id}`);
     } catch (error) {
-      console.error('Failed to update event:', error);
       setError('イベントの更新に失敗しました');
       setSubmitting(false);
     }

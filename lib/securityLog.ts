@@ -33,8 +33,7 @@ async function ensureDataDir() {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
   } catch (error) {
-    console.error('Failed to create data directory:', error);
-  }
+    }
 }
 
 // ログファイルの読み込み
@@ -111,8 +110,7 @@ export async function logSecurityEvent(
     await saveLogs(logs);
   } catch (error) {
     // ログ記録の失敗はアプリケーションの動作を妨げない
-    console.error('Failed to log security event:', error);
-  }
+    }
 }
 
 /**
@@ -194,7 +192,6 @@ export async function getSecurityLogs(
     
     return logs;
   } catch (error) {
-    console.error('Failed to get security logs:', error);
     return [];
   }
 }
@@ -243,7 +240,6 @@ export async function detectAnomalies(): Promise<{
       unauthorizedAccess,
     };
   } catch (error) {
-    console.error('Failed to detect anomalies:', error);
     return {
       suspiciousLogins: 0,
       rateLimitViolations: 0,

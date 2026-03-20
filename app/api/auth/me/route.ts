@@ -17,7 +17,6 @@ function getStripeInstance(): Stripe | null {
         apiVersion: '2023-10-16',
       });
     } catch (error) {
-      console.error('Stripe initialization error:', error);
       return null;
     }
   }
@@ -73,7 +72,6 @@ async function autoSyncSubscription(userId: string, subscriptionId: string): Pro
   try {
     const stripeInstance = getStripeInstance();
     if (!stripeInstance) {
-      console.log('AutoSync: Stripeインスタンスが取得できません（スキップ）');
       return;
     }
 
@@ -83,11 +81,6 @@ async function autoSyncSubscription(userId: string, subscriptionId: string): Pro
     } catch (error: any) {
       // サブスクリプションが削除されている場合（即時キャンセルなど）
       if (error.type === 'StripeInvalidRequestError' && error.code === 'resource_missing') {
-        console.log('AutoSync: サブスクリプションが削除されています - Freeプランに戻す', {
-          userId,
-          subscriptionId,
-        });
-        
         // Freeプランに戻す
         const user = await getUserById(userId);
         if (!user) return;
@@ -115,7 +108,6 @@ async function autoSyncSubscription(userId: string, subscriptionId: string): Pro
           await savePosts(posts);
         }
 
-        console.log('AutoSync: Freeプランへの切り替え完了（サブスクリプション削除）');
         return;
       }
       // その他のエラーは再スロー
@@ -184,15 +176,9 @@ async function autoSyncSubscription(userId: string, subscriptionId: string): Pro
       await savePosts(posts);
     }
 
-    console.log('AutoSync: 同期完了', {
-      userId,
-      planType,
-      status: subscription.status,
-    });
-  } catch (error: any) {
+    } catch (error: any) {
     // エラーは無視（ログのみ）
-    console.log('AutoSync: 同期エラー（無視）', error.message);
-  }
+    }
 }
 
 export async function GET(request: NextRequest) {
@@ -238,17 +224,9 @@ export async function GET(request: NextRequest) {
         (global as any)[lastSyncKey] = now;
         // バックグラウンドで同期を実行（エラーは無視）
         autoSyncSubscription(user.id, user.subscription.stripeSubscriptionId).catch(err => {
-          console.log('AutoSync: 同期エラー（無視）', err.message);
-        });
+          });
         
-        console.log('AutoSync: 期限切れまたは無効なステータスを検知、バックグラウンドで同期を開始', {
-          userId: user.id,
-          planType: user.subscription?.planType,
-          status: user.subscription?.status,
-          currentPeriodEnd: user.subscription?.currentPeriodEnd,
-          cancelAtPeriodEnd: user.subscription?.cancelAtPeriodEnd,
-        });
-      }
+        }
     } else if (user.subscription?.stripeSubscriptionId && user.subscription?.planType !== 'free') {
       // 即時キャンセルの場合、データベースのstatusがまだ"active"のままの可能性がある
       // そのため、サブスクリプションIDがある場合は、定期的にStripeから最新の状態を取得する
@@ -259,35 +237,21 @@ export async function GET(request: NextRequest) {
         // ただし、レスポンス時間への影響を最小限にするため、非同期で実行
         autoSyncSubscription(user.id, user.subscription.stripeSubscriptionId).catch(err => {
           // エラーは無視（Stripe APIが利用できない場合など）
-          console.log('AutoSync: 定期チェックで同期エラー（無視）', err.message);
-        });
+          });
         
-        console.log('AutoSync: 定期チェック - サブスクリプション状態を確認', {
-          userId: user.id,
-          planType: user.subscription?.planType,
-          status: user.subscription?.status,
-        });
-      }
+        }
     }
 
     // デバッグ用ログ（開発環境のみ、機密情報は含めない）
     if (process.env.NODE_ENV === 'development') {
-      console.log('GET /api/auth/me:', {
-        userId: user.id.substring(0, 8) + '...', // ユーザーIDの一部のみ表示
-        planType: user.subscription?.planType,
-        status: user.subscription?.status,
-        shouldAutoSync: shouldAutoSync(user),
-      });
-    }
+      }
 
     return NextResponse.json({ user }, { status: 200 });
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Get user error:', error);
-    } else {
-      console.error('Get user error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'ユーザー情報の取得に失敗しました' },
       { status: 500 }

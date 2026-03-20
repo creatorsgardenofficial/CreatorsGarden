@@ -172,8 +172,7 @@ export default function ProfilePage() {
         setPosts(postsData.posts || []);
       }
     } catch (err) {
-      console.error('Failed to fetch user posts:', err);
-    }
+      }
   };
 
   const fetchAllBumpStatuses = async () => {
@@ -217,8 +216,7 @@ export default function ProfilePage() {
           statuses[post.id] = bumpStatus;
         }
       } catch (err) {
-        console.error(`Failed to fetch bump status for post ${post.id}:`, err);
-      }
+        }
     }
 
     setBumpStatuses(statuses);
@@ -427,7 +425,6 @@ export default function ProfilePage() {
       setSubmitting(false);
     }
   };
-
 
   const postTypeLabels: Record<PostType, string> = {
     collab: '🤝 コラボ募集',

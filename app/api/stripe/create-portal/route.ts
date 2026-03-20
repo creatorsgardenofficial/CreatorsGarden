@@ -26,7 +26,6 @@ export async function POST(request: NextRequest) {
     try {
       stripeInstance = getStripeInstance();
     } catch (error: any) {
-      console.error('Stripe initialization error:', error);
       return NextResponse.json(
         { error: 'Stripe設定が完了していません' },
         { 
@@ -94,7 +93,6 @@ export async function POST(request: NextRequest) {
         },
       });
     } catch (stripeError: any) {
-      console.error('Stripe portal session creation error:', stripeError);
       return NextResponse.json(
         { error: `ポータルセッションの作成に失敗しました: ${stripeError.message || '不明なエラー'}` },
         { 
@@ -106,7 +104,6 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error: any) {
-    console.error('Unexpected error in create-portal:', error);
     const errorMessage = error?.message || error?.toString() || '不明なエラーが発生しました';
     return NextResponse.json(
       { error: errorMessage },

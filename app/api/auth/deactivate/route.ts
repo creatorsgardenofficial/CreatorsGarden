@@ -55,10 +55,8 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Deactivate account error:', error);
-    } else {
-      console.error('Deactivate account error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: '退会処理に失敗しました' },
       { status: 500 }

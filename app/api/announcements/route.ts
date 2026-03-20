@@ -30,10 +30,8 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Failed to fetch announcements:', error);
-    } else {
-      console.error('Failed to fetch announcements');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'お知らせの取得に失敗しました' },
       { status: 500 }
@@ -78,10 +76,8 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Failed to create announcement:', error);
-    } else {
-      console.error('Failed to create announcement');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'お知らせの作成に失敗しました' },
       { status: 500 }
@@ -133,10 +129,8 @@ export async function PUT(request: NextRequest) {
   } catch (error: any) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Failed to update announcement:', error);
-    } else {
-      console.error('Failed to update announcement');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'お知らせの更新に失敗しました' },
       { status: 500 }
@@ -178,10 +172,8 @@ export async function DELETE(request: NextRequest) {
   } catch (error: any) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Failed to delete announcement:', error);
-    } else {
-      console.error('Failed to delete announcement');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'お知らせの削除に失敗しました' },
       { status: 500 }

@@ -82,14 +82,11 @@ async function createAdminUserInDatabase(email, password, username) {
     );
     
     if (existingUserResult.rows.length > 0) {
-      console.log(`⚠️  ユーザーが既に存在します: ${email}`);
-      console.log('   既存のユーザーのパスワードを更新します...');
       const hashedPassword = await bcrypt.hash(password, 10);
       await client.query(
         'UPDATE users SET password = $1, username = $2 WHERE email = $3',
         [hashedPassword, username, email]
       );
-      console.log('✅ パスワードを更新しました');
       return;
     }
 
@@ -121,14 +118,7 @@ async function createAdminUserInDatabase(email, password, username) {
       ]
     );
 
-    console.log('✅ データベースに管理者ユーザーを作成しました！');
-    console.log(`   メールアドレス: ${email}`);
-    console.log(`   ユーザー名: ${username}`);
-    console.log(`   ユーザーID: ${id}`);
-    console.log(`   表示用ID: ${publicId}`);
-    console.log(`   パスワード: ${password} (ハッシュ化済み)`);
-  } catch (error) {
-    console.error('❌ データベースへの作成に失敗しました:', error.message);
+    } catch (error) {
     throw error;
   } finally {
     await client.end();
@@ -154,13 +144,10 @@ async function createAdminUserInFileSystem(email, password, username) {
     // 既存のユーザーをチェック
     const existingUser = users.find(u => u.email === email);
     if (existingUser) {
-      console.log(`⚠️  ユーザーが既に存在します: ${email}`);
-      console.log('   既存のユーザーのパスワードを更新します...');
       const hashedPassword = await bcrypt.hash(password, 10);
       existingUser.password = hashedPassword;
       existingUser.username = username;
       await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
-      console.log('✅ パスワードを更新しました');
       return;
     }
 
@@ -191,15 +178,7 @@ async function createAdminUserInFileSystem(email, password, username) {
     users.push(newUser);
     await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
 
-    console.log('✅ ファイルシステムに管理者ユーザーを作成しました！');
-    console.log(`   メールアドレス: ${email}`);
-    console.log(`   ユーザー名: ${username}`);
-    console.log(`   ユーザーID: ${id}`);
-    console.log(`   表示用ID: ${publicId}`);
-    console.log(`   パスワード: ${password} (ハッシュ化済み)`);
-    console.log(`   ファイル: ${USERS_FILE}`);
-  } catch (error) {
-    console.error('❌ ファイルシステムへの作成に失敗しました:', error.message);
+    } catch (error) {
     throw error;
   }
 }
@@ -213,70 +192,40 @@ async function main() {
 
   // バリデーション
   if (!email) {
-    console.error('❌ エラー: メールアドレスが指定されていません');
-    console.error('\n使用方法:');
-    console.error('  1. 環境変数を設定:');
-    console.error('     ADMIN_EMAIL=admin@example.com');
-    console.error('     ADMIN_PASSWORD=your-password');
-    console.error('     ADMIN_USERNAME=管理者');
-    console.error('\n  2. スクリプトを実行:');
-    console.error('     node scripts/create-admin-user.js');
-    console.error('\n  または、コマンドライン引数で指定:');
-    console.error('     node scripts/create-admin-user.js admin@example.com your-password "管理者"');
     process.exit(1);
   }
 
   if (!password) {
-    console.error('❌ エラー: パスワードが指定されていません');
     process.exit(1);
   }
 
   if (password.length < 8) {
-    console.error('❌ エラー: パスワードは8文字以上である必要があります');
     process.exit(1);
   }
 
   // メールアドレスの形式チェック
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    console.error('❌ エラー: メールアドレスの形式が正しくありません');
     process.exit(1);
   }
-
-  console.log('🔧 管理者ユーザーを作成します...');
-  console.log(`   メールアドレス: ${email}`);
-  console.log(`   ユーザー名: ${username}`);
-  console.log('');
 
   try {
     // データベースまたはファイルシステムに作成
     if (shouldUseDatabase() || isDatabaseAvailable()) {
-      console.log('📦 データベースを使用します');
       await createAdminUserInDatabase(email, password, username);
     } else {
-      console.log('📁 ファイルシステムを使用します');
       await createAdminUserInFileSystem(email, password, username);
     }
 
-    console.log('\n✅ 完了しました！');
-    console.log('\n💡 次のステップ:');
-    console.log('   1. 作成したメールアドレスとパスワードでログインできます');
-    console.log('   2. 管理者機能にアクセスできることを確認してください');
-    
     // 管理者メールアドレスの確認
     const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
     const defaultAdminEmails = ['creators.garden.official@gmail.com'];
     const allAdminEmails = [...adminEmails, ...defaultAdminEmails];
     
     if (allAdminEmails.includes(email)) {
-      console.log(`\n✅ このメールアドレス（${email}）は管理者として認識されます`);
-    } else {
-      console.log('\n⚠️  注意: このメールアドレスが管理者として認識されるように設定してください');
-      console.log('   方法1: 環境変数 ADMIN_EMAILS に追加');
-      console.log(`   方法2: lib/admin.ts の defaultAdminEmails に追加`);
-    }
+      } else {
+      }
   } catch (error) {
-    console.error('\n❌ エラーが発生しました:', error);
     process.exit(1);
   }
 }

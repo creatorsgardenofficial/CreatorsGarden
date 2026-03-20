@@ -40,7 +40,6 @@ export async function POST(
 
     return NextResponse.json({ event });
   } catch (error: any) {
-    console.error('Failed to toggle event like:', error);
     return NextResponse.json(
       { error: 'Failed to toggle event like' },
       { status: 500 }

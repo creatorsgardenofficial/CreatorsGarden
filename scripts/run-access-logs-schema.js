@@ -16,16 +16,8 @@ async function runAccessLogsSchema() {
       || process.env.STORAGE_POSTGRES_URL_NON_POOLING;
 
     if (!connectionString) {
-      console.error('❌ データベース接続文字列が見つかりません');
-      console.error('以下の環境変数のいずれかを設定してください:');
-      console.error('  - POSTGRES_URL_NON_POOLING');
-      console.error('  - DATABASE_URL');
-      console.error('  - CGDB_POSTGRES_URL_NON_POOLING');
-      console.error('  - STORAGE_POSTGRES_URL_NON_POOLING');
       process.exit(1);
     }
-
-    console.log('📋 access_logsテーブルを作成します...\n');
 
     // PostgreSQL接続プールを作成
     const pool = new Pool({
@@ -53,27 +45,20 @@ async function runAccessLogsSchema() {
         await pool.query(statement + ';');
         
         if (statement.toUpperCase().includes('CREATE TABLE')) {
-          console.log(`  ✓ access_logsテーブルを作成しました`);
-        } else if (statement.toUpperCase().includes('CREATE INDEX')) {
+          } else if (statement.toUpperCase().includes('CREATE INDEX')) {
           const indexMatch = statement.match(/CREATE INDEX\s+(?:IF NOT EXISTS\s+)?(\w+)/i);
           if (indexMatch) {
-            console.log(`  ✓ インデックス "${indexMatch[1]}" を作成しました`);
-          }
+            }
         } else if (statement.toUpperCase().includes('COMMENT')) {
-          console.log(`  ✓ コメントを追加しました`);
-        }
+          }
       } catch (error) {
         // "already exists"エラーは無視（IF NOT EXISTSを使用しているため）
         if (error.message && error.message.includes('already exists')) {
-          console.log(`  ⚠ 既に存在しています（スキップ）`);
-        } else {
-          console.error(`  ❌ エラー: ${error.message}`);
+          } else {
           throw error;
         }
       }
     }
-
-    console.log('\n✅ access_logsテーブルの作成が完了しました！\n');
 
     // テーブルが正しく作成されたか確認
     const result = await pool.query(`
@@ -83,16 +68,11 @@ async function runAccessLogsSchema() {
       ORDER BY ordinal_position
     `);
 
-    console.log('📋 作成されたカラム:');
     result.rows.forEach(row => {
-      console.log(`  - ${row.column_name} (${row.data_type})`);
-    });
+      });
 
     await pool.end();
-    console.log('\n✅ 完了しました！');
-  } catch (error) {
-    console.error('\n❌ エラーが発生しました:', error.message);
-    console.error(error);
+    } catch (error) {
     process.exit(1);
   }
 }

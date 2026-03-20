@@ -25,10 +25,8 @@ export async function GET(
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Get post error:', error);
-    } else {
-      console.error('Get post error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: '投稿の取得に失敗しました' },
       { status: 500 }
@@ -255,10 +253,8 @@ export async function PUT(
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Update post error:', error);
-    } else {
-      console.error('Update post error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: '投稿の更新に失敗しました' },
       { status: 500 }
@@ -341,10 +337,8 @@ export async function DELETE(
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Delete post error:', error);
-    } else {
-      console.error('Delete post error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: '投稿の削除に失敗しました' },
       { status: 500 }

@@ -38,8 +38,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       // 本番環境では機密情報をログに出力しない
       if (process.env.NODE_ENV === 'development') {
-        console.log('Password reset requested for non-existent email:', email);
-      }
+        }
       return NextResponse.json({
         success: true,
         message: 'メールアドレスが登録されている場合、パスワードリセットリンクを送信しました。',
@@ -70,10 +69,7 @@ export async function POST(request: NextRequest) {
     
     // デバッグ: 開発環境でのみURL生成をログ出力
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 Password reset URL generation:');
-      console.log('  Base URL:', baseUrl);
-      console.log('  Generated reset link:', resetLink.substring(0, 50) + '...');
-    }
+      }
 
     // メール送信
     const isProduction = process.env.NODE_ENV === 'production';
@@ -85,18 +81,14 @@ export async function POST(request: NextRequest) {
       if (!emailSent) {
         // 本番環境では機密情報をログに出力しない
         if (process.env.NODE_ENV === 'development') {
-          console.error('Failed to send password reset email to:', user.email);
-        } else {
-          console.error('Failed to send password reset email');
-        }
+          } else {
+          }
         
         // 本番環境でメール送信に失敗した場合
         if (isProduction) {
           // Vercel本番環境ではファイルシステムに書き込めない
           if (isVercelProduction) {
-            console.error('⚠️ 本番環境ではSMTP設定が必要です。環境変数を確認してください。');
-            console.error('⚠️ Vercel本番環境ではファイルシステムへの書き込みはできません。');
-          } else {
+            } else {
             // 非Vercel本番環境の場合のみファイルに保存を試行
             try {
               const fs = require('fs').promises;
@@ -122,13 +114,10 @@ Creators Garden
               await fs.writeFile(emailFile, emailContent, 'utf-8');
               // 本番環境では機密情報をログに出力しない
               if (process.env.NODE_ENV === 'development') {
-                console.error('メール送信に失敗しました。メール内容をファイルに保存しました:', emailFile);
-              } else {
-                console.error('メール送信に失敗しました。メール内容をファイルに保存しました');
-              }
+                } else {
+                }
             } catch (fileError) {
-              console.error('⚠️ ファイルへの保存にも失敗しました:', fileError);
-            }
+              }
           }
         }
         // メール送信に失敗しても、セキュリティのため成功メッセージを返す
@@ -161,33 +150,19 @@ Creators Garden
           
           // 開発環境のみログ出力
           if (process.env.NODE_ENV === 'development') {
-            console.log('Password reset email saved to:', emailFile);
-            console.log('Reset link:', resetLink);
-            console.log('ℹ️  開発環境: SMTP設定がないため、ファイルに保存しました。');
-            console.log('   本番環境では環境変数を設定すると実際のメールアドレスに送信されます。');
-          }
+            }
         } catch (fileError) {
-          console.error('⚠️ ファイルへの保存に失敗しました:', fileError);
-          console.log('Reset link (console only):', resetLink);
-        }
+          }
       } else {
         // Vercel本番環境ではファイルシステムに書き込めないため、開発環境でのみログ出力
         if (process.env.NODE_ENV === 'development') {
-          console.log('Reset link (console only):', resetLink);
-          console.log('⚠️ Vercel本番環境ではファイルシステムへの書き込みはできません。');
-        }
+          }
       }
     }
 
     // 本番環境では機密情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.log('Password reset token created:', {
-        userId: user.id,
-        email: user.email,
-        tokenId: resetToken.id,
-        expiresAt: resetToken.expiresAt,
-      });
-    }
+      }
 
     return NextResponse.json({
       success: true,
@@ -201,10 +176,8 @@ Creators Garden
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Forgot password error:', error);
-    } else {
-      console.error('Forgot password error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'パスワードリセット申請に失敗しました' },
       { status: 500 }

@@ -117,8 +117,7 @@ export default function A8Ad({ adCode, className = '' }: A8AdProps) {
             document.head.appendChild(script);
           });
         } catch (error) {
-          console.warn(`Failed to load A8.net script: ${scriptUrl}`, error);
-        }
+          }
       }
 
       // スクリプト読み込み後にHTMLコンテンツを挿入

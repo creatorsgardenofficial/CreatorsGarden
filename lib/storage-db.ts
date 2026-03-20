@@ -38,14 +38,9 @@ export async function getUsers(): Promise<User[]> {
       portfolioUrls: row.portfolioUrls || undefined,
     })) as User[];
   } catch (error: any) {
-    console.error('Failed to get users from database:', error);
     // Prisma Accelerateの制限エラーの場合、より明確なメッセージを表示
     if (error?.message?.includes('planLimitReached') || error?.message?.includes('account has restrictions')) {
-      console.error('❌ Prisma Accelerate account limit reached');
-      console.error('❌ Please configure Vercel Postgres connection string');
-      console.error('❌ Go to: Vercel Dashboard → Storage → Your Database → Settings');
-      console.error('❌ Copy the "Direct Connection" string and set it as POSTGRES_URL_NON_POOLING');
-    }
+      }
     throw error;
   }
 }
@@ -85,7 +80,6 @@ export async function getUserById(id: string): Promise<User | null> {
       portfolioUrls: row.portfolioUrls || undefined,
     } as User;
   } catch (error) {
-    console.error('Failed to get user by id from database:', error);
     throw error;
   }
 }
@@ -125,7 +119,6 @@ export async function getUserByEmail(email: string): Promise<User | null> {
       portfolioUrls: row.portfolioUrls || undefined,
     } as User;
   } catch (error) {
-    console.error('Failed to get user by email from database:', error);
     throw error;
   }
 }
@@ -166,7 +159,6 @@ export async function getUserByPublicId(publicId: string): Promise<User | null> 
       portfolioUrls: row.portfolioUrls || undefined,
     } as User;
   } catch (error) {
-    console.error('Failed to get user by public id from database:', error);
     throw error;
   }
 }
@@ -235,7 +227,6 @@ export async function createUser(user: Omit<User, 'id' | 'createdAt' | 'publicId
       isActive: user.isActive !== undefined ? user.isActive : true,
     } as User;
   } catch (error) {
-    console.error('Failed to create user in database:', error);
     throw error;
   }
 }
@@ -295,7 +286,6 @@ export async function updateUser(id: string, updates: Partial<User>): Promise<Us
     
     return getUserById(id);
   } catch (error) {
-    console.error('Failed to update user in database:', error);
     throw error;
   }
 }
@@ -312,7 +302,6 @@ export async function deactivateUser(userId: string, reason?: string): Promise<U
     );
     return getUserById(userId);
   } catch (error) {
-    console.error('Failed to deactivate user in database:', error);
     throw error;
   }
 }
@@ -328,7 +317,6 @@ export async function reactivateUser(userId: string): Promise<User | null> {
     );
     return getUserById(userId);
   } catch (error) {
-    console.error('Failed to reactivate user in database:', error);
     throw error;
   }
 }
@@ -357,7 +345,6 @@ export async function createPasswordResetToken(userId: string, email: string, to
       createdAt: now.toISOString(),
     };
   } catch (error) {
-    console.error('Failed to create password reset token in database:', error);
     throw error;
   }
 }
@@ -400,7 +387,6 @@ export async function getPasswordResetTokenByToken(token: string): Promise<Passw
       createdAt: row.createdAt,
     };
   } catch (error) {
-    console.error('Failed to get password reset token from database:', error);
     throw error;
   }
 }
@@ -412,7 +398,6 @@ export async function markPasswordResetTokenAsUsed(token: string): Promise<void>
       [token]
     );
   } catch (error) {
-    console.error('Failed to mark password reset token as used in database:', error);
     throw error;
   }
 }
@@ -424,7 +409,6 @@ export async function deleteExpiredPasswordResetTokens(): Promise<void> {
        WHERE expires_at < NOW() OR used = true`
     );
   } catch (error) {
-    console.error('Failed to delete expired password reset tokens from database:', error);
     throw error;
   }
 }
@@ -483,7 +467,6 @@ export async function getPosts(): Promise<Post[]> {
       updatedAt: row.updatedAt,
     })) as Post[];
   } catch (error) {
-    console.error('Failed to get posts from database:', error);
     throw error;
   }
 }
@@ -543,7 +526,6 @@ export async function getPostById(id: string): Promise<Post | null> {
       updatedAt: row.updatedAt,
     } as Post;
   } catch (error) {
-    console.error('Failed to get post by id from database:', error);
     throw error;
   }
 }
@@ -620,7 +602,6 @@ export async function createPost(post: Omit<Post, 'id' | 'createdAt' | 'updatedA
       updatedAt: now,
     } as Post;
   } catch (error) {
-    console.error('Failed to create post in database:', error);
     throw error;
   }
 }
@@ -750,7 +731,6 @@ export async function updatePost(id: string, updates: Partial<Post>): Promise<Po
     
     return getPostById(id);
   } catch (error) {
-    console.error('Failed to update post in database:', error);
     throw error;
   }
 }
@@ -780,7 +760,6 @@ export async function togglePostLike(postId: string, userIdOrSessionId: string):
     
     return getPostById(postId);
   } catch (error) {
-    console.error('Failed to toggle post like in database:', error);
     throw error;
   }
 }
@@ -795,7 +774,6 @@ export async function deletePost(id: string): Promise<boolean> {
     
     return result.rowCount !== null && result.rowCount > 0;
   } catch (error) {
-    console.error('Failed to delete post in database:', error);
     throw error;
   }
 }
@@ -815,7 +793,6 @@ export async function adminDeletePost(id: string): Promise<boolean> {
     
     return result.rowCount !== null && result.rowCount > 0;
   } catch (error) {
-    console.error('Failed to admin delete post in database:', error);
     throw error;
   }
 }
@@ -861,7 +838,6 @@ export async function updatePostsByUserId(userId: string, updates: Partial<Post>
     
     return result.rowCount || 0;
   } catch (error) {
-    console.error('Failed to update posts by user id in database:', error);
     throw error;
   }
 }
@@ -888,7 +864,6 @@ export async function getMessages(): Promise<Message[]> {
       read: row.read || false,
     })) as Message[];
   } catch (error) {
-    console.error('Failed to get messages from database:', error);
     throw error;
   }
 }
@@ -914,7 +889,6 @@ export async function getMessagesByConversationId(conversationId: string): Promi
       read: row.read || false,
     })) as Message[];
   } catch (error) {
-    console.error('Failed to get messages by conversation id from database:', error);
     throw error;
   }
 }
@@ -944,7 +918,6 @@ export async function createMessage(message: Omit<Message, 'id' | 'createdAt' | 
       createdAt: now,
     };
   } catch (error) {
-    console.error('Failed to create message in database:', error);
     throw error;
   }
 }
@@ -957,7 +930,6 @@ export async function markMessagesAsRead(conversationId: string, userId: string)
       WHERE conversation_id = $1 AND receiver_id = $2 AND is_read = false
     `, [conversationId, userId]);
   } catch (error) {
-    console.error('Failed to mark messages as read in database:', error);
     throw error;
   }
 }
@@ -972,7 +944,6 @@ export async function getUnreadMessageCount(userId: string): Promise<number> {
     
     return parseInt(result.rows[0]?.count || '0', 10);
   } catch (error) {
-    console.error('Failed to get unread message count from database:', error);
     throw error;
   }
 }
@@ -1001,7 +972,6 @@ export async function getMessageById(id: string): Promise<Message | null> {
       read: row.read || false,
     } as Message;
   } catch (error) {
-    console.error('Failed to get message by id from database:', error);
     throw error;
   }
 }
@@ -1015,7 +985,6 @@ export async function deleteMessage(id: string): Promise<boolean> {
     
     return result.rowCount !== null && result.rowCount > 0;
   } catch (error) {
-    console.error('Failed to delete message in database:', error);
     throw error;
   }
 }
@@ -1057,7 +1026,6 @@ export async function getConversations(): Promise<Conversation[]> {
       createdAt: row.createdAt,
     })) as Conversation[];
   } catch (error) {
-    console.error('Failed to get conversations from database:', error);
     throw error;
   }
 }
@@ -1103,7 +1071,6 @@ export async function getConversationByParticipants(userId1: string, userId2: st
       createdAt: row.createdAt,
     } as Conversation;
   } catch (error) {
-    console.error('Failed to get conversation by participants from database:', error);
     throw error;
   }
 }
@@ -1150,7 +1117,6 @@ export async function getConversationsByUserId(userId: string): Promise<Conversa
       createdAt: row.createdAt,
     })) as Conversation[];
   } catch (error) {
-    console.error('Failed to get conversations by user id from database:', error);
     throw error;
   }
 }
@@ -1179,7 +1145,6 @@ export async function createConversation(participantIds: [string, string]): Prom
       createdAt: now,
     };
   } catch (error) {
-    console.error('Failed to create conversation in database:', error);
     throw error;
   }
 }
@@ -1232,7 +1197,6 @@ export async function updateConversation(conversationId: string, updates: Partia
       createdAt: row.createdAt,
     } as Conversation;
   } catch (error) {
-    console.error('Failed to update conversation in database:', error);
     throw error;
   }
 }
@@ -1269,7 +1233,6 @@ export async function getAnnouncements(): Promise<Announcement[]> {
       updatedAt: row.updatedAt,
     })) as Announcement[];
   } catch (error) {
-    console.error('Failed to get announcements from database:', error);
     throw error;
   }
 }
@@ -1308,7 +1271,6 @@ export async function getVisibleAnnouncements(): Promise<Announcement[]> {
       updatedAt: row.updatedAt,
     })) as Announcement[];
   } catch (error) {
-    console.error('Failed to get visible announcements from database:', error);
     throw error;
   }
 }
@@ -1347,7 +1309,6 @@ export async function getAnnouncementById(id: string): Promise<Announcement | nu
       updatedAt: row.updatedAt,
     } as Announcement;
   } catch (error) {
-    console.error('Failed to get announcement by id from database:', error);
     throw error;
   }
 }
@@ -1382,7 +1343,6 @@ export async function createAnnouncement(announcement: Omit<Announcement, 'id' |
       updatedAt: now,
     } as Announcement;
   } catch (error) {
-    console.error('Failed to create announcement in database:', error);
     throw error;
   }
 }
@@ -1435,7 +1395,6 @@ export async function updateAnnouncement(id: string, updates: Partial<Announceme
     
     return getAnnouncementById(id);
   } catch (error) {
-    console.error('Failed to update announcement in database:', error);
     throw error;
   }
 }
@@ -1449,7 +1408,6 @@ export async function deleteAnnouncement(id: string): Promise<boolean> {
     
     return result.rowCount !== null && result.rowCount > 0;
   } catch (error) {
-    console.error('Failed to delete announcement in database:', error);
     throw error;
   }
 }
@@ -1472,7 +1430,6 @@ export async function getBlockedUserIds(userId: string): Promise<string[]> {
     
     return result.rows.map(row => row.blockedUserId);
   } catch (error) {
-    console.error('Failed to get blocked user ids from database:', error);
     throw error;
   }
 }
@@ -1488,7 +1445,6 @@ export async function isUserBlocked(userId: string, blockedUserId: string): Prom
     
     return result.rows.length > 0;
   } catch (error) {
-    console.error('Failed to check if user is blocked from database:', error);
     throw error;
   }
 }
@@ -1510,7 +1466,6 @@ export async function blockUser(userId: string, blockedUserId: string): Promise<
       ON CONFLICT (user_id, blocked_user_id) DO NOTHING
     `, [id, userId, blockedUserId, now]);
   } catch (error) {
-    console.error('Failed to block user in database:', error);
     throw error;
   }
 }
@@ -1522,7 +1477,6 @@ export async function unblockUser(userId: string, blockedUserId: string): Promis
       WHERE user_id = $1 AND blocked_user_id = $2
     `, [userId, blockedUserId]);
   } catch (error) {
-    console.error('Failed to unblock user in database:', error);
     throw error;
   }
 }
@@ -1576,7 +1530,6 @@ export async function getGroupChats(): Promise<GroupChat[]> {
       lastMessageAt: row.lastMessageAt || undefined,
     })) as GroupChat[];
   } catch (error) {
-    console.error('Failed to get group chats from database:', error);
     throw error;
   }
 }
@@ -1618,7 +1571,6 @@ export async function getGroupChatById(id: string): Promise<GroupChat | null> {
       lastMessageAt: row.lastMessageAt || undefined,
     } as GroupChat;
   } catch (error) {
-    console.error('Failed to get group chat by id from database:', error);
     throw error;
   }
 }
@@ -1657,7 +1609,6 @@ export async function getGroupChatsByUserId(userId: string): Promise<GroupChat[]
       lastMessageAt: row.lastMessageAt || undefined,
     })) as GroupChat[];
   } catch (error) {
-    console.error('Failed to get group chats by user id from database:', error);
     throw error;
   }
 }
@@ -1701,7 +1652,6 @@ export async function createGroupChat(groupChat: Omit<GroupChat, 'id' | 'created
       updatedAt: now,
     };
   } catch (error) {
-    console.error('Failed to create group chat in database:', error);
     throw error;
   }
 }
@@ -1753,7 +1703,6 @@ export async function updateGroupChat(id: string, updates: Partial<GroupChat>): 
 
     return await getGroupChatById(id);
   } catch (error) {
-    console.error('Failed to update group chat in database:', error);
     throw error;
   }
 }
@@ -1772,7 +1721,6 @@ export async function addParticipantToGroupChat(groupChatId: string, userId: str
       participantIds: updatedParticipantIds,
     });
   } catch (error) {
-    console.error('Failed to add participant to group chat in database:', error);
     throw error;
   }
 }
@@ -1787,7 +1735,6 @@ export async function removeParticipantFromGroupChat(groupChatId: string, userId
       participantIds: updatedParticipantIds,
     });
   } catch (error) {
-    console.error('Failed to remove participant from group chat in database:', error);
     throw error;
   }
 }
@@ -1816,7 +1763,6 @@ export async function getGroupMessages(): Promise<GroupMessage[]> {
       updatedAt: row.updatedAt || undefined,
     })) as GroupMessage[];
   } catch (error) {
-    console.error('Failed to get group messages from database:', error);
     throw error;
   }
 }
@@ -1844,7 +1790,6 @@ export async function getGroupMessagesByGroupChatId(groupChatId: string): Promis
       updatedAt: row.updatedAt || undefined,
     })) as GroupMessage[];
   } catch (error) {
-    console.error('Failed to get group messages by group chat id from database:', error);
     throw error;
   }
 }
@@ -1876,7 +1821,6 @@ export async function createGroupMessage(message: Omit<GroupMessage, 'id' | 'cre
       createdAt: now,
     };
   } catch (error) {
-    console.error('Failed to create group message in database:', error);
     throw error;
   }
 }
@@ -1885,12 +1829,10 @@ export async function markGroupMessageAsRead(messageId: string, userId: string):
   try {
     const message = await getGroupMessageById(messageId);
     if (!message) {
-      console.log(`[markGroupMessageAsRead] Message ${messageId} not found`);
       return;
     }
     
     if (message.readBy && message.readBy.includes(userId)) {
-      console.log(`[markGroupMessageAsRead] Message ${messageId} already read by user ${userId}`);
       return; // 既に既読
     }
 
@@ -1900,9 +1842,7 @@ export async function markGroupMessageAsRead(messageId: string, userId: string):
       SET read_by = $1
       WHERE id = $2
     `, [updatedReadBy, messageId]);
-    console.log(`[markGroupMessageAsRead] Marked message ${messageId} as read for user ${userId}, readBy: ${JSON.stringify(updatedReadBy)}`);
-  } catch (error) {
-    console.error('Failed to mark group message as read in database:', error);
+    } catch (error) {
     throw error;
   }
 }
@@ -1934,7 +1874,6 @@ export async function getGroupMessageById(id: string): Promise<GroupMessage | nu
       updatedAt: row.updatedAt || undefined,
     } as GroupMessage;
   } catch (error) {
-    console.error('Failed to get group message by id from database:', error);
     throw error;
   }
 }
@@ -1971,7 +1910,6 @@ export async function updateGroupMessage(id: string, updates: Partial<GroupMessa
 
     return await getGroupMessageById(id);
   } catch (error) {
-    console.error('Failed to update group message in database:', error);
     throw error;
   }
 }
@@ -1985,7 +1923,6 @@ export async function deleteGroupMessage(id: string): Promise<boolean> {
 
     return result.rowCount !== null && result.rowCount > 0;
   } catch (error) {
-    console.error('Failed to delete group message in database:', error);
     throw error;
   }
 }
@@ -2041,7 +1978,6 @@ export async function getSystemSettings(): Promise<SystemSettings | null> {
 
     return result.rows[0] as SystemSettings;
   } catch (error) {
-    console.error('Failed to get system settings from database:', error);
     // エラー時はメンテナンスモードOFFを返す
     return {
       id: 'maintenance',
@@ -2095,7 +2031,6 @@ export async function updateSystemSettings(settings: Partial<SystemSettings>): P
       updatedAt: new Date().toISOString(),
     };
   } catch (error) {
-    console.error('Failed to update system settings in database:', error);
     throw error;
   }
 }
@@ -2132,7 +2067,6 @@ export async function getFeedbacks(): Promise<Feedback[]> {
       createdAt: row.createdAt,
     })) as Feedback[];
   } catch (error) {
-    console.error('Failed to get feedbacks from database:', error);
     throw error;
   }
 }
@@ -2170,7 +2104,6 @@ export async function createFeedback(feedback: Omit<Feedback, 'id' | 'createdAt'
       createdAt,
     } as Feedback;
   } catch (error) {
-    console.error('Failed to create feedback in database:', error);
     throw error;
   }
 }
@@ -2209,7 +2142,6 @@ export async function getFeedbackById(id: string): Promise<Feedback | null> {
       createdAt: row.createdAt,
     } as Feedback;
   } catch (error) {
-    console.error('Failed to get feedback by id from database:', error);
     throw error;
   }
 }
@@ -2268,7 +2200,6 @@ export async function updateFeedback(id: string, updates: Partial<Feedback>): Pr
     
     return await getFeedbackById(id);
   } catch (error) {
-    console.error('Failed to update feedback in database:', error);
     throw error;
   }
 }
@@ -2282,7 +2213,6 @@ export async function deleteFeedback(id: string): Promise<boolean> {
     
     return result.rowCount !== null && result.rowCount > 0;
   } catch (error) {
-    console.error('Failed to delete feedback in database:', error);
     throw error;
   }
 }
@@ -2319,7 +2249,6 @@ export async function createAccessLog(log: Omit<AccessLog, 'id' | 'createdAt'>):
       log.referer || null,
     ]);
   } catch (error) {
-    console.error('Failed to create access log:', error);
     // エラーが発生しても処理を続行（アクセスログの記録失敗でサイトが停止しないように）
   }
 }
@@ -2351,7 +2280,6 @@ export async function getAccessStats(options: {
     `);
     
     if (!tableCheck.rows[0].exists) {
-      console.warn('⚠️ access_logsテーブルが存在しません。SQLスクリプトを実行してください: scripts/add-access-logs-table.sql');
       return {
         totalViews: 0,
         uniqueVisitors: 0,
@@ -2478,12 +2406,9 @@ export async function getAccessStats(options: {
       topReferers,
     };
   } catch (error: any) {
-    console.error('Failed to get access stats:', error);
     // テーブルが存在しないエラーの場合、より明確なメッセージを表示
     if (error?.message?.includes('does not exist') || error?.code === '42P01' || error?.message?.includes('relation "access_logs" does not exist')) {
-      console.error('⚠️ access_logsテーブルが存在しません。');
-      console.error('📋 以下のSQLスクリプトを実行してください: scripts/add-access-logs-table.sql');
-    }
+      }
     return {
       totalViews: 0,
       uniqueVisitors: 0,

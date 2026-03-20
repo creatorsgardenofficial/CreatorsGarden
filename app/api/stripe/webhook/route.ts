@@ -12,11 +12,9 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
 
 // 環境変数の検証
 if (!process.env.STRIPE_SECRET_KEY) {
-  console.warn('警告: STRIPE_SECRET_KEYが設定されていません。Stripe機能は動作しません。');
-}
+  }
 if (!webhookSecret) {
-  console.warn('警告: STRIPE_WEBHOOK_SECRETが設定されていません。Webhook検証ができません。');
-}
+  }
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +22,6 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get('stripe-signature');
 
     if (!signature) {
-      console.error('Webhook: 署名がありません');
       return NextResponse.json(
         { error: '署名がありません' },
         { status: 400 }
@@ -37,15 +34,12 @@ export async function POST(request: NextRequest) {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
       // 開発環境でのみログ出力
       if (process.env.NODE_ENV === 'development') {
-        console.log('Webhook: イベント受信:', event.type);
-      }
+        }
     } catch (err: any) {
       // 本番環境では詳細なエラー情報をログに出力しない
       if (process.env.NODE_ENV === 'development') {
-        console.error('Webhook: 署名検証失敗:', err.message);
-      } else {
-        console.error('Webhook: 署名検証失敗');
-      }
+        } else {
+        }
       return NextResponse.json(
         { error: `Webhookエラー: ${err.message}` },
         { status: 400 }
@@ -58,14 +52,7 @@ export async function POST(request: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session;
         // 開発環境のみログ出力（機密情報を含む）
         if (process.env.NODE_ENV === 'development') {
-          console.log('Webhook: checkout.session.completed', {
-            sessionId: session.id.substring(0, 8) + '...',
-            mode: session.mode,
-            customerId: typeof session.customer === 'string' ? session.customer.substring(0, 8) + '...' : session.customer,
-            userId: session.metadata?.userId ? session.metadata.userId.substring(0, 8) + '...' : undefined,
-            planType: session.metadata?.planType,
-          });
-        }
+          }
         
         if (session.mode === 'subscription') {
           const subscriptionId = session.subscription as string;
@@ -76,28 +63,16 @@ export async function POST(request: NextRequest) {
           if (userId && metadataPlanType) {
             // 開発環境のみログ出力
             if (process.env.NODE_ENV === 'development') {
-              console.log('Webhook: ユーザー情報を更新開始', { 
-                userId: userId.substring(0, 8) + '...', 
-                metadataPlanType 
-              });
-            }
+              }
             const user = await getUserById(userId);
             if (user) {
               // 開発環境のみログ出力
               if (process.env.NODE_ENV === 'development') {
-                console.log('Webhook: ユーザー情報取得成功', { 
-                  userId: user.id, 
-                  currentPlan: user.subscription?.planType 
-                });
-              }
+                }
               
               const subscription = await stripe.subscriptions.retrieve(subscriptionId);
               if (process.env.NODE_ENV === 'development') {
-                console.log('Webhook: サブスクリプション情報取得', {
-                  subscriptionId,
-                  status: subscription.status,
-                });
-              }
+                }
               
               // 価格IDからplanTypeを取得して検証
               const priceId = subscription.items.data[0]?.price?.id;
@@ -115,19 +90,9 @@ export async function POST(request: NextRequest) {
                 
                 // メタデータと価格IDから取得したplanTypeが一致しない場合は警告
                 if (planType !== metadataPlanType) {
-                  console.warn('Webhook: メタデータと価格IDのplanTypeが一致しません', {
-                    metadataPlanType,
-                    priceIdPlanType: planType,
-                    priceId,
-                    using: planType,
-                  });
-                }
+                  }
               } else {
-                console.warn('Webhook: 価格IDが取得できません。メタデータのplanTypeを使用します', {
-                  subscriptionId,
-                  metadataPlanType,
-                });
-              }
+                }
               
               const updatedUser = await updateUser(userId, {
                 subscription: {
@@ -140,21 +105,9 @@ export async function POST(request: NextRequest) {
                 },
               });
               
-              console.log('Webhook: ユーザー情報更新完了', {
-                userId: updatedUser?.id,
-                planType: updatedUser?.subscription?.planType,
-                status: updatedUser?.subscription?.status,
-              });
-              
               // プラン変更に伴い、既存の投稿の優先表示フラグを更新
               const isActive = subscription.status === 'active';
               const shouldHavePriority = (planType === 'grow' || planType === 'bloom') && isActive;
-              
-              console.log('Webhook: 投稿の優先表示フラグを更新', {
-                shouldHavePriority,
-                isActive,
-                planType,
-              });
               
               const posts = await getPosts();
               let updated = false;
@@ -170,24 +123,19 @@ export async function POST(request: NextRequest) {
                 await savePosts(posts);
                 // 開発環境でのみログ出力
                 if (process.env.NODE_ENV === 'development') {
-                  console.log('Webhook: 投稿の優先表示フラグ更新完了');
-                }
+                  }
               }
             } else {
               // 本番環境では機密情報をログに出力しない
               if (process.env.NODE_ENV === 'development') {
-                console.error('Webhook: ユーザーが見つかりません', { userId });
-              } else {
-                console.error('Webhook: ユーザーが見つかりません');
-              }
+                } else {
+                }
             }
           } else {
             // 本番環境では機密情報をログに出力しない
             if (process.env.NODE_ENV === 'development') {
-              console.error('Webhook: メタデータが不足しています', { userId, metadataPlanType });
-            } else {
-              console.error('Webhook: メタデータが不足しています');
-            }
+              } else {
+              }
           }
         }
         break;
@@ -195,27 +143,13 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
-        console.log('Webhook: subscription event', {
-          type: event.type,
-          customerId,
-          subscriptionId: subscription.id,
-          status: subscription.status,
-        });
-
         // メタデータからユーザーIDを取得
         const customer = await stripe.customers.retrieve(customerId);
         if (!customer.deleted && 'metadata' in customer) {
           const userId = customer.metadata?.userId;
-          console.log('Webhook: 顧客情報取得', { userId, customerId });
-          
           if (userId) {
             const user = await getUserById(userId);
             if (user) {
-              console.log('Webhook: ユーザー情報取得', {
-                userId: user.id,
-                currentPlan: user.subscription?.planType,
-              });
-              
               // サブスクリプションが更新された場合
               // サブスクリプションがキャンセル済みまたは無効な状態の場合、Freeプランに戻す
               const invalidStatuses = ['canceled', 'unpaid', 'past_due', 'incomplete_expired'];
@@ -229,15 +163,6 @@ export async function POST(request: NextRequest) {
               
               if (isInvalidStatus || periodEnded) {
                 // サブスクリプションが無効な状態、または期間終了済みの場合、Freeプランに戻す
-                console.log('Webhook: サブスクリプションが無効な状態または期間終了 - Seed Planに戻す', {
-                  status: subscription.status,
-                  subscriptionId: subscription.id,
-                  cancelAtPeriodEnd: subscription.cancel_at_period_end,
-                  currentPeriodEnd: subscription.current_period_end,
-                  periodEnded,
-                  isInvalidStatus,
-                });
-                
                 await updateUser(userId, {
                   subscription: {
                     ...user.subscription,
@@ -267,8 +192,7 @@ export async function POST(request: NextRequest) {
                   await savePosts(posts);
                 }
                 
-                console.log('Webhook: Seed Planへの切り替え完了');
-              } else {
+                } else {
                 // サブスクリプションが有効な場合、Stripeの価格IDからplanTypeを取得
                 const priceId = subscription.items.data[0]?.price?.id;
                 let planType: PlanType = 'free';
@@ -285,31 +209,13 @@ export async function POST(request: NextRequest) {
                   } else {
                     // 価格IDが一致しない場合、既存のplanTypeを保持（フォールバック）
                     planType = user.subscription?.planType || 'free';
-                    console.warn('Webhook: 価格IDが一致しません', {
-                      priceId,
-                      growPriceId,
-                      bloomPriceId,
-                      fallbackPlanType: planType,
-                    });
-                  }
+                    }
                 } else {
                   // 価格IDが取得できない場合、既存のplanTypeを保持
                   planType = user.subscription?.planType || 'free';
-                  console.warn('Webhook: 価格IDが取得できません', {
-                    subscriptionId: subscription.id,
-                    fallbackPlanType: planType,
-                  });
-                }
+                  }
                 
                 const isActive = subscription.status === 'active';
-                
-                console.log('Webhook: サブスクリプション更新', {
-                  priceId,
-                  planType,
-                  isActive,
-                  subscriptionStatus: subscription.status,
-                  previousPlanType: user.subscription?.planType,
-                });
                 
                 await updateUser(userId, {
                   subscription: {
@@ -322,8 +228,6 @@ export async function POST(request: NextRequest) {
                     cancelAtPeriodEnd: subscription.cancel_at_period_end,
                   },
                 });
-                
-                console.log('Webhook: ユーザー情報更新完了');
                 
                 // プラン変更に伴い、既存の投稿の優先表示フラグを更新
                 const shouldHavePriority = (planType === 'grow' || planType === 'bloom') && isActive;
@@ -345,18 +249,14 @@ export async function POST(request: NextRequest) {
             } else {
               // 本番環境では機密情報をログに出力しない
               if (process.env.NODE_ENV === 'development') {
-                console.error('Webhook: ユーザーが見つかりません', { userId });
-              } else {
-                console.error('Webhook: ユーザーが見つかりません');
-              }
+                } else {
+                }
             }
           } else {
             // 本番環境では機密情報をログに出力しない
             if (process.env.NODE_ENV === 'development') {
-              console.error('Webhook: 顧客メタデータにuserIdがありません', { customerId });
-            } else {
-              console.error('Webhook: 顧客メタデータにuserIdがありません');
-            }
+              } else {
+              }
           }
         }
         break;
@@ -364,29 +264,14 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
-        console.log('Webhook: subscription deleted event', {
-          type: event.type,
-          customerId,
-          subscriptionId: subscription.id,
-          status: subscription.status,
-        });
-
         // メタデータからユーザーIDを取得
         const customer = await stripe.customers.retrieve(customerId);
         if (!customer.deleted && 'metadata' in customer) {
           const userId = customer.metadata?.userId;
-          console.log('Webhook: 顧客情報取得', { userId, customerId });
-          
           if (userId) {
             const user = await getUserById(userId);
             if (user) {
-              console.log('Webhook: ユーザー情報取得', {
-                userId: user.id,
-                currentPlan: user.subscription?.planType,
-              });
-              
               // サブスクリプションが削除された場合、無料プランに戻す
-              console.log('Webhook: サブスクリプション削除 - Seed Planに戻す');
               await updateUser(userId, {
                 subscription: {
                   stripeCustomerId: customerId,
@@ -412,18 +297,14 @@ export async function POST(request: NextRequest) {
             } else {
               // 本番環境では機密情報をログに出力しない
               if (process.env.NODE_ENV === 'development') {
-                console.error('Webhook: ユーザーが見つかりません', { userId });
-              } else {
-                console.error('Webhook: ユーザーが見つかりません');
-              }
+                } else {
+                }
             }
           } else {
             // 本番環境では機密情報をログに出力しない
             if (process.env.NODE_ENV === 'development') {
-              console.error('Webhook: 顧客メタデータにuserIdがありません', { customerId });
-            } else {
-              console.error('Webhook: 顧客メタデータにuserIdがありません');
-            }
+              } else {
+              }
           }
         }
         break;
@@ -433,8 +314,7 @@ export async function POST(request: NextRequest) {
         const customerId = invoice.customer as string;
         // 開発環境でのみログ出力（機密情報を含む）
         if (process.env.NODE_ENV === 'development') {
-          console.log('Webhook: invoice.payment_succeeded', { customerId });
-        }
+          }
         
         const customer = await stripe.customers.retrieve(customerId);
         if (!customer.deleted && 'metadata' in customer) {
@@ -482,28 +362,20 @@ export async function POST(request: NextRequest) {
                 await savePosts(posts);
               }
               
-              console.log('Webhook: 請求書支払い成功 - ユーザー情報更新完了', {
-                planType,
-                isActive,
-                periodEnded,
-              });
-            }
+              }
           }
         }
         break;
       }
       default:
-        console.warn(`Webhook: 未処理のイベントタイプ ${event.type}`);
-    }
+        }
 
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (error: any) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Webhook: エラー発生', error);
-    } else {
-      console.error('Webhook: エラー発生');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'Webhook処理に失敗しました' },
       { status: 500 }

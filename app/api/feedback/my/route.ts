@@ -45,10 +45,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Get my feedbacks error:', error);
-    } else {
-      console.error('Get my feedbacks error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'フィードバックの取得に失敗しました' },
       { status: 500 }

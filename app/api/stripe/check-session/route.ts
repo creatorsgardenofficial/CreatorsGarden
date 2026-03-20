@@ -51,13 +51,6 @@ export async function GET(request: NextRequest) {
     // チェックアウトセッションを取得
     const session = await stripeInstance.checkout.sessions.retrieve(sessionId);
     
-    console.log('CheckSession: セッション取得', {
-      sessionId: session.id,
-      mode: session.mode,
-      subscriptionId: session.subscription,
-      customerId: session.customer,
-    });
-
     if (session.mode === 'subscription' && session.subscription) {
       const subscriptionId = session.subscription as string;
       const customerId = session.customer as string;
@@ -80,13 +73,6 @@ export async function GET(request: NextRequest) {
           planType = 'bloom';
         }
       }
-
-      console.log('CheckSession: サブスクリプション情報', {
-        subscriptionId,
-        planType,
-        status: subscription.status,
-        priceId,
-      });
 
       // ユーザー情報を更新
       await updateUser(userId, {
@@ -119,11 +105,6 @@ export async function GET(request: NextRequest) {
         await savePosts(posts);
       }
 
-      console.log('CheckSession: ユーザー情報更新完了', {
-        userId,
-        planType,
-      });
-
       return NextResponse.json({ 
         planUpdated: true,
         planType,
@@ -144,7 +125,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error('CheckSession: エラー', error);
     return NextResponse.json(
       { error: error.message || 'セッション確認に失敗しました' },
       { 

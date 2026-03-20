@@ -50,7 +50,6 @@ export async function POST(
       throw error;
     }
   } catch (error: any) {
-    console.error('Failed to bump event:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to bump event' },
       { status: 500 }

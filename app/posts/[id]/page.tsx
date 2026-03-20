@@ -98,8 +98,7 @@ export default function PostDetailPage() {
         setLikesCount(data.likesCount || 0);
       }
     } catch (error) {
-      console.error('Failed to fetch like status:', error);
-    }
+      }
   };
 
   const fetchBumpStatus = async () => {
@@ -131,8 +130,7 @@ export default function PostDetailPage() {
         });
       }
     } catch (error) {
-      console.error('Failed to fetch bump status:', error);
-    }
+      }
   };
 
   const handleBump = async () => {
@@ -215,8 +213,7 @@ export default function PostDetailPage() {
       // 401エラー（未ログイン）は正常なケースなので、エラーをログに出力しない
     } catch (error) {
       // ネットワークエラーなどのみログに出力
-      console.error('Failed to fetch user:', error);
-    }
+      }
   };
 
   const fetchAdminStatus = async () => {
@@ -494,8 +491,7 @@ export default function PostDetailPage() {
         }
       }
     } catch (error) {
-      console.error('Failed to toggle like:', error);
-    }
+      }
   };
 
   const postTypeLabels: Record<PostType, string> = {

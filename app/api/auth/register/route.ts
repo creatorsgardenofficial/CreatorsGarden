@@ -107,20 +107,11 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Registration error:', error);
-      console.error('Error details:', {
-        message: error?.message,
-        code: error?.code,
-        name: error?.name,
-        stack: error?.stack,
-      });
-    } else {
-      console.error('Registration error occurred');
-    }
+      } else {
+      }
     
     // ファイルシステムエラーの場合、より詳細なメッセージを返す
     if (error?.code === 'EACCES' || error?.code === 'EROFS' || error?.message?.includes('read-only')) {
-      console.error('File system is read-only. This is expected in Vercel production environment.');
       return NextResponse.json(
         { 
           error: '本番環境ではデータベースが必要です。現在、ファイルベースのストレージは使用できません。' 
@@ -134,7 +125,6 @@ export async function POST(request: NextRequest) {
         error?.message?.includes('missing_connection_string') ||
         error?.message?.includes('POSTGRES_PRISMA_URL') ||
         error?.name === 'VercelPostgresError') {
-      console.error('Database connection error detected');
       return NextResponse.json(
         { 
           error: 'データベース接続に失敗しました。環境変数（POSTGRES_PRISMA_URL）が正しく設定されているか確認してください。',

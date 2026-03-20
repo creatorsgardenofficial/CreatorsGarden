@@ -35,7 +35,6 @@ export default function BookmarksPage() {
         router.push('/login');
       }
     } catch (error) {
-      console.error('Failed to fetch user:', error);
       router.push('/login');
     }
   };
@@ -48,8 +47,7 @@ export default function BookmarksPage() {
         setBookmarks(data.bookmarks || []);
       }
     } catch (error) {
-      console.error('Failed to fetch bookmarks:', error);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };
@@ -68,7 +66,6 @@ export default function BookmarksPage() {
         alert(data.error || 'ブックマークの削除に失敗しました');
       }
     } catch (error) {
-      console.error('Failed to remove bookmark:', error);
       alert('エラーが発生しました');
     }
   };

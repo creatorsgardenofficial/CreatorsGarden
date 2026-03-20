@@ -52,20 +52,9 @@ export async function POST(request: NextRequest) {
     }
 
     const subscriptionId = user.subscription.stripeSubscriptionId;
-    console.log('SyncSubscription: サブスクリプションを同期開始', {
-      userId,
-      subscriptionId,
-    });
-
     // Stripe APIからサブスクリプション情報を取得
     const stripeInstance = getStripeInstance();
     const subscription = await stripeInstance.subscriptions.retrieve(subscriptionId);
-
-    console.log('SyncSubscription: サブスクリプション情報取得', {
-      subscriptionId,
-      status: subscription.status,
-      cancel_at_period_end: subscription.cancel_at_period_end,
-    });
 
     // 価格IDからplanTypeを取得
     const priceId = subscription.items.data[0]?.price?.id;
@@ -81,13 +70,7 @@ export async function POST(request: NextRequest) {
       } else {
         // 価格IDが一致しない場合、既存のplanTypeを保持（フォールバック）
         planType = user.subscription?.planType || 'free';
-        console.warn('SyncSubscription: 価格IDが一致しません', {
-          priceId,
-          growPriceId,
-          bloomPriceId: bloomPriceId || '未設定',
-          fallbackPlanType: planType,
-        });
-      }
+        }
     }
 
     // サブスクリプションの状態を確認
@@ -101,12 +84,7 @@ export async function POST(request: NextRequest) {
     // 無効な状態または期間終了済みの場合はFreeプランに戻す
     if (isInvalidStatus || periodEnded) {
       planType = 'free';
-      console.log('SyncSubscription: サブスクリプションが無効な状態または期間終了済み', {
-        isInvalidStatus,
-        periodEnded,
-        status: subscription.status,
-      });
-    }
+      }
 
     const isActive = subscription.status === 'active' && !periodEnded;
 
@@ -121,12 +99,6 @@ export async function POST(request: NextRequest) {
         currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
       },
-    });
-
-    console.log('SyncSubscription: ユーザー情報更新完了', {
-      userId,
-      planType,
-      status: subscription.status,
     });
 
     // プラン変更に伴い、既存の投稿の優先表示フラグを更新
@@ -144,8 +116,7 @@ export async function POST(request: NextRequest) {
     }
     if (updated) {
       await savePosts(posts);
-      console.log('SyncSubscription: 投稿の優先表示フラグ更新完了');
-    }
+      }
 
     return NextResponse.json({
       success: true,
@@ -162,8 +133,6 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('SyncSubscription: エラー', error);
-
     // Stripe APIエラーの場合
     if (error.type === 'StripeInvalidRequestError') {
       if (error.code === 'resource_missing') {

@@ -45,10 +45,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Reset password token verification error:', error);
-    } else {
-      console.error('Reset password token verification error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'トークンの検証に失敗しました' },
       { status: 500 }
@@ -124,12 +122,7 @@ export async function POST(request: NextRequest) {
 
     // 本番環境では機密情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.log('Password reset completed:', {
-        userId: user.id,
-        email: user.email,
-        tokenId: resetToken.id,
-      });
-    }
+      }
 
     return NextResponse.json({
       success: true,
@@ -139,10 +132,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Reset password error:', error);
-    } else {
-      console.error('Reset password error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'パスワードのリセットに失敗しました' },
       { status: 500 }

@@ -34,10 +34,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Get profile error:', error);
-    } else {
-      console.error('Get profile error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'プロフィールの取得に失敗しました' },
       { status: 500 }
@@ -204,10 +202,8 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     // 本番環境では詳細なエラー情報をログに出力しない
     if (process.env.NODE_ENV === 'development') {
-      console.error('Update profile error:', error);
-    } else {
-      console.error('Update profile error occurred');
-    }
+      } else {
+      }
     return NextResponse.json(
       { error: 'プロフィールの更新に失敗しました' },
       { status: 500 }

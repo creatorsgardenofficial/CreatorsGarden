@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
     const events = await getEvents();
     return NextResponse.json({ events });
   } catch (error: any) {
-    console.error('Failed to get events:', error);
     return NextResponse.json(
       { error: 'Failed to get events' },
       { status: 500 }
@@ -134,7 +133,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ event }, { status: 201 });
   } catch (error: any) {
-    console.error('Failed to create event:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to create event' },
       { status: 500 }

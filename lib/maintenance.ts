@@ -25,7 +25,6 @@ export async function isMaintenanceMode(userId?: string): Promise<boolean> {
 
     return true;
   } catch (error) {
-    console.error('Maintenance check error:', error);
     // エラー時はメンテナンスモードOFFとして扱う
     return false;
   }

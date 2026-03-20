@@ -15,7 +15,6 @@ export async function GET(request: NextRequest) {
       message: settings.maintenanceMessage || '現在メンテナンス中です。ご迷惑をおかけいたします。',
     }, { status: 200 });
   } catch (error) {
-    console.error('Get maintenance status error:', error);
     return NextResponse.json({
       isMaintenance: false,
       message: '現在メンテナンス中です。ご迷惑をおかけいたします。',

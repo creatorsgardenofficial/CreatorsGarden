@@ -24,7 +24,6 @@ export async function GET(
     const comments = await getEventComments(id);
     return NextResponse.json({ comments });
   } catch (error: any) {
-    console.error('Failed to get event comments:', error);
     return NextResponse.json(
       { error: 'Failed to get event comments' },
       { status: 500 }
@@ -86,7 +85,6 @@ export async function POST(
 
     return NextResponse.json({ comment }, { status: 201 });
   } catch (error: any) {
-    console.error('Failed to create event comment:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to create event comment' },
       { status: 500 }

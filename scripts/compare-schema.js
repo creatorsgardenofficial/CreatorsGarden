@@ -80,15 +80,8 @@ async function getAllTablesSchema(client) {
 
 // スキーマを表示
 function displaySchema(schema) {
-  console.log('\n📋 ローカルデータベースのスキーマ:\n');
-  console.log('='.repeat(80));
-  
   for (const [tableName, columns] of Object.entries(schema)) {
-    console.log(`\n📊 テーブル: ${tableName}`);
-    console.log('-'.repeat(80));
-    
     if (columns.length === 0) {
-      console.log('  (カラムなし)');
       continue;
     }
     
@@ -97,12 +90,10 @@ function displaySchema(schema) {
       const defaultVal = col.column_default ? ` DEFAULT ${col.column_default}` : '';
       const maxLength = col.character_maximum_length ? `(${col.character_maximum_length})` : '';
       
-      console.log(`  ${index + 1}. ${col.column_name.padEnd(25)} ${col.data_type}${maxLength} ${nullable}${defaultVal}`);
-    });
+      });
   }
   
-  console.log('\n' + '='.repeat(80));
-}
+  }
 
 async function main() {
   try {
@@ -119,15 +110,8 @@ async function main() {
       process.env.POSTGRES_URL;
     
     if (!connectionString) {
-      console.error('❌ エラー: 接続文字列が見つかりません');
-      console.error('\n以下のいずれかの環境変数が必要です:');
-      console.error('  - CGDB_POSTGRES_URL_NON_POOLING');
-      console.error('  - POSTGRES_URL_NON_POOLING');
-      console.error('  - POSTGRES_URL');
       process.exit(1);
     }
-    
-    console.log('🔗 ローカルデータベースに接続しています...');
     
     // SSL設定
     const isNeonDb = connectionString.includes('neon.tech');
@@ -140,8 +124,6 @@ async function main() {
     });
     
     await client.connect();
-    console.log('✅ 接続成功\n');
-    
     try {
       // スキーマを取得
       const schema = await getAllTablesSchema(client);
@@ -151,32 +133,17 @@ async function main() {
       
       // 特にgroup_messagesテーブルを詳しく表示
       if (schema.group_messages) {
-        console.log('\n🔍 group_messagesテーブルの詳細:');
-        console.log('-'.repeat(80));
         schema.group_messages.forEach((col, index) => {
           const nullable = col.is_nullable === 'YES' ? 'NULL' : 'NOT NULL';
           const defaultVal = col.column_default ? ` DEFAULT ${col.column_default}` : '';
-          console.log(`  ${index + 1}. ${col.column_name.padEnd(20)} ${col.data_type.padEnd(20)} ${nullable}${defaultVal}`);
-        });
-        console.log('-'.repeat(80));
-      }
+          });
+        }
       
-      console.log('\n✅ スキーマの取得が完了しました！');
-      console.log('\n💡 schema.sqlと比較してください:');
-      console.log('   - カラム数が同じか');
-      console.log('   - カラム名が同じか');
-      console.log('   - データ型が同じか');
-      console.log('   - NULL制約が同じか');
-      
-    } finally {
+      } finally {
       await client.end();
     }
     
   } catch (error) {
-    console.error('\n❌ エラーが発生しました:', error.message);
-    console.error('\nエラー詳細:');
-    console.error('  Message:', error.message);
-    console.error('  Code:', error.code);
     process.exit(1);
   }
 }

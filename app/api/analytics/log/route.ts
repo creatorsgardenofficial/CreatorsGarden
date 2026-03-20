@@ -33,12 +33,10 @@ export async function POST(request: NextRequest) {
       userAgent: userAgent || undefined,
       referer: referer || undefined,
     }).catch((error) => {
-      console.error('Failed to log access (non-blocking):', error);
-    });
+      });
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error('Access log API error:', error);
     // エラーが発生しても200を返す（アクセスログの記録失敗でサイトが停止しないように）
     return NextResponse.json({ success: false }, { status: 200 });
   }

@@ -144,7 +144,6 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
     try {
       const res = await fetch(`/api/messages?conversationId=${conversationId}`);
       if (!res.ok) {
-        console.error('❌ Failed to fetch messages:', res.status, res.statusText);
         setMessages([]);
         return;
       }
@@ -153,11 +152,9 @@ export default function DMChat({ currentUserId, onClose, initialUserId, embedded
       if (data.messages && Array.isArray(data.messages)) {
         setMessages(data.messages);
       } else {
-        console.warn('⚠️ Invalid messages data:', data);
         setMessages([]);
       }
     } catch (err) {
-      console.error('❌ Error fetching messages:', err);
       setMessages([]);
     }
   }, []);

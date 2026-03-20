@@ -14,15 +14,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Creators Garden｜クリエイターのための創作・コラボコミュニティ",
-  description: "Creators Gardenは、クリエイター同士がつながり、創作・コラボレーション・作品発表を行えるオンラインコミュニティです。小説家、イラストレーター、作曲家、AIクリエイターなどが参加し、共同制作や作品紹介の場として利用できます。",
-  keywords: ["クリエイター", "コラボ", "創作コミュニティ", "クリエイター交流", "創作SNS", "コラボレーション", "創作プラットフォーム"],
+  title: "Creators Garden｜異ジャンルコラボの専用コミュニティ",
+  description: "Creators Gardenは、小説×イラスト×音楽など異ジャンル横断のコラボに特化したコミュニティです。pixivやXでは見つかりにくい、本気のパートナーを探したいクリエイターのための場所です。",
+  keywords: ["クリエイター", "コラボ", "異ジャンルコラボ", "創作コミュニティ", "クリエイター交流", "コラボ募集", "パートナー探し", "創作プラットフォーム"],
   verification: {
     google: "tnvZBYxvA9j53zFrADBPbcq2tg_fgPYkRA7Q5cO-05U",
   },
   openGraph: {
-    title: "Creators Garden｜クリエイターのための創作・コラボコミュニティ",
-    description: "Creators Gardenは、クリエイター同士がつながり、創作・コラボレーション・作品発表を行えるオンラインコミュニティです。",
+    title: "Creators Garden｜異ジャンルコラボの専用コミュニティ",
+    description: "小説×イラスト×音楽。分野を超えて、本気のパートナーを見つける。異ジャンル横断のコラボに特化したコミュニティです。",
     type: "website",
     locale: "ja_JP",
   },
