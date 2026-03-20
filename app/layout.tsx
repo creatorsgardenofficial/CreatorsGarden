@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Creators Garden｜異ジャンルコラボの専用コミュニティ",
-  description: "Creators Gardenは、小説×イラスト×音楽など異ジャンル横断のコラボに特化したコミュニティです。pixivやXでは見つかりにくい、本気のパートナーを探したいクリエイターのための場所です。",
+  description: "Creators Gardenは、小説×イラスト×音楽など異ジャンル横断のコラボに特化したコミュニティです。本気のパートナーを探したいクリエイターのための専用の場所です。",
   keywords: ["クリエイター", "コラボ", "異ジャンルコラボ", "創作コミュニティ", "クリエイター交流", "コラボ募集", "パートナー探し", "創作プラットフォーム"],
   verification: {
     google: "tnvZBYxvA9j53zFrADBPbcq2tg_fgPYkRA7Q5cO-05U",

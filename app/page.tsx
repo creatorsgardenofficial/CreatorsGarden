@@ -29,7 +29,7 @@ export default function Home() {
             {/* SEO導入文（検索エンジンが最初に読む本文） */}
             <div className="max-w-3xl mx-auto mb-10">
               <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 leading-relaxed text-center">
-                Creators Gardenは、pixivやXでは見つかりにくい「異ジャンル横断のコラボ」に特化したコミュニティです。小説家とイラストレーター、作曲家と歌い手、AIクリエイターと人間クリエイターなど、分野の異なるクリエイターが集まり、募集・マッチング・交流を行います。
+                Creators Gardenは、「異ジャンル横断のコラボ」に特化したコミュニティです。小説家とイラストレーター、作曲家と歌い手、AIクリエイターと人間クリエイターなど、分野の異なるクリエイターが集まり、募集・マッチング・交流を行います。
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -143,7 +143,7 @@ export default function Home() {
               なぜ Creators Garden か
             </h2>
             <p className="text-lg text-gray-700 dark:text-gray-300 text-center max-w-3xl mx-auto mb-8">
-              pixivはイラスト、Skebは依頼・収益化に特化。Xではノイズが多く、コラボ相手を探しづらい。Creators Gardenは<strong className="text-purple-600 dark:text-purple-400">異ジャンル横断のコラボ</strong>に特化した、日本ではまだ少ない専用の場所です。
+              Creators Gardenは<strong className="text-purple-600 dark:text-purple-400">異ジャンル横断のコラボ</strong>に特化した、日本ではまだ少ない専用の場所です。コラボ募集・パートナー探しに特化した設計で、本気のマッチングを実現します。
             </p>
             <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               <div className="text-center p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20">
